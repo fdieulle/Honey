@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dojo", "Dojo\Dojo.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ninja", "Ninja\Ninja.csproj", "{EDB43F2B-461C-4967-B561-9CA53C2AB699}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1E7BF9D6-5C14-42D6-9239-2C75AF3F5A48}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ninja.Tests", "Tests\Ninja.Tests\Ninja.Tests.csproj", "{097BCBAC-0412-478E-B0DD-F600911B6CAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,9 +25,16 @@ Global
 		{EDB43F2B-461C-4967-B561-9CA53C2AB699}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDB43F2B-461C-4967-B561-9CA53C2AB699}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDB43F2B-461C-4967-B561-9CA53C2AB699}.Release|Any CPU.Build.0 = Release|Any CPU
+		{097BCBAC-0412-478E-B0DD-F600911B6CAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{097BCBAC-0412-478E-B0DD-F600911B6CAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{097BCBAC-0412-478E-B0DD-F600911B6CAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{097BCBAC-0412-478E-B0DD-F600911B6CAB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{097BCBAC-0412-478E-B0DD-F600911B6CAB} = {1E7BF9D6-5C14-42D6-9239-2C75AF3F5A48}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AEDE7C0D-C30E-4B97-809C-AAF0258C30E0}
