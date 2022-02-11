@@ -29,9 +29,9 @@ namespace Ninja.Controllers
         }
 
         [HttpPost("StartJob")]
-        public string StartJob(string name, string command, string arguments, int nbCores = 1)
+        public string StartJob(string command, string arguments, int nbCores = 1)
         {
-            return _worker.StartJob(name, command, arguments, nbCores);
+            return _worker.StartJob(command, arguments, nbCores);
         }
 
         [HttpPost("CancelJob")]
