@@ -1,4 +1,5 @@
 ﻿using Ninja.Dto;
+using Ninja.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,20 +12,26 @@ namespace Ninja.Services
         private readonly Process _process;
         private readonly string _workingFolder;
         private readonly List<JobMessage> _messages = new List<JobMessage>();
+        private DateTime _startTime;
+        private DateTime _endTime;
 
-        public string Id { get; } = Guid.NewGuid().ToString("N");
+        public Guid Id { get; } = Guid.NewGuid();
 
-        public int Pid => _process.Id;
+        public int Pid => _startTime != default ? _process.Id : -1;
 
         public List<JobMessage> Messages => _messages;
 
+        public DateTime StartTime => _startTime;
+
         public JobState State { get; private set; } = JobState.Pending;
+
+        public DateTime EndTime => _endTime;
 
         public bool IsAlive => !_process.HasExited;
 
         public RunningJob(string command, string argumente, string workingFolder)
         {
-            _workingFolder = Path.Combine(workingFolder, Id);
+            _workingFolder = Path.Combine(workingFolder, Id.ToString("N"));
 
             _process = new Process
             {
@@ -51,6 +58,7 @@ namespace Ninja.Services
 
             State = JobState.Running;
             _process.Start();
+            _startTime = DateTime.UtcNow;
 
             _process.BeginOutputReadLine();
             _process.BeginErrorReadLine();
@@ -72,7 +80,10 @@ namespace Ninja.Services
         public void Exit()
         {
             if (!State.IsFinal())
+            {
                 State = _process.ExitCode == 0 ? JobState.Done : JobState.Error;
+                _endTime = DateTime.UtcNow;
+            }
             PostMessage(MessageType.Exit, $"Exit with cose: {_process.ExitCode}");
         }
 
@@ -103,8 +114,9 @@ namespace Ninja.Services
 
         public void Dispose()
         {
-            _process.Dispose();
-            _workingFolder.DeleteFolder();
+            Cancel();
+            try { _process.Dispose(); } catch(Exception) { }
+            try { _workingFolder.DeleteFolder(); } catch (Exception) { }
         }
     }
 }

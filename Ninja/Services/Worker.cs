@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Ninja.Dto;
 using Ninja.Model;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -15,16 +15,18 @@ namespace Ninja.Services
     {
         private const int WATCH_DOG_PERIOD = 5000;
 
-        private readonly Dictionary<string, RunningJob> _runningJobs = new Dictionary<string, RunningJob>();
+        private readonly Dictionary<Guid, RunningJob> _runningJobs = new Dictionary<Guid, RunningJob>();
         private readonly ILogger<Worker> _logger;
+        private readonly IDbContextFactory<WorkerContext> _contextFactory;
         private readonly string _workingFolder;
         private readonly Timer _timer;
         private bool _isDisposed;
 
-        public Worker(ILogger<Worker> logger, IConfiguration config)
+        public Worker(ILogger<Worker> logger, IConfiguration config, IDbContextFactory<WorkerContext> contextFactory)
         {
             _logger = logger;
-            _workingFolder = config["WorkingFolder"].CreateFolder(logger);
+            _contextFactory = contextFactory;
+            _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "jobs").CreateFolder(logger);
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
         }
 
@@ -34,7 +36,7 @@ namespace Ninja.Services
                 .Select(p => p.Value.ToDto());
         }
 
-        public IEnumerable<JobMessage> FetchMessages(string id, int start, int length)
+        public IEnumerable<JobMessage> FetchMessages(Guid id, int start, int length)
         {
             if (!_runningJobs.TryGetValue(id, out var job))
             {
@@ -49,12 +51,13 @@ namespace Ninja.Services
             return job.Messages.Skip(start).Take(length);
         }
 
-        public string StartJob(string command, string arguments, int nbCores = -1)
+        public Guid StartJob(string command, string arguments, int nbCores = -1)
         {
             var job = new RunningJob(command, arguments, _workingFolder);
             _logger.LogInformation("Start a new job with Id={0}", job.Id);
             _logger.LogInformation("[{0}] Command line: {1} {2}", job.Id, command, arguments);
             _runningJobs[job.Id] = job;
+            _contextFactory.CreateJob(job);
 
             try
             {
@@ -65,11 +68,12 @@ namespace Ninja.Services
                 _logger.LogError(e, "[{0}] Cannot start the job", job.Id);
                 job.PostMessage(MessageType.Error, e.Message);
             }
+            _contextFactory.UpdateJob(job);
 
             return job.Id;
         }
 
-        public void CancelJob(string id)
+        public void CancelJob(Guid id)
         {
             if (!_runningJobs.TryGetValue(id, out var job))
             {
@@ -78,9 +82,11 @@ namespace Ninja.Services
             }
 
             job.Cancel();
+
+            _contextFactory.UpdateJob(job);
         }
 
-        public void DeleteJob(string id)
+        public void DeleteJob(Guid id)
         {
             if (!_runningJobs.TryGetValue(id, out var job))
             {
@@ -88,15 +94,18 @@ namespace Ninja.Services
                 return;
             }
 
-            job.Cancel();
+            job.Dispose();
             _runningJobs.Remove(id);
+            _contextFactory.DeleteJob(id);
         }
 
         private void OnWatchDogWalk(object state)
         {
-            foreach (var job in _runningJobs.Values)
-                if (!job.State.IsFinal() && job.IsAlive)
-                    job.Exit();
+            foreach (var job in _runningJobs.Values.Where(j => !j.State.IsFinal() && !j.IsAlive))
+            {
+                job.Exit();
+                _contextFactory.UpdateJob(job);
+            }
 
             if(!_isDisposed)
                 _timer.Change(WATCH_DOG_PERIOD, Timeout.Infinite);

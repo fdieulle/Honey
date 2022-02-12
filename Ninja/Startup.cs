@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Ninja.Model;
 using Ninja.Services;
+using System.IO;
 
 namespace Ninja
 {
@@ -20,7 +23,15 @@ namespace Ninja
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var workingFolder = Configuration["WorkingFolder"] ?? ".";
+            var dataFolder = Path.Combine(workingFolder, "data").CreateFolder();
+            var dbPath = Path.Combine(dataFolder, "Ninja.db");
+
+            services.AddEntityFrameworkSqlite()
+                .AddDbContextFactory<WorkerContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
+
             services.AddSingleton<Worker>();
+            
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Ninja.Dto;
 using Ninja.Services;
+using System;
 using System.Collections.Generic;
 
 namespace Ninja.Controllers
@@ -23,25 +24,25 @@ namespace Ninja.Controllers
         }
 
         [HttpGet("FetchMessages")]
-        public IEnumerable<JobMessage> FetchMessages(string id, int start, int length)
+        public IEnumerable<JobMessage> FetchMessages(Guid id, int start, int length)
         {
             return _worker.FetchMessages(id, start, length);
         }
 
         [HttpPost("StartJob")]
-        public string StartJob(string command, string arguments, int nbCores = 1)
+        public Guid StartJob(string command, string arguments, int nbCores = 1)
         {
             return _worker.StartJob(command, arguments, nbCores);
         }
 
         [HttpPost("CancelJob")]
-        public void CancelJob(string id)
+        public void CancelJob(Guid id)
         {
             _worker.CancelJob(id);
         }
 
         [HttpDelete("DeleteJob")]
-        public void DeleteJob(string id)
+        public void DeleteJob(Guid id)
         {
             _worker.DeleteJob(id);
         }
