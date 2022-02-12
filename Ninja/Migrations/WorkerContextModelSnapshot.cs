@@ -22,6 +22,12 @@ namespace Ninja.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Arguments")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Command")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("TEXT");
 
@@ -33,6 +39,9 @@ namespace Ninja.Migrations
 
                     b.Property<int>("State")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("WorkingFolder")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

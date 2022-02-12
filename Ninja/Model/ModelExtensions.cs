@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Ninja.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ninja.Model
@@ -14,6 +15,8 @@ namespace Ninja.Model
                 var model = new JobModel
                 {
                     Id = job.Id,
+                    Command = job.Command,
+                    Arguments = job.Arguments,
                     State = job.State,
                     Pid = job.Pid,
                     StartTime = job.StartTime,
@@ -51,6 +54,17 @@ namespace Ninja.Model
                 context.Jobs.Remove(model);
                 context.SaveChanges();
             }
+        }
+
+        public static IEnumerable<RunningJob> ReloadJobs(this IDbContextFactory<WorkerContext> factory)
+        {
+            var result = new List<RunningJob>();
+            using (var context = factory.CreateDbContext())
+            {
+                foreach (var job in context.Jobs)
+                    result.Add(new RunningJob(job));
+            }
+            return result;
         }
     }
 }

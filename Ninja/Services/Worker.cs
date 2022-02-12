@@ -28,6 +28,12 @@ namespace Ninja.Services
             _contextFactory = contextFactory;
             _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "jobs").CreateFolder(logger);
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
+
+            foreach(var job in contextFactory.ReloadJobs())
+            {
+                job.Exited += OnJobExited;
+                _runningJobs[job.Id] = job;
+            }
         }
 
         public IEnumerable<Job> GetJobs()
@@ -54,8 +60,11 @@ namespace Ninja.Services
         public Guid StartJob(string command, string arguments, int nbCores = -1)
         {
             var job = new RunningJob(command, arguments, _workingFolder);
+
             _logger.LogInformation("Start a new job with Id={0}", job.Id);
             _logger.LogInformation("[{0}] Command line: {1} {2}", job.Id, command, arguments);
+
+            job.Exited += OnJobExited;
             _runningJobs[job.Id] = job;
             _contextFactory.CreateJob(job);
 
@@ -95,9 +104,12 @@ namespace Ninja.Services
             }
 
             job.Dispose();
+            job.Exited -= OnJobExited;
             _runningJobs.Remove(id);
             _contextFactory.DeleteJob(id);
         }
+
+        private void OnJobExited(RunningJob job) => _contextFactory.UpdateJob(job);
 
         private void OnWatchDogWalk(object state)
         {

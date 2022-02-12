@@ -12,10 +12,13 @@ namespace Ninja.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Command = table.Column<string>(type: "TEXT", nullable: true),
+                    Arguments = table.Column<string>(type: "TEXT", nullable: true),
                     Pid = table.Column<int>(type: "INTEGER", nullable: false),
                     StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     State = table.Column<int>(type: "INTEGER", nullable: false),
-                    EndTime = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    EndTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    WorkingFolder = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

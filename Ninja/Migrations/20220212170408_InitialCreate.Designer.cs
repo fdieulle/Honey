@@ -9,7 +9,7 @@ using Ninja.Model;
 namespace Ninja.Migrations
 {
     [DbContext(typeof(WorkerContext))]
-    [Migration("20220212160956_InitialCreate")]
+    [Migration("20220212170408_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,12 @@ namespace Ninja.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Arguments")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Command")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("TEXT");
 
@@ -35,6 +41,9 @@ namespace Ninja.Migrations
 
                     b.Property<int>("State")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("WorkingFolder")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

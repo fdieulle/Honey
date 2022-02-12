@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Ninja.Dto;
+using Ninja.Model;
 using System;
 using System.IO;
 
@@ -54,10 +55,14 @@ namespace Ninja.Services
                 case JobState.Done:
                 case JobState.Cancel:
                 case JobState.Error:
+                case JobState.EndedWithoutSupervision:
                     return true;
                 default:
                     throw new NotImplementedException();
             }
         }
+
+        public static bool IsFinalState(this RunningJob job) => job.State.IsFinal();
+        public static bool IsFinalState(this JobModel job) => job.State.IsFinal();
     }
 }

@@ -8,7 +8,8 @@ namespace Ninja.Dto
         Running,
         Done,
         Cancel,
-        Error
+        Error,
+        EndedWithoutSupervision,
     }
 
     public class Job
@@ -16,6 +17,7 @@ namespace Ninja.Dto
         public Guid Id { get; set; }
         public string State { get; set; }
         public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
         public DateTime ExpectedEndTime { get; set; }
         public double Progress { get; set; }
     }

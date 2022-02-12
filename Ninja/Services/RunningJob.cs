@@ -10,14 +10,17 @@ namespace Ninja.Services
     public class RunningJob : IDisposable
     {
         private readonly Process _process;
-        private readonly string _workingFolder;
         private readonly List<JobMessage> _messages = new List<JobMessage>();
         private DateTime _startTime;
         private DateTime _endTime;
 
         public Guid Id { get; } = Guid.NewGuid();
 
-        public int Pid => _startTime != default ? _process.Id : -1;
+        public int Pid => _process != null && _startTime != default ? _process.Id : -1;
+
+        public string Command { get; }
+
+        public string Arguments { get; }
 
         public List<JobMessage> Messages => _messages;
 
@@ -27,34 +30,80 @@ namespace Ninja.Services
 
         public DateTime EndTime => _endTime;
 
-        public bool IsAlive => !_process.HasExited;
+        public string WorkingFolder { get; }
 
-        public RunningJob(string command, string argumente, string workingFolder)
+        public bool IsAlive => _process != null && !_process.HasExited;
+
+        public event Action<RunningJob> Exited;
+
+        public RunningJob(string command, string arguments, string workingFolder)
         {
-            _workingFolder = Path.Combine(workingFolder, Id.ToString("N"));
+            Command = command;
+            Arguments = arguments;
+            WorkingFolder = Path.Combine(workingFolder, Id.ToString("N"));
 
-            _process = new Process
+            _process = CreateProcess(command, arguments, WorkingFolder);
+            _process.Exited += OnExited;
+            _process.OutputDataReceived += OnOutpuDataReceived;
+            _process.ErrorDataReceived += OnErrorDataReceived;
+        }
+
+        public RunningJob(JobModel model)
+        {
+            Id = model.Id;
+            Command = model.Command;
+            Arguments = model.Arguments;
+            State = model.State;
+            WorkingFolder = model.WorkingFolder;
+            _startTime = model.StartTime;
+            _endTime = model.EndTime;
+
+            switch (State)
             {
-                StartInfo = new ProcessStartInfo(command, argumente)
+                case JobState.Pending:
+                    _process = CreateProcess(Command, Arguments, WorkingFolder);
+                    break;
+                case JobState.Running:
+                    try { _process = Process.GetProcessById(model.Pid); } catch(Exception) { }
+                    break;
+                case JobState.Done:
+                case JobState.Cancel:
+                case JobState.Error:
+                case JobState.EndedWithoutSupervision:
+                    break;
+            }
+
+            if (_process != null)
+            {
+                _process.Exited += OnExited;
+                _process.OutputDataReceived += OnOutpuDataReceived;
+                _process.ErrorDataReceived += OnErrorDataReceived;
+            }
+        }
+
+        private static Process CreateProcess(string command, string arguments, string workingFolder)
+        {
+            return new Process
+            {
+                StartInfo = new ProcessStartInfo(command, arguments)
                 {
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     RedirectStandardInput = true,
-                    WorkingDirectory = _workingFolder,
+                    WorkingDirectory = workingFolder,
                 },
                 EnableRaisingEvents = true,
             };
-            _process.Exited += OnExited;
-            _process.OutputDataReceived += OnOutpuDataReceived;
-            _process.ErrorDataReceived += OnErrorDataReceived;
         }
 
         public void Start()
         {
+            if (_process == null) return;
+
             PostMessage(MessageType.Info, $"Start job with id: {Id}");
-            _workingFolder.CreateFolder();
+            WorkingFolder.CreateFolder();
 
             State = JobState.Running;
             _process.Start();
@@ -66,6 +115,8 @@ namespace Ninja.Services
 
         public void Cancel()
         {
+            if (_process == null) return;
+
             if (_process.HasExited)
             {
                 if (!State.IsFinal()) Exit();
@@ -81,16 +132,23 @@ namespace Ninja.Services
         {
             if (!State.IsFinal())
             {
-                State = _process.ExitCode == 0 ? JobState.Done : JobState.Error;
+                if (_process == null)
+                    State = JobState.EndedWithoutSupervision;
+                else 
+                    State = _process.ExitCode == 0 ? JobState.Done : JobState.Error;
                 _endTime = DateTime.UtcNow;
             }
-            PostMessage(MessageType.Exit, $"Exit with cose: {_process.ExitCode}");
+            
+            PostMessage(MessageType.Exit, $"Exit with cose: {_process?.ExitCode}");
+            Exited?.Invoke(this);
         }
 
         public Job ToDto() => new Job
         {
             Id = Id,
+            StartTime = _startTime,
             State = State.ToString(),
+            EndTime = _endTime,
             Progress = -1,
             ExpectedEndTime = DateTime.MaxValue
         };
@@ -115,8 +173,8 @@ namespace Ninja.Services
         public void Dispose()
         {
             Cancel();
-            try { _process.Dispose(); } catch(Exception) { }
-            try { _workingFolder.DeleteFolder(); } catch (Exception) { }
+            try { _process?.Dispose(); } catch(Exception) { }
+            try { WorkingFolder.DeleteFolder(); } catch (Exception) { }
         }
     }
 }
