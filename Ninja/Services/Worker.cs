@@ -38,13 +38,17 @@ namespace Ninja.Services
 
         public IEnumerable<Job> GetJobs()
         {
-            return _runningJobs
-                .Select(p => p.Value.ToDto());
+            lock(_runningJobs)
+            {
+                return _runningJobs
+                    .Select(p => p.Value.ToDto())
+                    .ToList();
+            }
         }
 
         public IEnumerable<JobMessage> FetchMessages(Guid id, int start, int length)
         {
-            if (!_runningJobs.TryGetValue(id, out var job))
+            if (!_runningJobs.TryGetValueLocked(id, out var job))
             {
                 _logger.LogError("[{0}] Cannot find the job to fetch messages.", id);
                 return Enumerable.Empty<JobMessage>();
@@ -65,8 +69,11 @@ namespace Ninja.Services
             _logger.LogInformation("[{0}] Command line: {1} {2}", job.Id, command, arguments);
 
             job.Exited += OnJobExited;
-            _runningJobs[job.Id] = job;
-            _contextFactory.CreateJob(job);
+            lock (_runningJobs)
+            {
+                _runningJobs[job.Id] = job;
+                _contextFactory.CreateJob(job);
+            }            
 
             try
             {
@@ -77,27 +84,31 @@ namespace Ninja.Services
                 _logger.LogError(e, "[{0}] Cannot start the job", job.Id);
                 job.PostMessage(MessageType.Error, e.Message);
             }
-            _contextFactory.UpdateJob(job);
+
+            lock (_runningJobs)
+                _contextFactory.UpdateJob(job);
 
             return job.Id;
         }
 
         public void CancelJob(Guid id)
         {
-            if (!_runningJobs.TryGetValue(id, out var job))
+            if (!_runningJobs.TryGetValueLocked(id, out var job))
             {
                 _logger.LogError("[{0}] Cannot find the job to cancel.", id);
                 return;
             }
+            
 
             job.Cancel();
 
-            _contextFactory.UpdateJob(job);
+            lock (_runningJobs)
+                _contextFactory.UpdateJob(job);
         }
 
         public void DeleteJob(Guid id)
         {
-            if (!_runningJobs.TryGetValue(id, out var job))
+            if (!_runningJobs.TryGetValueLocked(id, out var job))
             {
                 _logger.LogError("[{0}] Cannot find the job to delete.", id);
                 return;
@@ -109,14 +120,22 @@ namespace Ninja.Services
             _contextFactory.DeleteJob(id);
         }
 
-        private void OnJobExited(RunningJob job) => _contextFactory.UpdateJob(job);
+        private void OnJobExited(RunningJob job)
+        {
+            lock(_runningJobs)
+                _contextFactory.UpdateJob(job);
+        }
+        
 
         private void OnWatchDogWalk(object state)
         {
-            foreach (var job in _runningJobs.Values.Where(j => !j.State.IsFinal() && !j.IsAlive))
+            lock(_runningJobs)
             {
-                job.Exit();
-                _contextFactory.UpdateJob(job);
+                foreach (var job in _runningJobs.Values.Where(j => !j.State.IsFinal() && !j.IsAlive))
+                {
+                    job.Exit();
+                    _contextFactory.UpdateJob(job);
+                }
             }
 
             if(!_isDisposed)

@@ -2,6 +2,7 @@
 using Ninja.Dto;
 using Ninja.Model;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Ninja.Services
@@ -64,5 +65,11 @@ namespace Ninja.Services
 
         public static bool IsFinalState(this RunningJob job) => job.State.IsFinal();
         public static bool IsFinalState(this JobModel job) => job.State.IsFinal();
+
+        public static bool TryGetValueLocked<TKey, TValue>(this Dictionary<TKey, TValue> dico, TKey key, out TValue value)
+        {
+            lock(dico)
+                return dico.TryGetValue(key, out value);
+        }
     }
 }
