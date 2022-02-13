@@ -3,6 +3,7 @@ using Ninja.Dto;
 using Ninja.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace Ninja.Services
@@ -70,6 +71,24 @@ namespace Ninja.Services
         {
             lock(dico)
                 return dico.TryGetValue(key, out value);
+        }
+
+        public static void SetAffinity(this ProcessorAllocator allocator, int pid, int nbCores)
+        {
+            if (pid <= 0 || nbCores <= 0) return;
+
+            foreach (var aff in allocator.GetAffinityPlan(pid, nbCores))
+            {
+                try
+                {
+                    var process = Process.GetProcessById(aff.Pid);
+                    process.ProcessorAffinity = (IntPtr)aff.Affinity;
+                }
+                catch (Exception)
+                {
+                    allocator.RemoveProcess(aff.Pid);
+                }
+            }
         }
     }
 }

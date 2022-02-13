@@ -20,6 +20,7 @@ namespace Ninja.Services
         private readonly IDbContextFactory<WorkerContext> _contextFactory;
         private readonly string _workingFolder;
         private readonly Timer _timer;
+        private readonly ProcessorAllocator _processorAllocator = new ProcessorAllocator();
         private bool _isDisposed;
 
         public Worker(ILogger<Worker> logger, IConfiguration config, IDbContextFactory<WorkerContext> contextFactory)
@@ -86,7 +87,11 @@ namespace Ninja.Services
             }
 
             lock (_runningJobs)
+            {
                 _contextFactory.UpdateJob(job);
+                _processorAllocator.SetAffinity(job.Pid, nbCores);
+            }
+            
 
             return job.Id;
         }
@@ -99,7 +104,6 @@ namespace Ninja.Services
                 return;
             }
             
-
             job.Cancel();
 
             lock (_runningJobs)
@@ -123,7 +127,10 @@ namespace Ninja.Services
         private void OnJobExited(RunningJob job)
         {
             lock(_runningJobs)
+            {
                 _contextFactory.UpdateJob(job);
+                _processorAllocator.RemoveProcess(job.Pid);
+            }
         }
         
 
