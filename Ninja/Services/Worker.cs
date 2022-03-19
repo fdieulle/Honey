@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hardware.Info;
+using Microsoft.DotNet.PlatformAbstractions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Ninja.Dto;
@@ -14,11 +16,13 @@ namespace Ninja.Services
     public class Worker : IDisposable
     {
         private const int WATCH_DOG_PERIOD = 5000;
+        private static readonly IHardwareInfo hardwareInfo = new HardwareInfo(useAsteriskInWMI: false);
 
         private readonly Dictionary<Guid, RunningJob> _runningJobs = new Dictionary<Guid, RunningJob>();
         private readonly ILogger<Worker> _logger;
         private readonly IDbContextFactory<WorkerContext> _contextFactory;
         private readonly string _workingFolder;
+        private readonly string _workingDrive;
         private readonly Timer _timer;
         private readonly ProcessorAllocator _processorAllocator = new ProcessorAllocator();
         private bool _isDisposed;
@@ -28,6 +32,7 @@ namespace Ninja.Services
             _logger = logger;
             _contextFactory = contextFactory;
             _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "jobs").CreateFolder(logger);
+            _workingDrive = Path.GetPathRoot(Path.GetFullPath(_workingFolder)).Replace("\\", "");
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
 
             foreach(var job in contextFactory.ReloadJobs())
@@ -153,6 +158,31 @@ namespace Ninja.Services
         {
             _isDisposed = true;
             _timer.Dispose();
+        }
+
+
+        public WorkerResources GetResources()
+        {
+            hardwareInfo.RefreshMemoryStatus();
+            hardwareInfo.RefreshDriveList();
+
+            var disk = hardwareInfo.DriveList
+                .SelectMany(p => p.PartitionList)
+                .SelectMany(p => p.VolumeList)
+                .FirstOrDefault(p => p.Name == _workingDrive);
+
+            return new WorkerResources
+            {
+                MachineName = Environment.MachineName,
+                OSPlatform = Environment.OSVersion.Platform.ToString(),
+                OSVersion = Environment.OSVersion.Version.ToString(),
+                NbCores = _processorAllocator.NbCores,
+                NbFreeCores = _processorAllocator.NbCores - _processorAllocator.NbUsedCores,
+                TotalPhysicalMemory = hardwareInfo.MemoryStatus.TotalPhysical,
+                AvailablePhysicalMemory = hardwareInfo.MemoryStatus.AvailablePhysical,
+                DiskSpace = disk.Size,
+                DiskFreeSpace = disk.FreeSpace,
+            };
         }
     }
 }

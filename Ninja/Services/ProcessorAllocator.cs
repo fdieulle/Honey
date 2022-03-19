@@ -6,40 +6,41 @@ namespace Ninja.Services
 {
     public class ProcessorAllocator
     {
-        private readonly int _maxNbProcessors;
-        private int _nbProcessors;
-        private int _maskInUsed;
         private readonly Dictionary<int, ProcessAffinity> _processes = new Dictionary<int, ProcessAffinity>();
 
-        public int MaskInUsed => _maskInUsed;
+        public int NbCores { get; }
+
+        public int NbUsedCores { get; private set; }
+
+        public int MaskInUsed { get; private set; }
 
         public ProcessorAllocator() : this(Environment.ProcessorCount) { }
         public ProcessorAllocator(int processorCount)
         {
-            _maxNbProcessors = processorCount;
+            NbCores = processorCount;
         }
 
         public List<ProcessAffinity> GetAffinityPlan(int pid, int nbCores)
         {
             var result = new List<ProcessAffinity>();
-            if (nbCores <= 0 || nbCores + _nbProcessors >= _maxNbProcessors)
+            if (nbCores <= 0 || nbCores + NbUsedCores >= NbCores)
                 return result;
 
             var pa = new ProcessAffinity() { Pid = pid, NbCores = nbCores };
 
-            pa.Fit(_maskInUsed);
+            pa.Fit(MaskInUsed);
 
             // Max reached so we need to change affinity of running process
-            if (pa.Affinity >= (1 << _maxNbProcessors))
+            if (pa.Affinity >= (1 << NbCores))
             {
                 result.AddRange(Shrink());
                 
-                pa.Fit(_maskInUsed);
+                pa.Fit(MaskInUsed);
             }
 
-            _maskInUsed |= pa.Affinity;
+            MaskInUsed |= pa.Affinity;
             _processes.Add(pid, pa);
-            _nbProcessors += pa.NbCores;
+            NbUsedCores += pa.NbCores;
 
             result.Add(pa);
             return result;
@@ -71,7 +72,7 @@ namespace Ninja.Services
                 yield return odds[i];
             }
 
-            _maskInUsed = mask;
+            MaskInUsed = mask;
         }
 
         public void RemoveProcess(int pid)
@@ -79,8 +80,8 @@ namespace Ninja.Services
             if (!_processes.TryGetValue(pid, out var pa))
                 return;
 
-            _maskInUsed ^= pa.Affinity;
-            _nbProcessors -= pa.NbCores;
+            MaskInUsed ^= pa.Affinity;
+            NbUsedCores -= pa.NbCores;
             _processes.Remove(pid);
         }
     }

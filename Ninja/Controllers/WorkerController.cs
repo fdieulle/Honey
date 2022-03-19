@@ -46,5 +46,11 @@ namespace Ninja.Controllers
         {
             _worker.DeleteJob(id);
         }
+
+        [HttpGet("GetResources")]
+        public WorkerResources GetResources()
+        {
+            return _worker.GetResources();
+        }
     }
 }
