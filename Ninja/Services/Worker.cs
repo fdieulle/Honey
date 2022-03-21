@@ -1,9 +1,8 @@
 ﻿using Hardware.Info;
-using Microsoft.DotNet.PlatformAbstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Ninja.Dto;
+using Yumi;
 using Ninja.Model;
 using System;
 using System.Collections.Generic;

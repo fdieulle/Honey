@@ -1,4 +1,4 @@
-﻿using Ninja.Dto;
+﻿using Yumi;
 using System;
 
 namespace Ninja.Model

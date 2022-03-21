@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ninja.Dto
+namespace Yumi
 {
     public enum MessageType
     {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Ninja.Dto;
+using Yumi;
 using Ninja.Model;
 using System;
 using System.Collections.Generic;
