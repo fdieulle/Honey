@@ -30,7 +30,7 @@ namespace Ninja
             services.AddEntityFrameworkSqlite()
                 .AddDbContextFactory<WorkerContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
 
-            services.AddSingleton<Worker>();
+            services.AddSingleton<Services.Ninja>();
             
             services.AddControllers();
             services.AddSwaggerGen(c =>

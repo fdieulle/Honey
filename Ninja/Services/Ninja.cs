@@ -12,13 +12,13 @@ using System.Threading;
 
 namespace Ninja.Services
 {
-    public class Worker : IDisposable
+    public class Ninja : IDisposable
     {
         private const int WATCH_DOG_PERIOD = 5000;
         private static readonly IHardwareInfo hardwareInfo = new HardwareInfo(useAsteriskInWMI: false);
 
         private readonly Dictionary<Guid, RunningJob> _runningJobs = new Dictionary<Guid, RunningJob>();
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<Ninja> _logger;
         private readonly IDbContextFactory<WorkerContext> _contextFactory;
         private readonly string _workingFolder;
         private readonly string _workingDrive;
@@ -26,7 +26,7 @@ namespace Ninja.Services
         private readonly ProcessorAllocator _processorAllocator = new ProcessorAllocator();
         private bool _isDisposed;
 
-        public Worker(ILogger<Worker> logger, IConfiguration config, IDbContextFactory<WorkerContext> contextFactory)
+        public Ninja(ILogger<Ninja> logger, IConfiguration config, IDbContextFactory<WorkerContext> contextFactory)
         {
             _logger = logger;
             _contextFactory = contextFactory;
@@ -160,17 +160,18 @@ namespace Ninja.Services
         }
 
 
-        public WorkerResources GetResources()
+        public NinjaResources GetResources()
         {
             hardwareInfo.RefreshMemoryStatus();
             hardwareInfo.RefreshDriveList();
+            hardwareInfo.RefreshCPUList();
 
             var disk = hardwareInfo.DriveList
                 .SelectMany(p => p.PartitionList)
                 .SelectMany(p => p.VolumeList)
                 .FirstOrDefault(p => p.Name == _workingDrive);
 
-            return new WorkerResources
+            return new NinjaResources
             {
                 MachineName = Environment.MachineName,
                 OSPlatform = Environment.OSVersion.Platform.ToString(),

@@ -3,16 +3,17 @@ using Yumi;
 using Ninja.Services;
 using System;
 using System.Collections.Generic;
+using Yumi.Application;
 
 namespace Ninja.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class WorkerController : ControllerBase
+    public class NinjaController : ControllerBase, INinja
     {
-        private readonly Worker _worker;
+        private readonly Services.Ninja _worker;
 
-        public WorkerController(Worker worker)
+        public NinjaController(Services.Ninja worker)
         {
             _worker = worker;
         }
@@ -48,7 +49,7 @@ namespace Ninja.Controllers
         }
 
         [HttpGet("GetResources")]
-        public WorkerResources GetResources()
+        public NinjaResources GetResources()
         {
             return _worker.GetResources();
         }

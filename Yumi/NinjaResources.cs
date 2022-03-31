@@ -2,7 +2,7 @@
 
 namespace Yumi
 {
-    public class WorkerResources
+    public class NinjaResources
     {
         public string MachineName { get; set; }
 
