@@ -25,6 +25,8 @@ namespace Dojo
             services.AddServerSideBlazor();
             services.AddAntDesign();
 
+            services.AddSingleton<Services.Dojo>();
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
