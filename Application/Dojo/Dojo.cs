@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace Application.Dojo
 {
-    public class Dojo : IDisposable
+    public class Dojo : IDojo, IDisposable
     {
         private const int WATCH_DOG_PERIOD = 3000;
 
@@ -33,6 +33,11 @@ namespace Application.Dojo
         {
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
             _ninjaContainer = ninjaContainer;
+        }
+
+        public IEnumerable<NinjaDto> GetNinjas()
+        {
+            return _ninjas.Values.Select(p => p.Dto).ToList();
         }
 
         public void EnrollNinja(string address)
