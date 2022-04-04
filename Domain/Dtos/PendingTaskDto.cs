@@ -8,9 +8,9 @@ namespace Domain.Dtos
 
         public StartTaskDto Task { get; set; }
 
-        public PendingTask() { }
+        public PendingTaskDto() { }
 
-        public PendingTask(StartTaskDto task)
+        public PendingTaskDto(StartTaskDto task)
         {
             Id = Guid.NewGuid();
             Task = task;
