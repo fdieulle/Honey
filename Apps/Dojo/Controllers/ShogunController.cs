@@ -1,4 +1,5 @@
 ﻿using Application;
+using Application.Dojo;
 using Domain.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -9,9 +10,9 @@ namespace Dojo.Controllers
     [Route("[controller]")]
     public class ShogunController : Controller, IShogun
     {
-        private readonly IShogun _shogun;
+        private readonly Shogun _shogun;
 
-        public ShogunController(IShogun shogun)
+        public ShogunController(Shogun shogun)
         {
             _shogun = shogun;
         }

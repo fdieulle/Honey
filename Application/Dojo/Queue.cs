@@ -137,7 +137,7 @@ namespace Application.Dojo
             if (nbTasksToStart <= 0) return;
 
             for (var i = 0; i < nbTasksToStart; i++)
-                StartTask(_pendingTasks.Dequeue());
+                StartTask(_pendingTasks.Dequeue().Task);
         }
     }
 }

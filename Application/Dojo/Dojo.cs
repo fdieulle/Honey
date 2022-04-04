@@ -23,8 +23,6 @@ namespace Application.Dojo
         private readonly Timer _timer;
         private bool _isDisposed;
 
-        public event Action<NinjaDto> NinjaAdded;
-        public event Action<NinjaDto> NinjaRemoved;
         public event Action Updated;
 
         public IEnumerable<Ninja> Ninjas => _ninjas.Values;
@@ -47,7 +45,6 @@ namespace Application.Dojo
 
             var ninja = new Ninja(address, _ninjaContainer.Resolve(address));
             _ninjas.Add(address, ninja);
-            NinjaAdded?.Invoke(ninja.Dto);
         }
 
         public void RevokeNinja(string address)
@@ -56,7 +53,6 @@ namespace Application.Dojo
                 return;
 
             _ninjas.Remove(address);
-            NinjaRemoved?.Invoke(ninja.Dto);
         }
 
         private void OnWatchDogWalk(object state)

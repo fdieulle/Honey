@@ -1,4 +1,5 @@
 ﻿using Application;
+using Application.Dojo;
 using Domain.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -7,9 +8,9 @@ namespace Dojo.Controllers
 {
     public class QueueController : Controller, IQueueProvider
     {
-        private readonly IQueueProvider _queueProvider;
+        private readonly QueueProvider _queueProvider;
 
-        public QueueController(IQueueProvider queueProvider)
+        public QueueController(QueueProvider queueProvider)
         {
             _queueProvider = queueProvider;
         }
