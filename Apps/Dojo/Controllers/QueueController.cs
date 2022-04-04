@@ -1,44 +1,41 @@
-﻿using Application.Dojo;
+﻿using Application;
 using Domain.Dtos;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Dojo.Controllers
 {
-    public class QueueController : Controller
+    public class QueueController : Controller, IQueueProvider
     {
-        private readonly Shogun _shogun;
+        private readonly IQueueProvider _queueProvider;
 
-        public QueueController(Shogun shogun)
+        public QueueController(IQueueProvider queueProvider)
         {
-            _shogun = shogun;
+            _queueProvider = queueProvider;
         }
 
         [HttpGet("GetQueues")]
         public IEnumerable<QueueDto> GetQueues()
         {
-            return _shogun.Queues;
+            return _queueProvider.GetQueues();
         }
 
         [HttpPost("CreateQueue")]
-        public void CreateQueue(QueueDto queue)
+        public bool CreateQueue(QueueDto queue)
         {
-            _shogun.AddQueue(queue.Name, queue.MaxParallelTasks, queue.Ninjas);
+            return _queueProvider.CreateQueue(queue);
         }
 
         [HttpPut("UpdateQueue")]
-        public void UpdateQueue(QueueDto queue)
+        public bool UpdateQueue(QueueDto queue)
         {
-            
+            return _queueProvider.UpdateQueue(queue);
         }
 
         [HttpDelete("DeleteQueue")]
-        public void DeleteQueue(string name)
+        public bool DeleteQueue(string name)
         {
-            _shogun.RemoveQueue(name);
+            return _queueProvider.DeleteQueue(name);
         }
     }
 }

@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Domain.Dtos;
+using Application;
 
 namespace Dojo.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class DojoController : Controller
+    public class DojoController : Controller, IDojo
     {
         private readonly Application.Dojo.Dojo _dojo;
 

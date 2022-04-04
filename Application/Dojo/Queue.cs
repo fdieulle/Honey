@@ -8,57 +8,51 @@ namespace Application.Dojo
 {
     public class Queue
     {
-        private readonly Queue<StartTaskDto> _pendingTasks = new Queue<StartTaskDto>();
+        private readonly Queue<PendingTaskDto> _pendingTasks = new Queue<PendingTaskDto>();
         private readonly Dictionary<Guid, Ninja> _runningTasks = new Dictionary<Guid, Ninja>();
         private readonly Dictionary<Guid, TaskDto> _tasks = new Dictionary<Guid, TaskDto>();
         private readonly Dojo _dojo;
         private int _maxParallelTasks;
         private HashSet<string> _ninjas;
 
-        public string Name { get; }
+        public string Name => Dto.Name;
 
         public QueueDto Dto { get; } = new QueueDto();
 
-        public IEnumerable<StartTaskDto> PendingTasks => _pendingTasks;
+        public IEnumerable<PendingTaskDto> PendingTasks => _pendingTasks;
 
-        public Queue(string name, Dojo dojo)
+        public Queue(QueueDto dto, Dojo dojo)
         {
-            Name = name;
+            Dto = dto.Clone();
             _dojo = dojo;
         }
 
-        public void Update(int maxParallelTask, IEnumerable<string> ninjas)
+        public void Update(QueueDto dto)
         {
-            Dto.MaxParallelTasks = maxParallelTask;
-            Dto.Ninjas = new List<string>(ninjas ?? Enumerable.Empty<string>());
+            Dto.MaxParallelTasks = dto.MaxParallelTasks;
+            Dto.Ninjas = new List<string>(dto.Ninjas ?? Enumerable.Empty<string>());
 
-            _ninjas = new HashSet<string>(ninjas ?? Enumerable.Empty<string>());
+            _ninjas = new HashSet<string>(dto.Ninjas ?? Enumerable.Empty<string>());
 
             var current = _maxParallelTasks;
-            _maxParallelTasks = maxParallelTask;
+            _maxParallelTasks = dto.MaxParallelTasks;
 
-            var nbTasksToStart = maxParallelTask <= 0 
+            var nbTasksToStart = dto.MaxParallelTasks <= 0 
                 ? _pendingTasks.Count 
-                : maxParallelTask - current;
+                : dto.MaxParallelTasks - current;
             DequeTasks(nbTasksToStart);
         }
 
-        public void StartTask(StartTaskDto task)
+        public Guid StartTask(StartTaskDto task)
         {
             // Make sure we didn't exceed the max number of parallel tasks
             if (_maxParallelTasks > 0 && _runningTasks.Count >= _maxParallelTasks)
-            {
-                _pendingTasks.Enqueue(task);
-                return;
-            }
+                return Hang(task);
 
             var ninja = _dojo.GetNextNinja(_ninjas);
             // If there is no available ninjas we enqueue the task
             if (ninja == null)
-            {
-                _pendingTasks.Enqueue(task);
-                return;
-            }
+                return Hang(task);
 
             var id = ninja.StartTask(task.Command, task.Arguments, task.NbCores);
             // If the task start failed we will retry later
@@ -72,10 +66,7 @@ namespace Application.Dojo
                     ninja = _dojo.GetNextNinja(ninjas);
                     // If there is no available ninjas we enqueue the task
                     if (ninja == null)
-                    {
-                        _pendingTasks.Enqueue(task);
-                        return;
-                    }
+                        return Hang(task);
 
                     id = ninja.StartTask(task.Command, task.Arguments, task.NbCores);
                     if (id == default)
@@ -83,20 +74,35 @@ namespace Application.Dojo
                     else break;
                     
                     if (ninjas.Count == 0)
-                    {
-                        _pendingTasks.Enqueue(task);
-                        return;
-                    }
+                        return Hang(task);
                 }
             }
 
             _runningTasks[id] = ninja;
+            return id;
         }
         
-        public void CancelJob(Guid id)
+        private Guid Hang(StartTaskDto task)
+        {
+            var pendingTask = new PendingTaskDto(task);
+            _pendingTasks.Enqueue(pendingTask);
+            return pendingTask.Id;
+        }
+
+        public void CancelTask(Guid id)
         {
             if (_runningTasks.TryGetValue(id, out var ninja))
                 ninja.CancelTask(id);
+            else
+            {
+                var count = _pendingTasks.Count;
+                for(var i=0; i < count; i++)
+                {
+                    var task = _pendingTasks.Dequeue();
+                    if (task.Id == id) continue;
+                    _pendingTasks.Enqueue(task);
+                }
+            }
         }
 
         public void Refresh()

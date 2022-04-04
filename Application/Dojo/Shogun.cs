@@ -1,36 +1,34 @@
 ﻿using Domain.Dtos;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Application.Dojo
 {
-    public class Shogun
+    public class Shogun : IShogun
     {
-        private readonly Dictionary<string, Queue> _queues = new Dictionary<string, Queue>();
-        private readonly Dojo _dojo;
+        private readonly QueueProvider _queueProvider;
+        private readonly Dictionary<Guid, string> _tasksByQueue = new Dictionary<Guid, string>();
 
-        public Shogun(Dojo dojo)
+        public Shogun(QueueProvider queueProvider)
         {
-            _dojo = dojo;
+            _queueProvider = queueProvider;
         }
 
-        public IEnumerable<QueueDto> Queues => _queues.Values.Select(p => p.Dto);
-
-        public void AddQueue(string name, int maxParallelTasks = -1, IEnumerable<string> ninjas = null)
+        public Guid Execute(string queueName, StartTaskDto task)
         {
-            if (!_queues.TryGetValue(name, out var queue))
-                _queues.Add(name, queue = new Queue(name, _dojo));
-            queue.Update(maxParallelTasks, ninjas);
+            var queue = _queueProvider.GetQueue(queueName);
+            var id = queue.StartTask(task);
+            _tasksByQueue[id] = queueName;
+            return id;
         }
 
-        public void RemoveQueue(string name)
+        public void Cancel(Guid id)
         {
-            _queues.Remove(name);
-        }
+            if (!_tasksByQueue.TryGetValue(id, out var queueName))
+                return;
 
-        public Queue GetQueue(string name)
-        {
-            return _queues.TryGetValue(name, out var shogoun) ? shogoun : null;
+            var queue = _queueProvider.GetQueue(queueName);
+            queue.CancelTask(id);
         }
-    }
+    } 
 }

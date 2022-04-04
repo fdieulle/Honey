@@ -34,6 +34,7 @@ namespace Infrastructure
         {
             services.AddSingleton<INinjaContainer, NinjaContainer>();
             services.AddSingleton<Application.Dojo.Dojo>();
+            services.AddSingleton<IQueueProvider, QueueProvider>();
             services.AddSingleton<Shogun>();
         }
     }
