@@ -75,6 +75,9 @@ namespace Application.Dojo
             return selectedNinjas.OrderByDescending(p => p.Dto, heuristic).FirstOrDefault();
         }
 
+        public Ninja GetNinja(string address) => 
+            _ninjas.TryGetValue(address, out var ninja) ? ninja : null;
+
         public void Dispose()
         {
             _isDisposed = true;

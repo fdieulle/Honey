@@ -13,7 +13,7 @@ namespace Application.Dojo
         private readonly Dictionary<Guid, TaskDto> _tasks = new Dictionary<Guid, TaskDto>();
         private readonly Dojo _dojo;
         private int _maxParallelTasks;
-        private HashSet<string> _ninjas;
+        private HashSet<string> _ninjas = new HashSet<string>();
 
         public string Name => Dto.Name;
 
