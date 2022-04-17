@@ -23,8 +23,9 @@ namespace Application.Dojo
 
         public Queue(QueueDto dto, Dojo dojo)
         {
-            Dto = dto.Clone();
             _dojo = dojo;
+            Dto.Name = dto.Name;
+            Update(dto);
         }
 
         public void Update(QueueDto dto)
@@ -45,7 +46,7 @@ namespace Application.Dojo
 
         public Guid StartTask(StartTaskDto startTask)
         {
-            return StartTask(new QueueTaskDto(startTask));
+            return StartTask(new QueueTaskDto(Name, startTask));
         }
 
         private Guid StartTask(QueueTaskDto task)

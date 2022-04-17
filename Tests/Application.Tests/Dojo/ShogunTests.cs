@@ -144,6 +144,50 @@ namespace Application.Tests.Dojo
             ninja.Received().CancelTask(Arg.Is(ninjaTaskIds[0]));
         }
 
+        [Fact]
+        public void TestExecuteTasksInMultipleQueues()
+        {
+            var container = Substitute.For<INinjaContainer>();
+            var dojo = new Application.Dojo.Dojo(container);
+            var queueProvider = new QueueProvider(dojo);
+            var shogun = new Shogun(queueProvider);
+            var ninjaTaskIds = new List<Guid>();
+
+            // Setup a ninja
+            var ninja1 = dojo.SetupNinja("http://ninja1:8080", ninjaTaskIds);
+            var ninja2 = dojo.SetupNinja("http://ninja2:8080", ninjaTaskIds);
+
+            // Create a queue
+            queueProvider.CreateQueue("queue1", ninjas: "http://ninja1:8080");
+            queueProvider.CreateQueue("queue2", ninjas: "http://ninja2:8080");
+
+            var id1 = shogun.Execute("queue1", T("powershell", "-version"));
+            var id2 = shogun.Execute("queue2", T("powershell", "-version"));
+            var id3 = shogun.Execute("queue1", T("powershell", "-version"));
+
+            Assert.NotEqual(id1, Guid.Empty);
+            Assert.NotEqual(id1, ninjaTaskIds[0]);
+            Assert.NotEqual(id2, Guid.Empty);
+            Assert.NotEqual(id2, ninjaTaskIds[1]);
+            Assert.NotEqual(id3, Guid.Empty);
+            Assert.NotEqual(id3, ninjaTaskIds[2]);
+            ninja1.Received(2).StartTask(
+                Arg.Is("powershell"),
+                Arg.Is("-version"),
+                Arg.Is(1));
+            ninja1.Received().StartTask(
+                Arg.Is("powershell"),
+                Arg.Is("-version"),
+                Arg.Is(1));
+
+            shogun.Cancel(id2);
+            shogun.Cancel(id3);
+
+            ninja1.DidNotReceive().CancelTask(Arg.Is(ninjaTaskIds[0]));
+            ninja2.Received().CancelTask(Arg.Is(ninjaTaskIds[1]));
+            ninja1.Received().CancelTask(Arg.Is(ninjaTaskIds[2]));
+        }
+
         private static StartTaskDto T(string command, string arguments, int nbCores = 1) => new StartTaskDto
         {
             Command = command,
