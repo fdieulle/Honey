@@ -25,6 +25,8 @@ namespace Application.Dojo
 
         public event Action Updated;
 
+        public INinjaContainer Container => _ninjaContainer;
+
         public IEnumerable<Ninja> Ninjas => _ninjas.Values;
 
         public Dojo(INinjaContainer ninjaContainer)
@@ -72,7 +74,10 @@ namespace Application.Dojo
             if (ninjas != null && ninjas.Count > 0)
                 selectedNinjas = selectedNinjas.Where(p => ninjas.Contains(p.Address));
 
-            return selectedNinjas.OrderByDescending(p => p.Dto, heuristic).FirstOrDefault();
+            return selectedNinjas
+                .OrderByDescending(p => p.Dto, heuristic)
+                .Where(p => p.Dto.PercentFreeCores > 0)
+                .FirstOrDefault();
         }
 
         public Ninja GetNinja(string address) => 

@@ -21,5 +21,7 @@ namespace Domain
                     throw new NotImplementedException();
             }
         }
+
+        public static bool IsFinal(this TaskDto task) => task.Status.IsFinal();
     }
 }

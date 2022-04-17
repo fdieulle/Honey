@@ -8,9 +8,9 @@ namespace Application.Dojo
 {
     public class Queue
     {
-        private readonly Queue<PendingTaskDto> _pendingTasks = new Queue<PendingTaskDto>();
-        private readonly Dictionary<Guid, Ninja> _runningTasks = new Dictionary<Guid, Ninja>();
-        private readonly Dictionary<Guid, TaskDto> _tasks = new Dictionary<Guid, TaskDto>();
+        private readonly Queue<QueueTaskDto> _pendingTasks = new Queue<QueueTaskDto>();
+        private readonly Dictionary<Guid, QueueTaskDto> _runningTasks = new Dictionary<Guid, QueueTaskDto>();
+        private readonly Dictionary<Guid, QueueTaskDto> _tasks = new Dictionary<Guid, QueueTaskDto>();
         private readonly Dojo _dojo;
         private int _maxParallelTasks;
         private HashSet<string> _ninjas = new HashSet<string>();
@@ -19,7 +19,7 @@ namespace Application.Dojo
 
         public QueueDto Dto { get; } = new QueueDto();
 
-        public IEnumerable<PendingTaskDto> PendingTasks => _pendingTasks;
+        public IEnumerable<QueueTaskDto> PendingTasks => _pendingTasks;
 
         public Queue(QueueDto dto, Dojo dojo)
         {
@@ -40,65 +40,82 @@ namespace Application.Dojo
             var nbTasksToStart = dto.MaxParallelTasks <= 0 
                 ? _pendingTasks.Count 
                 : dto.MaxParallelTasks - current;
-            DequeTasks(nbTasksToStart);
+            DequeueTasks(nbTasksToStart);
         }
 
-        public Guid StartTask(StartTaskDto task)
+        public Guid StartTask(StartTaskDto startTask)
+        {
+            return StartTask(new QueueTaskDto(startTask));
+        }
+
+        private Guid StartTask(QueueTaskDto task)
         {
             // Make sure we didn't exceed the max number of parallel tasks
             if (_maxParallelTasks > 0 && _runningTasks.Count >= _maxParallelTasks)
                 return Hang(task);
 
-            var ninja = _dojo.GetNextNinja(_ninjas);
-            // If there is no available ninjas we enqueue the task
-            if (ninja == null)
-                return Hang(task);
-
-            var id = ninja.StartTask(task.Command, task.Arguments, task.NbCores);
-            // If the task start failed we will retry later
-            if (id == default)
+            var ninjas = new HashSet<string>(_ninjas);
+            Ninja ninja;
+            while ((ninja = _dojo.GetNextNinja(ninjas)) != null)
             {
-                // Retry with another ninja by banning the faulted one
-                var ninjas = new HashSet<string>(_ninjas);
-                ninjas.Remove(ninja.Address);
-                while (ninjas.Count > 0)
-                {
-                    ninja = _dojo.GetNextNinja(ninjas);
-                    // If there is no available ninjas we enqueue the task
-                    if (ninja == null)
-                        return Hang(task);
+                var ninjaId = ninja.StartTask(task);
+                // If a task has been launched we record it
+                if (ninjaId != Guid.Empty)
+                    return RunTask(task, ninja, ninjaId);
 
-                    id = ninja.StartTask(task.Command, task.Arguments, task.NbCores);
-                    if (id == default)
-                        ninjas.Remove(ninja.Address);
-                    else break;
-                    
-                    if (ninjas.Count == 0)
-                        return Hang(task);
-                }
+                // Otherwise retry with another ninja by banning the faulted one
+                ninjas.Remove(ninja.Address);
+
+                // If there is no more usable ninjas we stop retries.
+                if (ninjas.Count == 0)
+                    break;
             }
 
-            _runningTasks[id] = ninja;
-            return id;
+            // The task is enqueued with a pending state
+            return Hang(task);
         }
         
-        private Guid Hang(StartTaskDto task)
+        private Guid RunTask(QueueTaskDto task, Ninja ninja, Guid ninjaTaskId)
         {
-            var pendingTask = new PendingTaskDto(task);
-            _pendingTasks.Enqueue(pendingTask);
-            return pendingTask.Id;
+            task.NinjaState.Id = ninjaTaskId;
+            task.NinjaAddress = ninja.Address;
+            _runningTasks[task.Id] = task;
+            RecordTask(task);
+            return task.Id;
+        }
+
+        private Guid Hang(QueueTaskDto task)
+        {
+            if (!_tasks.ContainsKey(task.Id))
+                _pendingTasks.Enqueue(task);
+            RecordTask(task);
+            return task.Id;
+        }
+
+        private void RecordTask(QueueTaskDto task)
+        {
+            _tasks[task.Id] = task;
         }
 
         public void CancelTask(Guid id)
         {
-            if (_runningTasks.TryGetValue(id, out var ninja))
-                ninja.CancelTask(id);
-            else
+            // Try cancel running task
+            if (_runningTasks.TryGetValue(id, out var task))
+            {
+                var ninja = _dojo.GetNinja(task.NinjaAddress);
+                if (ninja != null)
+                    ninja.CancelTask(task.NinjaState.Id);
+                else
+                {
+                    // Todo: store the cancel request and retry when the ninja is available.
+                }
+            }
+            else // The task is pending
             {
                 var count = _pendingTasks.Count;
-                for(var i=0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
-                    var task = _pendingTasks.Dequeue();
+                    task = _pendingTasks.Dequeue();
                     if (task.Id == id) continue;
                     _pendingTasks.Enqueue(task);
                 }
@@ -108,18 +125,25 @@ namespace Application.Dojo
         public void Refresh()
         {
             var endedTasks = new List<Guid>();
-            foreach(var pair in _runningTasks)
+            foreach(var task in _tasks.Values)
             {
-                var state = pair.Value.GetTaskState(pair.Key);
+                if (string.IsNullOrEmpty(task.NinjaAddress)) // Skip pending tasks
+                    continue;
+
+                var ninja = _dojo.GetNinja(task.NinjaAddress);
+                if (ninja == null) continue; // TODO: Should we consider a state after a long run without ninja up ?
+
+                var state = ninja.GetTaskState(task.NinjaState.Id);
                 if (state != null)
                 {
-                    _tasks[pair.Key] = state;
-                    if (state.Status.IsFinal())
-                        endedTasks.Add(pair.Key);
-                }
-                else
-                {
-                    // Todo: Handle this case ?
+                    task.NinjaState = state;
+                    if (state.IsFinal())
+                        endedTasks.Add(task.Id);
+                    else
+                    {
+                        // Todo: Handle this case ?
+                    }
+
                 }
             }
 
@@ -129,15 +153,22 @@ namespace Application.Dojo
             var nbTasksToStart = _maxParallelTasks <= 0
                 ? _pendingTasks.Count
                 : _maxParallelTasks - _runningTasks.Count;
-            DequeTasks(nbTasksToStart);
+            DequeueTasks(nbTasksToStart);
         }
 
-        private void DequeTasks(int nbTasksToStart)
+        private void DequeueTasks(int nbTasksToStart)
         {
             if (nbTasksToStart <= 0) return;
 
             for (var i = 0; i < nbTasksToStart; i++)
-                StartTask(_pendingTasks.Dequeue().Task);
+            {
+                var task = _pendingTasks.Peek();
+                StartTask(task);
+
+                if (task.NinjaState.Id != Guid.Empty)
+                    _pendingTasks.Dequeue();
+                else break;
+            }
         }
     }
 }

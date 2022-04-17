@@ -3,9 +3,6 @@ using Domain.Dtos;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Application.Tests.Dojo
@@ -13,30 +10,18 @@ namespace Application.Tests.Dojo
     public class ShogunTests
     {
         [Fact]
-        public void TestExecute()
+        public void TestExecuteSimpleTask()
         {
             var container = Substitute.For<INinjaContainer>();
-            var ninja = Substitute.For<INinja>();
-
             var dojo = new Application.Dojo.Dojo(container);
             var queueProvider = new QueueProvider(dojo);
             var shogun = new Shogun(queueProvider);
 
             // Setup a ninja
-            ninja.GetResources().Returns(R("http://ninja1:8080"));
-            ninja.StartTask(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<int>())
-                .Returns(Guid.NewGuid());
-            container.Resolve(Arg.Any<string>()).Returns(ninja);
-
-            // Enroll a ninja and enforce a refreseh to set it up
-            dojo.EnrollNinja("http://ninja1:8080");
-            dojo.GetNinja("http://ninja1:8080").Refresh();
+            var ninja = dojo.SetupNinja("http://ninja1:8080");
 
             // Create a queue
-            queueProvider.CreateQueue(Q("queue"));
+            queueProvider.CreateQueue("queue");
 
             var id = shogun.Execute("queue", T("powershell", "-version"));
 
@@ -47,23 +32,117 @@ namespace Application.Tests.Dojo
                 Arg.Is(1));
         }
 
-        private static NinjaResourcesDto R(string address) => new NinjaResourcesDto()
+        [Fact]
+        public void TestCancelSimpleTask()
         {
-            MachineName = address,
-            OSPlatform = "Win32",
-            NbCores = 10,
-            NbFreeCores = 9,
-            AvailablePhysicalMemory = (ulong)24e9,
-            TotalPhysicalMemory = (ulong)32e9,
-            DiskSpace = (ulong)250e9,
-            DiskFreeSpace = (ulong)198e9,
-        };
+            var container = Substitute.For<INinjaContainer>();
+            var dojo = new Application.Dojo.Dojo(container);
+            var queueProvider = new QueueProvider(dojo);
+            var shogun = new Shogun(queueProvider);
+            var ninjaTaskIds = new List<Guid>();
 
-        private static QueueDto Q(string name) => new QueueDto
+            // Setup a ninja
+            var ninja = dojo.SetupNinja("http://ninja1:8080", ninjaTaskIds);
+
+            // Create a queue
+            queueProvider.CreateQueue("queue");
+
+            var id = shogun.Execute("queue", T("powershell", "-version"));
+
+            Assert.NotEqual(id, Guid.Empty);
+            ninja.Received().StartTask(
+                Arg.Is("powershell"),
+                Arg.Is("-version"),
+                Arg.Is(1));
+            Assert.NotEqual(id, ninjaTaskIds[0]);
+
+            shogun.Cancel(id);
+
+            ninja.Received().CancelTask(Arg.Is(ninjaTaskIds[0]));
+        }
+
+        [Fact]
+        public void TestExecuteMultipleTasks()
         {
-            Name = name,
-            MaxParallelTasks = -1
-        };
+            var container = Substitute.For<INinjaContainer>();
+            var dojo = new Application.Dojo.Dojo(container);
+            var queueProvider = new QueueProvider(dojo);
+            var shogun = new Shogun(queueProvider);
+            var ninjaTaskIds = new List<Guid>();
+
+            // Setup a ninja
+            var ninja = dojo.SetupNinja("http://ninja1:8080", ninjaTaskIds);
+
+            // Create a queue
+            queueProvider.CreateQueue("queue");
+
+            var id1 = shogun.Execute("queue", T("powershell", "-version"));
+            var id2 = shogun.Execute("queue", T("powershell", "-version"));
+            var id3 = shogun.Execute("queue", T("powershell", "-version"));
+
+            Assert.NotEqual(id1, Guid.Empty);
+            Assert.NotEqual(id1, ninjaTaskIds[0]);
+            Assert.NotEqual(id2, Guid.Empty);
+            Assert.NotEqual(id2, ninjaTaskIds[1]);
+            Assert.NotEqual(id3, Guid.Empty);
+            Assert.NotEqual(id3, ninjaTaskIds[2]);
+            ninja.Received(3).StartTask(
+                Arg.Is("powershell"),
+                Arg.Is("-version"),
+                Arg.Is(1));
+
+            shogun.Cancel(id2);
+            shogun.Cancel(id3);
+
+            ninja.DidNotReceive().CancelTask(Arg.Is(ninjaTaskIds[0]));
+            ninja.Received().CancelTask(Arg.Is(ninjaTaskIds[1]));
+            ninja.Received().CancelTask(Arg.Is(ninjaTaskIds[2]));
+        }
+
+        [Fact]
+        public void TestHangingTask()
+        {
+            var container = Substitute.For<INinjaContainer>();
+            var dojo = new Application.Dojo.Dojo(container);
+            var queueProvider = new QueueProvider(dojo);
+            var shogun = new Shogun(queueProvider);
+            var ninjaTaskIds = new List<Guid>();
+
+            // Setup a ninja
+            var ninja = dojo.SetupNinja("http://ninja1:8080", ninjaTaskIds);
+
+            // Create a queue
+            queueProvider.CreateQueue("queue");
+
+            // Turn ninja too busy
+            dojo.UpdateNinjaState("http://ninja1:8080", 0);
+
+            var id = shogun.Execute("queue", T("powershell", "-version"));
+
+            // The task is create into shogun but no sent to a ninja yet
+            Assert.NotEqual(id, Guid.Empty);
+            Assert.Empty(ninjaTaskIds);
+            ninja.DidNotReceive().StartTask(
+                Arg.Is("powershell"),
+                Arg.Is("-version"),
+                Arg.Is(1));
+
+            // Make some room on Ninja to run the task
+            dojo.UpdateNinjaState("http://ninja1:8080", 2);
+
+            var queue = queueProvider.GetQueue("queue");
+            queue.Refresh();
+
+            ninja.Received().StartTask(
+                Arg.Is("powershell"),
+                Arg.Is("-version"),
+                Arg.Is(1));
+
+            Assert.NotEqual(id, ninjaTaskIds[0]);
+            shogun.Cancel(id);
+
+            ninja.Received().CancelTask(Arg.Is(ninjaTaskIds[0]));
+        }
 
         private static StartTaskDto T(string command, string arguments, int nbCores = 1) => new StartTaskDto
         {
@@ -71,5 +150,70 @@ namespace Application.Tests.Dojo
             Arguments = arguments,
             NbCores = nbCores,
         };
+    }
+
+    public static class ShogunTestsExtensions
+    {
+        public static INinja SetupNinja(this Application.Dojo.Dojo dojo, string address, List<Guid> ninjaIds = null)
+        {
+            var ninja = Substitute.For<INinja>();
+            ninjaIds ??= new List<Guid>();
+
+            // Setup a ninja
+            ninja.GetResources().Returns(R(address));
+            ninja.StartTask(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<int>())
+                .Returns(x =>
+                {
+                    var id = Guid.NewGuid();
+                    ninjaIds.Add(id);
+                    return id;
+                });
+
+            // Make it accessible from the container
+            dojo.Container
+                .Resolve(Arg.Is(address))
+                .Returns(ninja);
+
+            // Enroll a ninja and enforce a refresh to set it up
+            dojo.EnrollNinja(address);
+            dojo.GetNinja(address)
+                .Refresh();
+
+            return ninja;
+        }
+
+        public static void UpdateNinjaState(this Application.Dojo.Dojo dojo, string address, int nbFreeCores)
+        {
+            var proxy = dojo.Container.Resolve(address);
+            proxy.GetResources().Returns(R(address, nbFreeCores));
+
+            dojo.GetNinja(address)
+                .Refresh();
+        }
+
+        private static NinjaResourcesDto R(string address, int nbFreeCores = 9) => new NinjaResourcesDto()
+        {
+            MachineName = address,
+            OSPlatform = "Win32",
+            NbCores = 10,
+            NbFreeCores = nbFreeCores,
+            AvailablePhysicalMemory = (ulong)24e9,
+            TotalPhysicalMemory = (ulong)32e9,
+            DiskSpace = (ulong)250e9,
+            DiskFreeSpace = (ulong)198e9,
+        };
+
+        public static bool CreateQueue(this IQueueProvider provider, string name, int maxParallelTask = -1, params string[] ninjas)
+        {
+            return provider.CreateQueue(new QueueDto
+            {
+                Name = name,
+                MaxParallelTasks = maxParallelTask,
+                Ninjas = ninjas,
+            });
+        }
     }
 }
