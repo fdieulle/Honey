@@ -8,6 +8,6 @@ namespace Domain.Entities
 
         public int MaxParallelTasks { get; set; }
 
-        public List<string> Ninjas { get; set; }
+        public string Ninjas { get; set; }
     }
 }

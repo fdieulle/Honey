@@ -49,6 +49,7 @@ namespace Infrastructure.Dojo
         private static void UpdateEntity(NinjaDto dto, NinjaEntity entity) { }
         private static NinjaDto ToDto(NinjaEntity entity) => new NinjaDto { Address = entity.Address };
 
+        private const char SEP = ';';
         private static QueueEntity ToEntity(QueueDto dto)
         {
             var entity = new QueueEntity { Name = dto.Name };
@@ -58,14 +59,14 @@ namespace Infrastructure.Dojo
         private static void UpdateEntity(QueueDto dto, QueueEntity entity) 
         {
             entity.MaxParallelTasks = dto.MaxParallelTasks;
-            entity.Ninjas = dto.Ninjas != null ? dto.Ninjas.ToList() : null;
+            entity.Ninjas = dto.Ninjas != null ? string.Join(SEP, dto.Ninjas) : null;
         }
         private static QueueDto ToDto(QueueEntity entity)
         {
             return new QueueDto { 
                 Name = entity.Name,
                 MaxParallelTasks = entity.MaxParallelTasks,
-                Ninjas = entity.Ninjas != null ? entity.Ninjas.ToList() : null
+                Ninjas = entity.Ninjas != null ? entity.Ninjas.Split(SEP) : null
             };
         }
 
