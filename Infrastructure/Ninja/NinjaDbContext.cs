@@ -11,5 +11,13 @@ namespace Infrastructure.Ninja
         {
             Database.EnsureCreated();
         }
+
+        protected override void OnModelCreating(ModelBuilder mb)
+        {
+            base.OnModelCreating(mb);
+
+            mb.Entity<TaskEntity>()
+                .HasKey(p => p.Id);
+        }
     }
 }

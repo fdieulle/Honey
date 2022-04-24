@@ -15,5 +15,17 @@ namespace Infrastructure.Dojo
         {
             Database.EnsureCreated();
         }
+
+        protected override void OnModelCreating(ModelBuilder mb)
+        {
+            base.OnModelCreating(mb);
+
+            mb.Entity<NinjaEntity>()
+                .HasKey(p => p.Address);
+            mb.Entity<QueueEntity>()
+                .HasKey(p => p.Name);
+            mb.Entity<QueuedTaskEntity>()
+                .HasKey(p => p.Id);
+        }
     }
 }
