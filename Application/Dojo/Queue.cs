@@ -8,24 +8,56 @@ namespace Application.Dojo
 {
     public class Queue
     {
-        private readonly Queue<QueueTaskDto> _pendingTasks = new Queue<QueueTaskDto>();
-        private readonly Dictionary<Guid, QueueTaskDto> _runningTasks = new Dictionary<Guid, QueueTaskDto>();
-        private readonly Dictionary<Guid, QueueTaskDto> _tasks = new Dictionary<Guid, QueueTaskDto>();
+        private readonly Queue<QueuedTaskDto> _pendingTasks = new Queue<QueuedTaskDto>();
+        private readonly Dictionary<Guid, QueuedTaskDto> _runningTasks = new Dictionary<Guid, QueuedTaskDto>();
+        private readonly Dictionary<Guid, QueuedTaskDto> _tasks = new Dictionary<Guid, QueuedTaskDto>();
         private readonly Dojo _dojo;
+        private readonly IDojoDb _database;
         private int _maxParallelTasks;
         private HashSet<string> _ninjas = new HashSet<string>();
+        private ulong _orderIncrement;
 
         public string Name => Dto.Name;
 
         public QueueDto Dto { get; } = new QueueDto();
 
-        public IEnumerable<QueueTaskDto> PendingTasks => _pendingTasks;
+        public IEnumerable<QueuedTaskDto> PendingTasks => _pendingTasks;
 
-        public Queue(QueueDto dto, Dojo dojo)
+        public Queue(QueueDto dto, Dojo dojo, IDojoDb database)
         {
             _dojo = dojo;
+            _database = database;
             Dto.Name = dto.Name;
             Update(dto);
+
+            var tasks = _database.FetchTasks() ?? Enumerable.Empty<QueuedTaskDto>();
+            RestoreTasks(tasks);
+        }
+
+        private void RestoreTasks(IEnumerable<QueuedTaskDto> tasks)
+        {
+            var pendingTasks = new List<QueuedTaskDto>();
+            foreach (var task in tasks)
+            {
+                _tasks[task.Id] = task;
+
+                switch (task.Status)
+                {
+                    case QueuedTaskStatus.Pending:
+                        pendingTasks.Add(task);
+                        break;
+                    case QueuedTaskStatus.Running:
+                        _runningTasks[task.Id] = task;
+                        break;
+                    case QueuedTaskStatus.CancelRequested:
+                        _runningTasks[task.Id] = task;
+                        // Todo: Process them during the Refresh when the Ninja is up
+                        break;
+                }
+            }
+
+            foreach (var task in pendingTasks.OrderBy(p => p.Order))
+                _pendingTasks.Enqueue(task);
         }
 
         public void Update(QueueDto dto)
@@ -46,10 +78,10 @@ namespace Application.Dojo
 
         public Guid StartTask(StartTaskDto startTask)
         {
-            return StartTask(new QueueTaskDto(Name, startTask));
+            return StartTask(new QueuedTaskDto(Name, startTask, _orderIncrement++));
         }
 
-        private Guid StartTask(QueueTaskDto task)
+        private Guid StartTask(QueuedTaskDto task)
         {
             // Make sure we didn't exceed the max number of parallel tasks
             if (_maxParallelTasks > 0 && _runningTasks.Count >= _maxParallelTasks)
@@ -76,26 +108,35 @@ namespace Application.Dojo
             return Hang(task);
         }
         
-        private Guid RunTask(QueueTaskDto task, Ninja ninja, Guid ninjaTaskId)
+        private Guid RunTask(QueuedTaskDto task, Ninja ninja, Guid ninjaTaskId)
         {
             task.NinjaState.Id = ninjaTaskId;
             task.NinjaAddress = ninja.Address;
+
             _runningTasks[task.Id] = task;
-            RecordTask(task);
+            RecordTask(task, QueuedTaskStatus.Running);
             return task.Id;
         }
 
-        private Guid Hang(QueueTaskDto task)
+        private Guid Hang(QueuedTaskDto task)
         {
             if (!_tasks.ContainsKey(task.Id))
                 _pendingTasks.Enqueue(task);
-            RecordTask(task);
+
+            RecordTask(task, QueuedTaskStatus.Pending);
             return task.Id;
         }
 
-        private void RecordTask(QueueTaskDto task)
+        private void RecordTask(QueuedTaskDto task, QueuedTaskStatus status)
         {
-            _tasks[task.Id] = task;
+            task.Status = status;
+
+            if (!_tasks.ContainsKey(task.Id))
+                _database.CreateTask(task);
+            else
+                _database.UpdateTask(task);
+            
+            _tasks[task.Id] = task;            
         }
 
         public void CancelTask(Guid id)
@@ -103,6 +144,8 @@ namespace Application.Dojo
             // Try cancel running task
             if (_runningTasks.TryGetValue(id, out var task))
             {
+                RecordTask(task, QueuedTaskStatus.CancelRequested);
+
                 var ninja = _dojo.GetNinja(task.NinjaAddress);
                 if (ninja != null)
                     ninja.CancelTask(task.NinjaState.Id);
@@ -117,7 +160,11 @@ namespace Application.Dojo
                 for (var i = 0; i < count; i++)
                 {
                     task = _pendingTasks.Dequeue();
-                    if (task.Id == id) continue;
+                    if (task.Id == id)
+                    {
+                        RecordTask(task, QueuedTaskStatus.Completed);
+                        continue;
+                    }
                     _pendingTasks.Enqueue(task);
                 }
             }
@@ -125,21 +172,23 @@ namespace Application.Dojo
 
         public void Refresh()
         {
-            var endedTasks = new List<Guid>();
             foreach(var task in _tasks.Values)
             {
                 if (string.IsNullOrEmpty(task.NinjaAddress)) // Skip pending tasks
                     continue;
 
                 var ninja = _dojo.GetNinja(task.NinjaAddress);
-                if (ninja == null) continue; // TODO: Should we consider a state after a long run without ninja up ?
+                if (ninja == null) continue; // TODO: Should we consider a state after a long run without ninja up like a timeout and allow delete the task ?
 
                 var state = ninja.GetTaskState(task.NinjaState.Id);
                 if (state != null)
                 {
                     task.NinjaState = state;
                     if (state.IsFinal())
-                        endedTasks.Add(task.Id);
+                    {
+                        _runningTasks.Remove(task.Id);
+                        RecordTask(task, QueuedTaskStatus.Completed);
+                    }
                     else
                     {
                         // Todo: Handle this case ?
@@ -148,13 +197,22 @@ namespace Application.Dojo
                 }
             }
 
-            foreach(var task in endedTasks)
-                _runningTasks.Remove(task);
-
             var nbTasksToStart = _maxParallelTasks <= 0
                 ? _pendingTasks.Count
                 : _maxParallelTasks - _runningTasks.Count;
             DequeueTasks(nbTasksToStart);
+        }
+
+        public bool DeleteTask(Guid id)
+        {
+            if (_tasks.TryGetValue(id, out var task) && task.Status == QueuedTaskStatus.Completed)
+            {
+                _tasks.Remove(id);
+                _database.DeleteTask(id);
+                return true;
+            }
+
+            return false;
         }
 
         private void DequeueTasks(int nbTasksToStart)

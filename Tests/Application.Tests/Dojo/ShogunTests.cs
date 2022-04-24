@@ -12,9 +12,10 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestExecuteSimpleTask()
         {
+            var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container);
-            var queueProvider = new QueueProvider(dojo);
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
 
             // Setup a ninja
@@ -35,9 +36,10 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestCancelSimpleTask()
         {
+            var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container);
-            var queueProvider = new QueueProvider(dojo);
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -64,9 +66,10 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestExecuteMultipleTasks()
         {
+            var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container);
-            var queueProvider = new QueueProvider(dojo);
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -102,9 +105,10 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestHangingTask()
         {
+            var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container);
-            var queueProvider = new QueueProvider(dojo);
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -147,9 +151,10 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestExecuteTasksInMultipleQueues()
         {
+            var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container);
-            var queueProvider = new QueueProvider(dojo);
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 

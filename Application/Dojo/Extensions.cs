@@ -7,7 +7,7 @@ namespace Application.Dojo
 {
     public static class Extensions
     {
-        public static Guid StartTask(this Ninja ninja, QueueTaskDto task)
+        public static Guid StartTask(this Ninja ninja, QueuedTaskDto task)
         {
             var startTask = task.StartTask;
             if (startTask == null) return Guid.Empty;

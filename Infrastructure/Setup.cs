@@ -30,8 +30,20 @@ namespace Infrastructure
             services.AddSingleton<Application.Ninja.Ninja>();
         }
 
-        public static void ConfigureDojo(this IServiceCollection services)
+        public static void ConfigureDojo(this IServiceCollection services, IConfiguration configuration)
         {
+            #region Database
+
+            var workingFolder = configuration["WorkingFolder"] ?? ".";
+            var dataFolder = Path.Combine(workingFolder, "data").CreateFolder();
+            var dbPath = Path.Combine(dataFolder, "Dojo.db");
+
+            services.AddEntityFrameworkSqlite()
+                .AddDbContextFactory<DojoDbContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
+            services.AddSingleton<IDojoDb, DojoDb>();
+
+            #endregion
+
             services.AddSingleton<INinjaContainer, NinjaContainer>();
             services.AddSingleton<Application.Dojo.Dojo>();
             services.AddSingleton<QueueProvider>();

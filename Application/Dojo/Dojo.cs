@@ -19,6 +19,7 @@ namespace Application.Dojo
         });
 
         private readonly INinjaContainer _ninjaContainer;
+        private readonly IDojoDb _database;
         private Dictionary<string, Ninja> _ninjas = new Dictionary<string, Ninja>();
         private readonly Timer _timer;
         private bool _isDisposed;
@@ -29,10 +30,15 @@ namespace Application.Dojo
 
         public IEnumerable<Ninja> Ninjas => _ninjas.Values;
 
-        public Dojo(INinjaContainer ninjaContainer)
+        public Dojo(INinjaContainer ninjaContainer, IDojoDb database)
         {
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
             _ninjaContainer = ninjaContainer;
+            _database = database;
+
+            var ninjas = _database.FetchNinjas() ?? Enumerable.Empty<NinjaDto>();
+            foreach (var ninja in ninjas)
+                EnrollNinja(ninja.Address, false);
         }
 
         public IEnumerable<NinjaDto> GetNinjas()
@@ -40,13 +46,18 @@ namespace Application.Dojo
             return _ninjas.Values.Select(p => p.Dto).ToList();
         }
 
-        public void EnrollNinja(string address)
+        public void EnrollNinja(string address) => EnrollNinja(address, true);
+
+        private void EnrollNinja(string address, bool withDb)
         {
             if (_ninjas.ContainsKey(address))
                 return;
 
             var ninja = new Ninja(address, _ninjaContainer.Resolve(address));
             _ninjas.Add(address, ninja);
+
+            if (withDb)
+                _database.CreateNinja(ninja.Dto);
         }
 
         public void RevokeNinja(string address)
@@ -55,6 +66,7 @@ namespace Application.Dojo
                 return;
 
             _ninjas.Remove(address);
+            _database.DeleteNinja(address);
         }
 
         private void OnWatchDogWalk(object state)
