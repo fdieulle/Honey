@@ -1,7 +1,6 @@
 ﻿@page "/ninjas"
 
 @using AntDesign
-@using System.Collections.ObjectModel
 @using Domain.Dtos
 @using Application.Dojo
 
@@ -42,7 +41,6 @@
        </Form>
 </Modal>
 <AntDesign.Table 
-    @ref="table"
     TItem="NinjaDto"
     DataSource="@_ninjas"   
 >
@@ -71,26 +69,14 @@
 </AntDesign.Table>
 
 @code {
-    ITable table;
-    ObservableCollection<NinjaDto> _ninjas = new ObservableCollection<NinjaDto>();
+    List<NinjaDto> _ninjas = new List<NinjaDto>();
     bool _isVisible;
     NinjaDto _newNinja = new NinjaDto();
 
     protected override async Task OnInitializedAsync()
     {
-        Dojo.NinjaAdded += NinjaAdded;
-        Dojo.NinjaRemoved += NinjaRemoved;
         Dojo.Updated += Updated;
-    }
-
-    private void NinjaAdded(NinjaDto ninja)
-    {
-        _ninjas.Add(ninja);
-    }
-
-    private void NinjaRemoved(NinjaDto ninja)
-    {
-        _ninjas.Remove(ninja);
+        _ninjas = Dojo.GetNinjas().ToList();
     }
 
     private void Updated()
@@ -102,6 +88,9 @@
     {
         Dojo.EnrollNinja(_newNinja.Address);
         _isVisible = false;
+
+        _ninjas = Dojo.GetNinjas().ToList();
+        StateHasChanged();
     }
 
     private void EnrollmentFailed(EditContext editContext)
@@ -117,6 +106,9 @@
     private void Revoke(string name)
     {
         Dojo.RevokeNinja(name);
+
+        _ninjas = Dojo.GetNinjas().ToList();
+        StateHasChanged();
     }
 
     string GetColor(double percent)
@@ -148,8 +140,6 @@
 
     public void Dispose()
     {
-        Dojo.NinjaAdded -= NinjaAdded;
-        Dojo.NinjaRemoved -= NinjaRemoved;
         Dojo.Updated -= Updated;
     }
 

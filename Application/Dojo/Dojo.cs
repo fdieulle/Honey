@@ -43,10 +43,19 @@ namespace Application.Dojo
 
         public IEnumerable<NinjaDto> GetNinjas()
         {
-            return _ninjas.Values.Select(p => p.Dto).ToList();
+            lock (_ninjas)
+            {
+                return _ninjas.Values.Select(p => p.Dto).ToList();
+            }
         }
 
-        public void EnrollNinja(string address) => EnrollNinja(address, true);
+        public void EnrollNinja(string address)
+        {
+            lock (_ninjas)
+            {
+                EnrollNinja(address, true);
+            }
+        }
 
         private void EnrollNinja(string address, bool withDb)
         {
@@ -62,16 +71,25 @@ namespace Application.Dojo
 
         public void RevokeNinja(string address)
         {
-            if (!_ninjas.TryGetValue(address, out var ninja))
-                return;
+            lock (_ninjas)
+            {
+                if (!_ninjas.TryGetValue(address, out var ninja))
+                    return;
 
-            _ninjas.Remove(address);
-            _database.DeleteNinja(address);
+                _ninjas.Remove(address);
+                _database.DeleteNinja(address);
+            }
         }
 
         private void OnWatchDogWalk(object state)
         {
-            foreach (var ninja in _ninjas.Values)
+            List<Ninja> ninjas;
+            lock (_ninjas)
+            {
+                ninjas = _ninjas.Values.ToList();
+            }
+            
+            foreach (var ninja in ninjas)
                 ninja.Refresh();
 
             Updated?.Invoke();
@@ -82,18 +100,26 @@ namespace Application.Dojo
 
         public Ninja GetNextNinja(HashSet<string> ninjas = null)
         {
-            var selectedNinjas = _ninjas.Values.Where(p => p.Dto.IsUp);
-            if (ninjas != null && ninjas.Count > 0)
-                selectedNinjas = selectedNinjas.Where(p => ninjas.Contains(p.Address));
+            lock (_ninjas)
+            {
+                var selectedNinjas = _ninjas.Values.Where(p => p.Dto.IsUp);
+                if (ninjas != null && ninjas.Count > 0)
+                    selectedNinjas = selectedNinjas.Where(p => ninjas.Contains(p.Address));
 
-            return selectedNinjas
-                .OrderByDescending(p => p.Dto, heuristic)
-                .Where(p => p.Dto.PercentFreeCores > 0)
-                .FirstOrDefault();
+                return selectedNinjas
+                    .OrderByDescending(p => p.Dto, heuristic)
+                    .Where(p => p.Dto.PercentFreeCores > 0)
+                    .FirstOrDefault();
+            }
         }
 
-        public Ninja GetNinja(string address) => 
-            _ninjas.TryGetValue(address, out var ninja) ? ninja : null;
+        public Ninja GetNinja(string address)
+        {
+            lock (_ninjas)
+            {
+                return _ninjas.TryGetValue(address, out var ninja) ? ninja : null;
+            }
+        }
 
         public void Dispose()
         {

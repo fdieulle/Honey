@@ -20,9 +20,21 @@ namespace Application.Dojo
                 CreateQueue(queue, false);
         }
 
-        public Queue GetQueue(string name) => _queues.TryGetValue(name, out var queue) ? queue : null;
+        public Queue GetQueue(string name) 
+        {
+            lock(_queues)
+            {
+                return _queues.TryGetValue(name, out var queue) ? queue : null;
+            }
+        }
 
-        public bool CreateQueue(QueueDto dto) => CreateQueue(dto, true);
+        public bool CreateQueue(QueueDto dto)
+        {
+            lock (_queues)
+            {
+                return CreateQueue(dto, true);
+            }
+        }
 
         private bool CreateQueue(QueueDto dto, bool withDb)
         {
@@ -36,21 +48,33 @@ namespace Application.Dojo
 
         public bool DeleteQueue(string name)
         {
-            var result = _queues.Remove(name);
-            _database.DeleteQueue(name);
-            return result;
+            lock (_queues)
+            {
+                var result = _queues.Remove(name);
+                _database.DeleteQueue(name);
+                return result;
+            }
         }
-        
-        public IEnumerable<QueueDto> GetQueues() => _queues.Values.Select(p => p.Dto).ToList();
+
+        public IEnumerable<QueueDto> GetQueues()
+        {
+            lock (_queues)
+            {
+                return _queues.Values.Select(p => p.Dto).ToList();
+            }
+        }
 
         public bool UpdateQueue(QueueDto dto)
         {
-            if (!_queues.TryGetValue(dto.Name, out var queue))
-                return false;
+            lock (_queues)
+            {
+                if (!_queues.TryGetValue(dto.Name, out var queue))
+                    return false;
 
-            queue.Update(dto);
-            _database.UpdateQueue(dto);
-            return true;
+                queue.Update(dto);
+                _database.UpdateQueue(dto);
+                return true;
+            }
         }
     }
 }

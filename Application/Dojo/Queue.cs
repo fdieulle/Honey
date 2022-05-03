@@ -11,6 +11,7 @@ namespace Application.Dojo
         private readonly Queue<QueuedTaskDto> _pendingTasks = new Queue<QueuedTaskDto>();
         private readonly Dictionary<Guid, QueuedTaskDto> _runningTasks = new Dictionary<Guid, QueuedTaskDto>();
         private readonly Dictionary<Guid, QueuedTaskDto> _tasks = new Dictionary<Guid, QueuedTaskDto>();
+        private readonly object _lock = new object();
         private readonly Dojo _dojo;
         private readonly IDojoDb _database;
         private int _maxParallelTasks;
@@ -62,23 +63,29 @@ namespace Application.Dojo
 
         public void Update(QueueDto dto)
         {
-            Dto.MaxParallelTasks = dto.MaxParallelTasks;
-            Dto.Ninjas = new List<string>(dto.Ninjas ?? Enumerable.Empty<string>());
+            lock (_lock)
+            {
+                Dto.MaxParallelTasks = dto.MaxParallelTasks;
+                Dto.Ninjas = new List<string>(dto.Ninjas ?? Enumerable.Empty<string>());
 
-            _ninjas = new HashSet<string>(dto.Ninjas ?? Enumerable.Empty<string>());
+                _ninjas = new HashSet<string>(dto.Ninjas ?? Enumerable.Empty<string>());
 
-            var current = _maxParallelTasks;
-            _maxParallelTasks = dto.MaxParallelTasks;
+                var current = _maxParallelTasks;
+                _maxParallelTasks = dto.MaxParallelTasks;
 
-            var nbTasksToStart = dto.MaxParallelTasks <= 0 
-                ? _pendingTasks.Count 
-                : dto.MaxParallelTasks - current;
-            DequeueTasks(nbTasksToStart);
+                var nbTasksToStart = dto.MaxParallelTasks <= 0
+                    ? _pendingTasks.Count
+                    : dto.MaxParallelTasks - current;
+                DequeueTasks(nbTasksToStart);
+            }
         }
 
         public Guid StartTask(StartTaskDto startTask)
         {
-            return StartTask(new QueuedTaskDto(Name, startTask, _orderIncrement++));
+            lock (_lock)
+            {
+                return StartTask(new QueuedTaskDto(Name, startTask, _orderIncrement++));
+            }
         }
 
         private Guid StartTask(QueuedTaskDto task)
@@ -141,78 +148,87 @@ namespace Application.Dojo
 
         public void CancelTask(Guid id)
         {
-            // Try cancel running task
-            if (_runningTasks.TryGetValue(id, out var task))
+            lock (_lock)
             {
-                RecordTask(task, QueuedTaskStatus.CancelRequested);
+                // Try cancel running task
+                if (_runningTasks.TryGetValue(id, out var task))
+                {
+                    RecordTask(task, QueuedTaskStatus.CancelRequested);
 
-                var ninja = _dojo.GetNinja(task.NinjaAddress);
-                if (ninja != null)
-                    ninja.CancelTask(task.NinjaState.Id);
-                else
-                {
-                    // Todo: store the cancel request and retry when the ninja is available.
-                }
-            }
-            else // The task is pending
-            {
-                var count = _pendingTasks.Count;
-                for (var i = 0; i < count; i++)
-                {
-                    task = _pendingTasks.Dequeue();
-                    if (task.Id == id)
+                    var ninja = _dojo.GetNinja(task.NinjaAddress);
+                    if (ninja != null)
+                        ninja.CancelTask(task.NinjaState.Id);
+                    else
                     {
-                        RecordTask(task, QueuedTaskStatus.Completed);
-                        continue;
+                        // Todo: store the cancel request and retry when the ninja is available.
                     }
-                    _pendingTasks.Enqueue(task);
+                }
+                else // The task is pending
+                {
+                    var count = _pendingTasks.Count;
+                    for (var i = 0; i < count; i++)
+                    {
+                        task = _pendingTasks.Dequeue();
+                        if (task.Id == id)
+                        {
+                            RecordTask(task, QueuedTaskStatus.Completed);
+                            continue;
+                        }
+                        _pendingTasks.Enqueue(task);
+                    }
                 }
             }
         }
 
         public void Refresh()
         {
-            foreach(var task in _tasks.Values)
+            lock (_lock)
             {
-                if (string.IsNullOrEmpty(task.NinjaAddress)) // Skip pending tasks
-                    continue;
-
-                var ninja = _dojo.GetNinja(task.NinjaAddress);
-                if (ninja == null) continue; // TODO: Should we consider a state after a long run without ninja up like a timeout and allow delete the task ?
-
-                var state = ninja.GetTaskState(task.NinjaState.Id);
-                if (state != null)
+                foreach (var task in _tasks.Values)
                 {
-                    task.NinjaState = state;
-                    if (state.IsFinal())
-                    {
-                        _runningTasks.Remove(task.Id);
-                        RecordTask(task, QueuedTaskStatus.Completed);
-                    }
-                    else
-                    {
-                        // Todo: Handle this case ?
-                    }
+                    if (string.IsNullOrEmpty(task.NinjaAddress)) // Skip pending tasks
+                        continue;
 
+                    var ninja = _dojo.GetNinja(task.NinjaAddress);
+                    if (ninja == null) continue; // TODO: Should we consider a state after a long run without ninja up like a timeout and allow delete the task ?
+
+                    var state = ninja.GetTaskState(task.NinjaState.Id);
+                    if (state != null)
+                    {
+                        task.NinjaState = state;
+                        if (state.IsFinal())
+                        {
+                            _runningTasks.Remove(task.Id);
+                            RecordTask(task, QueuedTaskStatus.Completed);
+                        }
+                        else
+                        {
+                            // Todo: Handle this case ?
+                        }
+
+                    }
                 }
-            }
 
-            var nbTasksToStart = _maxParallelTasks <= 0
-                ? _pendingTasks.Count
-                : _maxParallelTasks - _runningTasks.Count;
-            DequeueTasks(nbTasksToStart);
+                var nbTasksToStart = _maxParallelTasks <= 0
+                    ? _pendingTasks.Count
+                    : _maxParallelTasks - _runningTasks.Count;
+                DequeueTasks(nbTasksToStart);
+            }
         }
 
         public bool DeleteTask(Guid id)
         {
-            if (_tasks.TryGetValue(id, out var task) && task.Status == QueuedTaskStatus.Completed)
+            lock (_lock)
             {
-                _tasks.Remove(id);
-                _database.DeleteTask(id);
-                return true;
-            }
+                if (_tasks.TryGetValue(id, out var task) && task.Status == QueuedTaskStatus.Completed)
+                {
+                    _tasks.Remove(id);
+                    _database.DeleteTask(id);
+                    return true;
+                }
 
-            return false;
+                return false;
+            }
         }
 
         private void DequeueTasks(int nbTasksToStart)
