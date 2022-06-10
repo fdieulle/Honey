@@ -45,7 +45,7 @@ namespace Application.Dojo
             _tasks = tasks?.ToDictionary(p => p.Id, p => p) ?? new Dictionary<Guid, TaskDto>();
         }
 
-        private static double Percent(ulong free, ulong total) => Math.Round((double)free / total * 100.0, 2);
+        private static double Percent(ulong free, ulong total) => Math.Round((1.0 - (double)free / total) * 100.0, 2);
 
         public IEnumerable<TaskDto> GetTasks() => _tasks.Values;
 
