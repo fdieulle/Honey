@@ -17,6 +17,8 @@ namespace Application
         void DeleteTask(Guid id);
 
         NinjaResourcesDto GetResources();
+
+        void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message = null);
     }
 
     public interface INinjaContainer

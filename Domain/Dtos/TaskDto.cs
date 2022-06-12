@@ -18,7 +18,11 @@ namespace Domain.Dtos
         public TaskStatus Status { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
+
+        public double ProgressPercent { get; set; }
         public DateTime ExpectedEndTime { get; set; }
-        public double Progress { get; set; }
+        public string Message { get; set; }
+
+        public TaskDto Clone() => (TaskDto)MemberwiseClone();
     }
 }

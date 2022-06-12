@@ -10,10 +10,12 @@ namespace Infrastructure.Ninja
     internal class NinjaDb : INinjaDb
     {
         private readonly IDbContextFactory<NinjaDbContext> _factory;
+        private readonly INinjaResourcesProvider _ninjaResourcesProvider;
 
-        public NinjaDb(IDbContextFactory<NinjaDbContext> factory)
+        public NinjaDb(IDbContextFactory<NinjaDbContext> factory, INinjaResourcesProvider ninjaResourcesProvider)
         {
             _factory = factory;
+            _ninjaResourcesProvider = ninjaResourcesProvider;
         }        
 
         public void CreateTask(RunningTask task)
@@ -24,15 +26,20 @@ namespace Infrastructure.Ninja
 
         private void CreateTask(NinjaDbContext context, RunningTask task)
         {
+            var dto = task.ToDto();
             var model = new TaskEntity
             {
                 Id = task.Id,
                 Command = task.Command,
                 Arguments = task.Arguments,
+                WorkingFolder = task.WorkingFolder,
                 Status = task.Status,
                 Pid = task.Pid,
-                StartTime = task.StartTime,
-                EndTime = task.EndTime,
+                StartTime = dto.StartTime,
+                EndTime = dto.EndTime,
+                ProgressPercent = dto.ProgressPercent,
+                ExpectedEndTime = dto.ExpectedEndTime,
+                Message = dto.Message,
             };
             context.Add(model);
             context.SaveChanges();
@@ -46,10 +53,14 @@ namespace Infrastructure.Ninja
                 if (model == null) CreateTask(context, task);
                 else
                 {
+                    var dto = task.ToDto();
                     model.Pid = task.Pid;
-                    model.StartTime = task.StartTime;
+                    model.StartTime = dto.StartTime;
                     model.Status = task.Status;
-                    model.EndTime = task.EndTime;
+                    model.EndTime = dto.EndTime;
+                    model.ProgressPercent = dto.ProgressPercent;
+                    model.ExpectedEndTime = dto.ExpectedEndTime;
+                    model.Message = dto.Message;
                     context.SaveChanges();
                 }
             }
@@ -73,7 +84,7 @@ namespace Infrastructure.Ninja
             using (var context = _factory.CreateDbContext())
             {
                 foreach (var task in context.Tasks)
-                    result.Add(new RunningTask(task));
+                    result.Add(new RunningTask(_ninjaResourcesProvider.GetBaseUri(), task));
             }
             return result;
         }

@@ -27,6 +27,8 @@ namespace Infrastructure.Ninja
 
         public string GetMachineName() => Environment.MachineName;
 
+        public string GetBaseUri() => $"https://localhost:{Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORT")}";
+
         public string GetOSPlatform() => Environment.OSVersion.Platform.ToString();
 
         public string GetOSVersion() => Environment.OSVersion.Version.ToString();

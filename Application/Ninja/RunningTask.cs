@@ -12,13 +12,13 @@ namespace Application.Ninja
     public class RunningTask : IDisposable
     {
         private readonly Process _process;
+        private readonly TaskDto _taskDto = new TaskDto();
         private readonly List<TaskMessageDto> _messages = new List<TaskMessageDto>();
-        private DateTime _startTime;
-        private DateTime _endTime;
+        private readonly string _baseUri;
 
         public Guid Id { get; } = Guid.NewGuid();
 
-        public int Pid => _process != null && _startTime != default ? _process.Id : -1;
+        public int Pid => _process != null && _taskDto.StartTime != default ? _process.Id : -1;
 
         public string Command { get; }
 
@@ -26,11 +26,11 @@ namespace Application.Ninja
 
         public List<TaskMessageDto> Messages => _messages;
 
-        public DateTime StartTime => _startTime;
-
-        public TaskStatus Status { get; private set; } = TaskStatus.Pending;
-
-        public DateTime EndTime => _endTime;
+        public TaskStatus Status 
+        {
+            get => _taskDto.Status;
+            private set => _taskDto.Status = value;
+        }
 
         public string WorkingFolder { get; }
 
@@ -38,11 +38,15 @@ namespace Application.Ninja
 
         public event Action<RunningTask> Exited;
 
-        public RunningTask(string command, string arguments, string workingFolder)
+        public RunningTask(string baseUri, string command, string arguments, string workingFolder)
         {
+            _baseUri = baseUri;
             Command = command;
             Arguments = arguments;
             WorkingFolder = Path.Combine(workingFolder, Id.ToString("N"));
+
+            _taskDto.Id = Id;
+            _taskDto.Status = TaskStatus.Pending;
 
             _process = CreateProcess(command, arguments, WorkingFolder);
             _process.Exited += OnExited;
@@ -50,15 +54,18 @@ namespace Application.Ninja
             _process.ErrorDataReceived += OnErrorDataReceived;
         }
 
-        public RunningTask(TaskEntity entity)
+        public RunningTask(string baseUri, TaskEntity entity)
         {
+            _baseUri = baseUri;
             Id = entity.Id;
             Command = entity.Command;
             Arguments = entity.Arguments;
             Status = entity.Status;
             WorkingFolder = entity.WorkingFolder;
-            _startTime = entity.StartTime;
-            _endTime = entity.EndTime;
+
+            _taskDto.Id = Id;
+            _taskDto.StartTime = entity.StartTime;
+            _taskDto.EndTime = entity.EndTime;
 
             switch (Status)
             {
@@ -83,19 +90,24 @@ namespace Application.Ninja
             }
         }
 
-        private static Process CreateProcess(string command, string arguments, string workingFolder)
+        private Process CreateProcess(string command, string arguments, string workingFolder)
         {
+            var startInfo = new ProcessStartInfo(command, arguments)
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                WorkingDirectory = workingFolder,
+            };
+
+            startInfo.EnvironmentVariables.Add("NINJA_TASK_ID", Id.ToString());
+            startInfo.EnvironmentVariables.Add("NINJA_BASE_URI", _baseUri);
+
             return new Process
             {
-                StartInfo = new ProcessStartInfo(command, arguments)
-                {
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                    WorkingDirectory = workingFolder,
-                },
+                StartInfo = startInfo,
                 EnableRaisingEvents = true,
             };
         }
@@ -109,7 +121,7 @@ namespace Application.Ninja
 
             Status = TaskStatus.Running;
             _process.Start();
-            _startTime = DateTime.UtcNow;
+            _taskDto.StartTime = DateTime.UtcNow;
 
             _process.BeginOutputReadLine();
             _process.BeginErrorReadLine();
@@ -138,22 +150,21 @@ namespace Application.Ninja
                     Status = TaskStatus.EndedWithoutSupervision;
                 else
                     Status = _process.ExitCode == 0 ? TaskStatus.Done : TaskStatus.Error;
-                _endTime = DateTime.UtcNow;
+                _taskDto.EndTime = DateTime.UtcNow;
             }
             
             PostMessage(MessageType.Exit, $"Exit with cose: {_process?.ExitCode}");
             Exited?.Invoke(this);
         }
 
-        public TaskDto ToDto() => new TaskDto
+        public void Update(double progressPercent, DateTime expectedEndTime, string message)
         {
-            Id = Id,
-            StartTime = _startTime,
-            Status = Status,
-            EndTime = _endTime,
-            Progress = -1,
-            ExpectedEndTime = DateTime.MaxValue
-        };
+            _taskDto.ProgressPercent = progressPercent;
+            _taskDto.ExpectedEndTime = expectedEndTime;
+            _taskDto.Message = message;
+        }
+
+        public TaskDto ToDto() => _taskDto.Clone();
 
         private void OnOutpuDataReceived(object sender, DataReceivedEventArgs e)
         {

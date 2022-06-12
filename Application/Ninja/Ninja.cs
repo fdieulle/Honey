@@ -71,7 +71,9 @@ namespace Application.Ninja
 
         public Guid StartTask(string command, string arguments, int nbCores = -1)
         {
-            var task = new RunningTask(command, arguments, _workingFolder);
+            var task = new RunningTask(
+                _ninjaResourcesProvider.GetBaseUri(), 
+                command, arguments, _workingFolder);
 
             _logger.LogInformation("Start a new task with Id={0}", task.Id);
             _logger.LogInformation("[{0}] Command line: {1} {2}", task.Id, command, arguments);
@@ -179,6 +181,15 @@ namespace Application.Ninja
                 DiskSpace = disk.Total,
                 DiskFreeSpace = disk.Free,
             };
+        }
+
+        public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message)
+        {
+            lock (_runningTasks)
+            {
+                if (_runningTasks.TryGetValue(taskId, out var task))
+                    task.Update(progressPercent, expectedEndTime, message);
+            }
         }
     }
 }

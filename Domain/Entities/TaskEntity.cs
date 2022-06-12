@@ -21,5 +21,9 @@ namespace Domain.Entities
         public DateTime EndTime { get; set; }
 
         public string WorkingFolder { get; set; }
+
+        public double ProgressPercent { get; set; }
+        public DateTime ExpectedEndTime { get; set; }
+        public string Message { get; set; }
     }
 }

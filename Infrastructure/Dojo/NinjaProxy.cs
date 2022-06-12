@@ -47,5 +47,17 @@ namespace Infrastructure.Dojo
         {
             return _client.GetAsync<NinjaResourcesDto>("Ninja/GetResources").Result;
         }
+
+        public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message)
+        {
+            var dto = new TaskStateDto
+            {
+                TaskId = taskId,
+                ProgressPercent = progressPercent,
+                ExpectedEndTime = expectedEndTime,
+                Message = message
+            };
+            _client.PostAsJsonAsync("Ninja/UpdateTask", dto).Wait();
+        }
     }
 }

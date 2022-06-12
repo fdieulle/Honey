@@ -52,5 +52,11 @@ namespace Ninja.Controllers
         {
             return _ninja.GetResources();
         }
+
+        [HttpPost("UpdateTask")]
+        public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message)
+        {
+            _ninja.UpdateTask(taskId, progressPercent, expectedEndTime, message);
+        }
     }
 }

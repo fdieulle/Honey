@@ -6,6 +6,8 @@ namespace Application.Ninja
     {
         string GetMachineName();
 
+        string GetBaseUri();
+
         string GetOSPlatform();
 
         string GetOSVersion();
