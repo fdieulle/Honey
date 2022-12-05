@@ -1,0 +1,207 @@
+﻿@page "/queues"
+
+@using AntDesign
+@using AntDesign.TableModels
+@using Application
+@using Application.Dojo
+@using Domain.Dtos
+
+@inject QueueProvider QueueProvider
+@inject Dojo Dojo
+
+<h3>Queues</h3>
+
+<Space>
+    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@NewQueue">New</Button></SpaceItem>
+</Space>
+<Modal Title="New Queue"
+       Visible="@_isVisible"
+       Closable="false"
+       Footer="@null">
+    <Form Model="@_model"
+          OnFinish="@AddQueue"
+          OnFinishFailed="@AddQueueFailed"
+          Layout="Vertical">
+        <FormItem Label="Name">
+            <Input @bind-Value="@context.Name" />
+        </FormItem>
+        <FormItem Label="Max number of parallel tasks" Help="A value <= 0 means no restrictions.">
+            <AntDesign.InputNumber @bind-Value="@context.MaxParallelTasks" />
+        </FormItem>
+        <FormItem Label="Ninjas" Help="No selection means allowing the queue to run on all ninjas.">
+            <Select Mode="multiple"
+                    DataSource="@_ninjas"
+                    @bind-Values="@context.Ninjas"
+                    LabelName="@nameof(NinjaDto.Address)"
+                    ValueName="@nameof(NinjaDto.Address)"
+                    Placeholder="Please select"
+                    EnableSearch
+                    AllowClear>
+            </Select>
+        </FormItem>
+        <Divider />
+        <Row Justify="end">
+            <Col Span="4">
+            <FormItem>
+                <Button Type="@ButtonType.Primary" HtmlType="submit">Add</Button>
+            </FormItem>
+            </Col>
+            <Col Span="4">
+            <FormItem>
+                <Button OnClick="@Cancel">Cancel</Button>
+            </FormItem>
+            </Col>
+        </Row>
+    </Form>
+</Modal>
+<AntDesign.Table TItem="QueueVM" DataSource="@_queues" OnExpand="OnRowExpand">
+    <RowTemplate>
+        <Column Title="Name" Field="@context.Name" />
+        <Column Title="Max Parallel" Field="@context.MaxParallelTasks" />
+        <Column Title="Nb Ninjas" Field="@Count(context.Ninjas)" />
+        <ActionColumn>
+            <Space>
+                <SpaceItem><Button Danger OnClick="()=>RemoveQueue(context.Name)">Delete</Button></SpaceItem>
+            </Space>
+        </ActionColumn>
+    </RowTemplate>
+    <ExpandTemplate Context="rowData">
+        <Table DataSource="rowData.Data.NinjasVM" Loading="rowData.Data.NinjasVM==null" TItem="NinjaDto" HidePagination>
+            <Column Title="OS" Field="@context.OS">
+                <Image Preview=false Width="25px" Src="@GetOSImage(context.OS)" />
+            </Column>
+            <Column Title="Active" Field="@context.IsUp">
+                <Switch Value="@context.IsUp" Disabled />
+            </Column>
+            <Column Title="Name" @bind-Field="@context.Address" Sortable />
+            <Column Title="Cores %" @bind-Field="@context.PercentFreeCores" Sortable>
+                <Progress Percent="@context.PercentFreeCores" Type=ProgressType.Line StrokeColor=@GetColor(context.PercentFreeCores) />
+            </Column>
+            <Column Title="RAM %" @bind-Field="@context.PercentFreeMemory" Sortable>
+                <Progress Percent="@context.PercentFreeMemory" Type=ProgressType.Line StrokeColor="@GetColor(context.PercentFreeMemory)" />
+            </Column>
+            <Column Title="Disk %" @bind-Field="@context.PercentFreeDiskSpace" Sortable>
+                <Progress Percent="@context.PercentFreeDiskSpace" Type=ProgressType.Line StrokeColor=@GetColor(context.PercentFreeDiskSpace) />
+            </Column>
+        </Table>
+    </ExpandTemplate>
+</AntDesign.Table>
+
+
+@code {
+    bool _isVisible;
+    QueueDto _model = new QueueDto();
+    List<QueueVM> _queues = new List<QueueVM>();
+    List<NinjaDto> _ninjas = new List<NinjaDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ninjas.AddRange(Dojo.GetNinjas());
+        _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
+    }
+
+    private void NewQueue()
+    {
+        _isVisible = true;
+    }
+
+    private void Cancel()
+    {
+        _isVisible = false;
+    }
+
+    public void AddQueue(EditContext context)
+    {
+        QueueProvider.CreateQueue(_model);
+        _isVisible = false;
+
+        _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
+        StateHasChanged();
+    }
+
+    public void AddQueueFailed(EditContext context)
+    {
+
+    }
+
+    private void RemoveQueue(string name)
+    {
+        QueueProvider.DeleteQueue(name);
+
+        _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
+        StateHasChanged();
+    }
+
+    async Task OnRowExpand(RowData<QueueVM> rowData)
+    {
+        var allNinjas = Dojo.GetNinjas().ToDictionary(p => p.Address, p => p);
+        var names = new List<string>(rowData.Data.Ninjas ?? Enumerable.Empty<string>());
+        if (names.Count == 0)
+        {
+            rowData.Data.NinjasVM = allNinjas.Values.ToList();
+        }
+        else
+        {
+            var ninjas = new List<NinjaDto>();
+            foreach (var name in names)
+            {
+                if (allNinjas.TryGetValue(name, out var ninja))
+                    ninjas.Add(ninja);
+            }
+
+            rowData.Data.NinjasVM = ninjas;
+        }
+
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+    }
+
+    int Count(IEnumerable<string> ninjas)
+    {
+        return ninjas == null || !ninjas.Any()
+            ? _ninjas.Count
+            : ninjas.Count();
+    }
+
+    string GetColor(double percent)
+    {
+        if (percent >= 90) return "#dc3545";
+        if (percent >= 75) return "#fd7e14";
+        return "#28a745";
+    }
+
+    string GetOSImage(string platform)
+    {
+        switch (platform)
+        {
+            case "Win32S":
+            case "Win32Windows":
+            case "Win32NT":
+            case "WinCE":
+                return "images/windows_microsoft_icon.png";
+            case "Unix":
+                return "images/tux_linux_icon.png";
+            case "MacOSX":
+                return "images/mac_osx_icon.png";
+            case "Xbox":
+                return "images/xbox_icon.png";
+            default:
+                return "images/server_center_data_icon.png";
+        }
+    }
+
+    public class QueueVM : QueueDto
+    {
+        public QueueVM(QueueDto dto)
+        {
+            Name = dto.Name;
+            MaxParallelTasks = dto.MaxParallelTasks;
+            Ninjas = dto.Ninjas;
+        }
+
+        public List<NinjaDto> NinjasVM { get; set; }
+    }
+}
