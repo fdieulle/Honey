@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Application.Dojo
 {
-    public class Queue
+    public class Queue : IDisposable
     {
         private readonly Queue<QueuedTaskDto> _pendingTasks = new Queue<QueuedTaskDto>();
         private readonly Dictionary<Guid, QueuedTaskDto> _runningTasks = new Dictionary<Guid, QueuedTaskDto>();
@@ -14,6 +14,7 @@ namespace Application.Dojo
         private readonly object _lock = new object();
         private readonly Dojo _dojo;
         private readonly IDojoDb _database;
+        private readonly ITimer _timer;
         private int _maxParallelTasks;
         private HashSet<string> _ninjas = new HashSet<string>();
         private ulong _orderIncrement;
@@ -22,17 +23,24 @@ namespace Application.Dojo
 
         public QueueDto Dto { get; } = new QueueDto();
 
-        public IEnumerable<QueuedTaskDto> PendingTasks => _pendingTasks;
-
-        public Queue(QueueDto dto, Dojo dojo, IDojoDb database)
+        public Queue(QueueDto dto, Dojo dojo, IDojoDb database, ITimer timer)
         {
             _dojo = dojo;
             _database = database;
+            _timer = timer;
             Dto.Name = dto.Name;
             Update(dto);
 
             var tasks = _database.FetchTasks() ?? Enumerable.Empty<QueuedTaskDto>();
             RestoreTasks(tasks);
+
+            _timer.Updated += Refresh;
+        }
+
+        public IEnumerable<QueuedTaskDto> GetAllTasks()
+        {
+            lock (_lock)
+                return _tasks.Values.ToList();
         }
 
         private void RestoreTasks(IEnumerable<QueuedTaskDto> tasks)
@@ -80,11 +88,11 @@ namespace Application.Dojo
             }
         }
 
-        public Guid StartTask(StartTaskDto startTask)
+        public Guid StartTask(string name, StartTaskDto startTask)
         {
             lock (_lock)
             {
-                return StartTask(new QueuedTaskDto(Name, startTask, _orderIncrement++));
+                return StartTask(new QueuedTaskDto(Name, name, startTask, _orderIncrement++));
             }
         }
 
@@ -240,10 +248,15 @@ namespace Application.Dojo
                 var task = _pendingTasks.Peek();
                 StartTask(task);
 
-                if (task.NinjaState.Id != Guid.Empty)
+                if (task.NinjaState != null && task.NinjaState.Id != Guid.Empty)
                     _pendingTasks.Dequeue();
                 else break;
             }
+        }
+
+        public void Dispose()
+        {
+            _timer.Updated -= Refresh;
         }
     }
 }

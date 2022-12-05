@@ -9,12 +9,13 @@ namespace Application.Dojo
         private readonly Dictionary<string, Queue> _queues = new Dictionary<string, Queue>();
         private readonly Dojo _dojo;
         private readonly IDojoDb _database;
+        private readonly ITimer _timer;
 
-        public QueueProvider(Dojo dojo, IDojoDb database)
+        public QueueProvider(Dojo dojo, IDojoDb database, ITimer timer)
         {
             _dojo = dojo;
             _database = database;
-
+            _timer = timer;
             var queues = _database.FetchQueues() ?? Enumerable.Empty<QueueDto>();
             foreach (var queue in queues)
                 CreateQueue(queue, false);
@@ -40,7 +41,7 @@ namespace Application.Dojo
         {
             if (_queues.ContainsKey(dto.Name)) return false;
 
-            _queues.Add(dto.Name, new Queue(dto, _dojo, _database));
+            _queues.Add(dto.Name, new Queue(dto, _dojo, _database, _timer));
             if (withDb)
                 _database.CreateQueue(dto);
             return true;
@@ -50,9 +51,13 @@ namespace Application.Dojo
         {
             lock (_queues)
             {
-                var result = _queues.Remove(name);
+                if (!_queues.TryGetValue(name, out var queue))
+                    return false;
+                
+                queue.Dispose();
+                _queues.Remove(name);
                 _database.DeleteQueue(name);
-                return result;
+                return true;
             }
         }
 
