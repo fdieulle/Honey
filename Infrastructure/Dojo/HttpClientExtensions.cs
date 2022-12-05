@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.Extensions.Options;
+using System;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -8,6 +10,8 @@ namespace Infrastructure.Dojo
 {
     internal static class HttpClientExtensions
     {
+        private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = false };
+
         public static async Task<T> GetAsync<T>(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
         {
             try
@@ -28,7 +32,7 @@ namespace Infrastructure.Dojo
         {
             try
             {
-                var response = await client.PostAsync(requestUri, new StringContent(JsonSerializer.Serialize(content)));
+                var response = await client.PostAsync(requestUri, JsonContent.Create(content));
                 if (response.IsSuccessStatusCode)
                     return await response.ReadJsonResponse<TResult>();
             }
@@ -44,7 +48,7 @@ namespace Infrastructure.Dojo
         {
             try
             {
-                await client.PostAsync(requestUri, new StringContent(JsonSerializer.Serialize(content)));
+                await client.PostAsync(requestUri, JsonContent.Create(content));
             }
             catch (Exception)
             {                
@@ -70,10 +74,9 @@ namespace Infrastructure.Dojo
             return $"{baseUri}?{args}";
         }
 
-        private static readonly JsonSerializerOptions jsonOption = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
         public static async Task<T> ReadJsonResponse<T>(this HttpResponseMessage response)
         {
-            return await JsonSerializer.DeserializeAsync<T>(response.Content.ReadAsStream(), jsonOption);
+            return await JsonSerializer.DeserializeAsync<T>(response.Content.ReadAsStream(), jsonOptions);
         }
     }
 }
