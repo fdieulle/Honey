@@ -8,8 +8,6 @@ namespace Application.Dojo
 {
     public class Dojo : IDojo, IDisposable
     {
-        private const int WATCH_DOG_PERIOD = 3000;
-
         private static readonly Comparer<NinjaDto> heuristic = Comparer<NinjaDto>.Create((x, y) =>
         {
             var compare = x.PercentFreeCores.CompareTo(y.PercentFreeCores);
@@ -21,24 +19,23 @@ namespace Application.Dojo
         private readonly INinjaContainer _ninjaContainer;
         private readonly IDojoDb _database;
         private Dictionary<string, Ninja> _ninjas = new Dictionary<string, Ninja>();
-        private readonly Timer _timer;
-        private bool _isDisposed;
-
-        public event Action Updated;
+        private readonly ITimer _timer;
 
         public INinjaContainer Container => _ninjaContainer;
 
         public IEnumerable<Ninja> Ninjas => _ninjas.Values;
 
-        public Dojo(INinjaContainer ninjaContainer, IDojoDb database)
+        public Dojo(INinjaContainer ninjaContainer, IDojoDb database, ITimer timer)
         {
-            _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
             _ninjaContainer = ninjaContainer;
             _database = database;
+            _timer = timer;
 
             var ninjas = _database.FetchNinjas() ?? Enumerable.Empty<NinjaDto>();
             foreach (var ninja in ninjas)
                 EnrollNinja(ninja.Address, false);
+
+            _timer.Updated += Refresh;
         }
 
         public IEnumerable<NinjaDto> GetNinjas()
@@ -81,7 +78,7 @@ namespace Application.Dojo
             }
         }
 
-        private void OnWatchDogWalk(object state)
+        private void Refresh()
         {
             List<Ninja> ninjas;
             lock (_ninjas)
@@ -91,11 +88,6 @@ namespace Application.Dojo
             
             foreach (var ninja in ninjas)
                 ninja.Refresh();
-
-            Updated?.Invoke();
-
-            if (!_isDisposed)
-                _timer.Change(WATCH_DOG_PERIOD, Timeout.Infinite);
         }
 
         public Ninja GetNextNinja(HashSet<string> ninjas = null)
@@ -123,8 +115,7 @@ namespace Application.Dojo
 
         public void Dispose()
         {
-            _isDisposed = true;
-            _timer.Dispose();
+            _timer.Updated -= Refresh;
         }
     }
 }

@@ -14,8 +14,9 @@ namespace Application.Tests.Dojo
         {
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var timer = Substitute.For<ITimer>();
+            var dojo = new Application.Dojo.Dojo(container, database, timer);
+            var queueProvider = new QueueProvider(dojo, database, timer);
             var shogun = new Shogun(queueProvider);
 
             // Setup a ninja
@@ -24,7 +25,7 @@ namespace Application.Tests.Dojo
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id = shogun.Execute("queue", T("powershell", "-version"));
+            var id = shogun.Execute("queue", "name", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             ninja.Received().StartTask(
@@ -38,8 +39,9 @@ namespace Application.Tests.Dojo
         {
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var timer = Substitute.For<ITimer>();
+            var dojo = new Application.Dojo.Dojo(container, database, timer);
+            var queueProvider = new QueueProvider(dojo, database, timer);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -49,7 +51,7 @@ namespace Application.Tests.Dojo
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id = shogun.Execute("queue", T("powershell", "-version"));
+            var id = shogun.Execute("queue", "name", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             ninja.Received().StartTask(
@@ -68,8 +70,9 @@ namespace Application.Tests.Dojo
         {
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var timer = Substitute.For<ITimer>();
+            var dojo = new Application.Dojo.Dojo(container, database, timer);
+            var queueProvider = new QueueProvider(dojo, database, timer);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -79,9 +82,9 @@ namespace Application.Tests.Dojo
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id1 = shogun.Execute("queue", T("powershell", "-version"));
-            var id2 = shogun.Execute("queue", T("powershell", "-version"));
-            var id3 = shogun.Execute("queue", T("powershell", "-version"));
+            var id1 = shogun.Execute("queue", "name1", T("powershell", "-version"));
+            var id2 = shogun.Execute("queue", "name2", T("powershell", "-version"));
+            var id3 = shogun.Execute("queue", "name", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, ninjaTaskIds[0]);
@@ -107,8 +110,9 @@ namespace Application.Tests.Dojo
         {
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var timer = Substitute.For<ITimer>();
+            var dojo = new Application.Dojo.Dojo(container, database, timer);
+            var queueProvider = new QueueProvider(dojo, database, timer);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -121,7 +125,7 @@ namespace Application.Tests.Dojo
             // Turn ninja too busy
             dojo.UpdateNinjaState("http://ninja1:8080", 0);
 
-            var id = shogun.Execute("queue", T("powershell", "-version"));
+            var id = shogun.Execute("queue", "name", T("powershell", "-version"));
 
             // The task is create into shogun but no sent to a ninja yet
             Assert.NotEqual(id, Guid.Empty);
@@ -153,8 +157,9 @@ namespace Application.Tests.Dojo
         {
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaContainer>();
-            var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var timer = Substitute.For<ITimer>();
+            var dojo = new Application.Dojo.Dojo(container, database, timer);
+            var queueProvider = new QueueProvider(dojo, database, timer);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -166,9 +171,9 @@ namespace Application.Tests.Dojo
             queueProvider.CreateQueue("queue1", ninjas: "http://ninja1:8080");
             queueProvider.CreateQueue("queue2", ninjas: "http://ninja2:8080");
 
-            var id1 = shogun.Execute("queue1", T("powershell", "-version"));
-            var id2 = shogun.Execute("queue2", T("powershell", "-version"));
-            var id3 = shogun.Execute("queue1", T("powershell", "-version"));
+            var id1 = shogun.Execute("queue1", "name", T("powershell", "-version"));
+            var id2 = shogun.Execute("queue2", "name", T("powershell", "-version"));
+            var id3 = shogun.Execute("queue1", "name", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, ninjaTaskIds[0]);
