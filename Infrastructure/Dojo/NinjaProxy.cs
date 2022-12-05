@@ -7,20 +7,14 @@ using System.Net.Http.Headers;
 
 namespace Infrastructure.Dojo
 {
-    internal class NinjaProxy : INinja
+    internal class NinjaProxy : NinjaClient, INinja
     {
-        private readonly HttpClient _client = new HttpClient();
-        public NinjaProxy(string address)
-        {
-            _client.BaseAddress = new Uri(address);
-            _client.DefaultRequestHeaders.Accept.Clear();
-            _client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-        }
+        public NinjaProxy(string address) 
+            : base(address) { }
 
         public IEnumerable<TaskDto> GetTasks()
         {
-            return _client.GetAsync<List<TaskDto>>("Ninja/GetTasks").Result;
+            return Client.GetAsync<List<TaskDto>>("Ninja/GetTasks").Result;
         }
 
         public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length)
@@ -30,34 +24,22 @@ namespace Infrastructure.Dojo
 
         public Guid StartTask(string command, string arguments, int nbCores = 1)
         {
-            return _client.PostAsJsonAsync<StartTaskDto, Guid>("Ninja/StartTask", new StartTaskDto { Command = command, Arguments = arguments, NbCores = nbCores }).Result;
+            return Client.PostAsJsonAsync<StartTaskDto, Guid>("Ninja/StartTask", new StartTaskDto { Command = command, Arguments = arguments, NbCores = nbCores }).Result;
         }
 
         public void CancelTask(Guid id)
         {
-            _client.PostAsJsonAsync("Ninja/CancelTask", id).Wait();
+            Client.PostAsJsonAsync("Ninja/CancelTask", id).Wait();
         }
 
         public void DeleteTask(Guid id)
         {
-            _client.DeleteAsJsonAsync("Ninja/DeleteTask", ("id", id.ToString())).Wait();
+            Client.DeleteAsJsonAsync("Ninja/DeleteTask", ("id", id.ToString())).Wait();
         }
 
         public NinjaResourcesDto GetResources()
         {
-            return _client.GetAsync<NinjaResourcesDto>("Ninja/GetResources").Result;
-        }
-
-        public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message)
-        {
-            var dto = new TaskStateDto
-            {
-                TaskId = taskId,
-                ProgressPercent = progressPercent,
-                ExpectedEndTime = expectedEndTime,
-                Message = message
-            };
-            _client.PostAsJsonAsync("Ninja/UpdateTask", dto).Wait();
+            return Client.GetAsync<NinjaResourcesDto>("Ninja/GetResources").Result;
         }
     }
 }

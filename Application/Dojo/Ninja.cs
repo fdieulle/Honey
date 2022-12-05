@@ -59,7 +59,7 @@ namespace Application.Dojo
 
         public NinjaResourcesDto GetResources() => _resources;
 
-        public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message) => 
-            _proxy.UpdateTask(taskId, progressPercent, expectedEndTime, message);
+        public void UpdateTask(TaskStateDto dto) => 
+            _proxy.UpdateTask(dto);
     }
 }

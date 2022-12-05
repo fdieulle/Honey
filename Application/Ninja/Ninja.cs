@@ -183,12 +183,14 @@ namespace Application.Ninja
             };
         }
 
-        public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message)
+        public void UpdateTask(TaskStateDto dto)
         {
+            if (dto == null) return;
+
             lock (_runningTasks)
             {
-                if (_runningTasks.TryGetValue(taskId, out var task))
-                    task.Update(progressPercent, expectedEndTime, message);
+                if (_runningTasks.TryGetValue(dto.TaskId, out var task))
+                    task.Update(dto.ProgressPercent, dto.ExpectedEndTime, dto.Message);
             }
         }
     }

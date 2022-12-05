@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Domain.Dtos;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 
@@ -42,5 +43,16 @@ namespace Application
             => !string.IsNullOrEmpty(path) && Directory.Exists(path);
 
         #endregion
+
+        public static void UpdateTask(this INinja ninja, Guid taskId, double progressPercent, DateTime expectedEndTime, string message = null)
+        {
+            ninja.UpdateTask(new TaskStateDto
+            {
+                TaskId = taskId,
+                ProgressPercent = progressPercent,
+                ExpectedEndTime = expectedEndTime,
+                Message = message
+            });
+        }
     }
 }

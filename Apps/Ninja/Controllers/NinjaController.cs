@@ -54,9 +54,9 @@ namespace Ninja.Controllers
         }
 
         [HttpPost("UpdateTask")]
-        public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime, string message)
+        public void UpdateTask(TaskStateDto dto)
         {
-            _ninja.UpdateTask(taskId, progressPercent, expectedEndTime, message);
+            _ninja.UpdateTask(dto);
         }
     }
 }
