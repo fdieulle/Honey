@@ -18,9 +18,9 @@ namespace Dojo.Controllers
         }
 
         [HttpPost("Execute")]
-        public Guid Execute(string queue, StartTaskDto task)
+        public Guid Execute(string queue, string name, StartTaskDto task)
         {
-            return _shogun.Execute(queue, task);
+            return _shogun.Execute(queue, name, task);
         }
 
         [HttpPost("Cancel")]

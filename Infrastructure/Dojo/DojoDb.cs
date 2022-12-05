@@ -78,6 +78,7 @@ namespace Infrastructure.Dojo
         }
         private static void UpdateEntity(QueuedTaskDto dto, QueuedTaskEntity entity)
         {
+            entity.Name = dto.Name;
             entity.Status = dto.Status;
             entity.QueueName = dto.QueueName;
             entity.NinjaAddress = dto.NinjaAddress;
@@ -91,6 +92,7 @@ namespace Infrastructure.Dojo
             return new QueuedTaskDto
             {
                 Id = entity.Id,
+                Name = entity.Name,
                 Status = entity.Status,
                 QueueName = entity.QueueName,
                 NinjaAddress = entity.NinjaAddress,
@@ -141,7 +143,7 @@ namespace Infrastructure.Dojo
         {
             var result = new List<TDto>();
             using (var context = _factory.CreateDbContext())
-                foreach (var entity in _getTable(context))
+                foreach (var entity in _getTable(context).AsEnumerable())
                     result.Add(_toDto(entity));
             return result;
         }
@@ -163,7 +165,7 @@ namespace Infrastructure.Dojo
             var key = _getKeyFromDto(dto);
             using (var context = _factory.CreateDbContext())
             {
-                var entity = _getTable(context).FirstOrDefault(p => _getKey(p).CompareTo(key) == 0);
+                var entity = _getTable(context).AsEnumerable().FirstOrDefault(p => _getKey(p).CompareTo(key) == 0);
 
                 if (entity == null) Create(context, dto);
                 else
@@ -179,7 +181,7 @@ namespace Infrastructure.Dojo
             using (var context = _factory.CreateDbContext())
             {
                 var table = _getTable(context);
-                var entity = table.FirstOrDefault(p => _getKey(p).CompareTo(key) == 0);
+                var entity = table.AsEnumerable().FirstOrDefault(p => _getKey(p).CompareTo(key) == 0);
                 if (entity == null) return;
 
                 table.Remove(entity);

@@ -26,7 +26,7 @@ namespace Application
 
     public interface IShogun
     {
-        Guid Execute(string queue, StartTaskDto task);
+        Guid Execute(string queue, string name, StartTaskDto task);
 
         void Cancel(Guid id);
     }

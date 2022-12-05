@@ -4,7 +4,7 @@ namespace Domain.Dtos
 {
     public enum QueuedTaskStatus
     {
-        Unknwon, // When Non ninja status has been received yet
+        Unknwon, // When no ninja status has been received yet
         Pending,
         Running,
         CancelRequested,
@@ -14,6 +14,8 @@ namespace Domain.Dtos
     public class QueuedTaskDto
     {
         public Guid Id { get; set; }
+
+        public string Name { get; set; }
 
         public string NinjaAddress { get; set; }
 
@@ -29,9 +31,10 @@ namespace Domain.Dtos
 
         public QueuedTaskDto() { Id = Guid.NewGuid(); }
 
-        public QueuedTaskDto(string queue, StartTaskDto task, ulong order)
+        public QueuedTaskDto(string queue, string name, StartTaskDto task, ulong order)
         {
             Id = Guid.NewGuid();
+            Name = name ?? Id.ToString();
             QueueName = queue;
             StartTask = task;
             NinjaState = new TaskDto { Status = TaskStatus.Pending };

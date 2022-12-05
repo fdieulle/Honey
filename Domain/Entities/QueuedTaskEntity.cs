@@ -7,6 +7,7 @@ namespace Domain.Entities
     {
         public Guid Id { get; set; }
 
+        public string Name { get; set; }
         public string NinjaAddress { get; set; }
 
         public string QueueName { get; set; }
