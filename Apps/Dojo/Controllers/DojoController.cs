@@ -20,7 +20,7 @@ namespace Dojo.Controllers
         [HttpGet("Ninjas")]
         public IEnumerable<NinjaDto> GetNinjas()
         {
-            return _dojo.Ninjas.Select(p => p.Dto);
+            return _dojo.GetNinjas();
         }
 
         [HttpPost("EnrollNinja")]
