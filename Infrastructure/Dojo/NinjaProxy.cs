@@ -29,12 +29,12 @@ namespace Infrastructure.Dojo
 
         public void CancelTask(Guid id)
         {
-            Client.PostAsJsonAsync("Ninja/CancelTask", id).Wait();
+            Client.PostAsArgsAsync("Ninja/CancelTask", ("id", id.ToString())).Wait();
         }
 
         public void DeleteTask(Guid id)
         {
-            Client.DeleteAsJsonAsync("Ninja/DeleteTask", ("id", id.ToString())).Wait();
+            Client.DeleteAsArgsAsync("Ninja/DeleteTask", ("id", id.ToString())).Wait();
         }
 
         public NinjaResourcesDto GetResources()

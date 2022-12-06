@@ -44,6 +44,17 @@ namespace Infrastructure.Dojo
             return default;
         }
 
+        public static async Task PostAsArgsAsync(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
+        {
+            try
+            {
+                await client.PostAsync(requestUri.BuildUri(arguments), new StringContent(""));
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         public static async Task<TResult> PostAsJsonAsync<TContent, TResult>(this HttpClient client, string requestUri, TContent content)
         {
             try
@@ -71,7 +82,7 @@ namespace Infrastructure.Dojo
             }
         }
 
-        public static async Task DeleteAsJsonAsync(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
+        public static async Task DeleteAsArgsAsync(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
         {
             try
             {
