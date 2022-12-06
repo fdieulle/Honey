@@ -28,6 +28,22 @@ namespace Infrastructure.Dojo
             return default;
         }
 
+        public static async Task<TResult> PostAsArgsAsync<TResult>(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
+        {
+            try
+            {
+                var response = await client.PostAsync(requestUri.BuildUri(arguments), new StringContent(""));
+                if (response.IsSuccessStatusCode)
+                    return await response.ReadJsonResponse<TResult>();
+            }
+            catch (Exception)
+            {
+
+            }
+
+            return default;
+        }
+
         public static async Task<TResult> PostAsJsonAsync<TContent, TResult>(this HttpClient client, string requestUri, TContent content)
         {
             try

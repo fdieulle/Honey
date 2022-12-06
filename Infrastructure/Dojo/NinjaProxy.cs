@@ -24,7 +24,7 @@ namespace Infrastructure.Dojo
 
         public Guid StartTask(string command, string arguments, int nbCores = 1)
         {
-            return Client.PostAsJsonAsync<StartTaskDto, Guid>("Ninja/StartTask", new StartTaskDto { Command = command, Arguments = arguments, NbCores = nbCores }).Result;
+            return Client.PostAsArgsAsync<Guid>("Ninja/StartTask", ("command", command), ("arguments", arguments), ("nbCores", nbCores.ToString())).Result;
         }
 
         public void CancelTask(Guid id)
