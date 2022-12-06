@@ -34,7 +34,7 @@ namespace Application.Ninja
 
         public string WorkingFolder { get; }
 
-        public bool IsAlive => _process != null && !_process.HasExited;
+        public bool IsAlive => Status == TaskStatus.Pending || (_process != null && !_process.HasExited);
 
         public event Action<RunningTask> Exited;
 
@@ -46,12 +46,20 @@ namespace Application.Ninja
             WorkingFolder = Path.Combine(workingFolder, Id.ToString("N"));
 
             _taskDto.Id = Id;
-            _taskDto.Status = TaskStatus.Pending;
+            if (!string.IsNullOrEmpty(command))
+            {
+                _taskDto.Status = TaskStatus.Pending;
 
-            _process = CreateProcess(command, arguments, WorkingFolder);
-            _process.Exited += OnExited;
-            _process.OutputDataReceived += OnOutpuDataReceived;
-            _process.ErrorDataReceived += OnErrorDataReceived;
+                _process = CreateProcess(command, arguments, WorkingFolder);
+                _process.Exited += OnExited;
+                _process.OutputDataReceived += OnOutpuDataReceived;
+                _process.ErrorDataReceived += OnErrorDataReceived;
+            }
+            else
+            {
+                _taskDto.Status = TaskStatus.Error;
+                _taskDto.Message = "The command line is null or empty";
+            }
         }
 
         public RunningTask(string baseUri, TaskEntity entity)
@@ -119,12 +127,13 @@ namespace Application.Ninja
             PostMessage(MessageType.Info, $"Start job with id: {Id}");
             WorkingFolder.CreateFolder();
 
-            Status = TaskStatus.Running;
             _process.Start();
             _taskDto.StartTime = DateTime.UtcNow;
 
             _process.BeginOutputReadLine();
             _process.BeginErrorReadLine();
+
+            Status = TaskStatus.Running;
         }
 
         public void Cancel()
