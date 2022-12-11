@@ -15,6 +15,9 @@
 <AntDesign.Table TItem="TaskViewModel"
                  DataSource="@_tasks">
     <Column @bind-Field="@context.Name" Sortable Filterable Fixed="left" />
+    <Column @bind-Field="@context.Status" Sortable Filterable >
+        <Alert Type="@context.StatusAsAlert" Message="@context.Status.ToString()" />
+    </Column>
     <Column @bind-Field="@context.Progress" Sortable>
         <Progress Percent="@context.Progress" Status="@context.ProgressStatus" Format="_progressFormat" />
     </Column>
@@ -61,6 +64,7 @@
             et.Name = task.Name;
             et.Ninja = task.NinjaAddress;
             et.Status = task.Status;
+            et.StatusAsAlert = ToAlertType(task.Status);            
 
             var isRunning = task.Status == QueuedTaskStatus.Running || task.Status == QueuedTaskStatus.CancelRequested;
             var isCompleted = task.Status == QueuedTaskStatus.Completed;
@@ -104,6 +108,23 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private static string ToAlertType(QueuedTaskStatus status)
+    {
+        switch (status)
+        {
+            case QueuedTaskStatus.Pending:
+                return AlertType.Info;
+            case QueuedTaskStatus.Running:
+            case QueuedTaskStatus.Completed:
+                return AlertType.Success;
+            case QueuedTaskStatus.CancelRequested:
+            case QueuedTaskStatus.CancelPending:
+                return AlertType.Warning;
+            default:
+                return AlertType.Error;
+        }
+    }
+
     private void CancelTask(TaskViewModel task)
     {
         Shogun.Cancel(task.Id);
@@ -127,6 +148,7 @@
         public double Progress { get; set; }
         public ProgressStatus ProgressStatus { get; set; }
         public QueuedTaskStatus Status { get; set; }
+        public string StatusAsAlert { get; set; }
         public DateTime Start { get; set; }
         public TimeSpan Elapsed { get; set; }
         public string Ninja { get; set; }
