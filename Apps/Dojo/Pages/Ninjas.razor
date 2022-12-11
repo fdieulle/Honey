@@ -54,13 +54,13 @@
     </Column>
     <Column Title="Name" @bind-Field="@context.Address" Sortable />
     <Column Title="Cores %" @bind-Field="@context.PercentFreeCores" Sortable>
-        <Progress Percent="@context.PercentFreeCores" Type=ProgressType.Line StrokeColor=@GetColor(context.PercentFreeCores) />
+        <Progress Percent="@(Math.Round(100.0 - context.PercentFreeCores))" Type=ProgressType.Line StrokeColor=@GetColor(context.PercentFreeCores) />
     </Column>
     <Column Title="RAM %" @bind-Field="@context.PercentFreeMemory" Sortable>
-        <Progress Percent="@context.PercentFreeMemory" Type=ProgressType.Line StrokeColor="@GetColor(context.PercentFreeMemory)" />
+        <Progress Percent="@(Math.Round(100.0 - @context.PercentFreeMemory, 2))" Type=ProgressType.Line StrokeColor="@GetColor(context.PercentFreeMemory)" />
     </Column>
     <Column Title="Disk %" @bind-Field="@context.PercentFreeDiskSpace" Sortable>
-        <Progress Percent="@context.PercentFreeDiskSpace" Type=ProgressType.Line StrokeColor=@GetColor(context.PercentFreeDiskSpace) />
+        <Progress Percent="@(Math.Round(100.0 - @context.PercentFreeDiskSpace, 2))" Type=ProgressType.Line StrokeColor=@GetColor(context.PercentFreeDiskSpace) />
     </Column>
     <ActionColumn>
         <Space>
@@ -113,10 +113,10 @@
         StateHasChanged();
     }
 
-    string GetColor(double percent)
+    string GetColor(double percentFree)
     {
-        if (percent >= 90) return "#dc3545";
-        if (percent >= 75) return "#fd7e14";
+        if (percentFree <= 10) return "#dc3545";
+        if (percentFree <= 25) return "#fd7e14";
         return "#28a745";
     }
 
