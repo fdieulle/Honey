@@ -1,0 +1,136 @@
+﻿@page "/dashboard"
+
+@using System.Collections.ObjectModel
+@using AntDesign
+@using AntDesign.TableModels
+@using Domain.Dtos
+@using Application
+@using Application.Dojo
+
+@inject Shogun Shogun
+@inject ITimer Timer
+
+<h3>Dashboard</h3>
+
+<AntDesign.Table TItem="TaskViewModel"
+                 DataSource="@_tasks">
+    <Column @bind-Field="@context.Name" Sortable Filterable Fixed="left" />
+    <Column @bind-Field="@context.Progress" Sortable>
+        <Progress Percent="@context.Progress" Status="@context.ProgressStatus" Format="_progressFormat" />
+    </Column>
+    <Column @bind-Field="@context.Start" Format="yyyy-MM-dd HH:mm:ss" Width="200" Sortable Hidden  />
+    <Column Title="Elapsed" @bind-Field="@context.Elapsed" Width="200" Format="dd\.hh\:mm\:ss" Sortable />
+    <Column Title="Ninja" @bind-Field="@context.Ninja" Width="200" Sortable />
+    <Column Title="Message" @bind-Field="@context.Message" Width="200" Sortable />
+    <ActionColumn>
+        <Space>
+            <SpaceItem><Button OnClick="()=>CancelTask(context)">Cancel</Button></SpaceItem>
+        </Space>
+    </ActionColumn>
+    <ActionColumn>
+        <Space>
+            <SpaceItem><Button Danger OnClick="()=>RemoveTask(context)">Remove</Button></SpaceItem>
+        </Space>
+    </ActionColumn>
+
+</AntDesign.Table>
+
+@code {
+    ObservableCollection<TaskViewModel> _tasks = new ObservableCollection<TaskViewModel>();
+    private readonly Func<double, string> _progressFormat = p => $"{Math.Round(p, 2)}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Updated();
+        Timer.Updated += Updated;
+    }
+
+    private void Updated()
+    {
+        var ets = _tasks.ToDictionary(p => p.Id, p => p);
+        foreach(var task in Shogun.GetAllTasks())
+        {
+            if (ets.TryGetValue(task.Id, out var et))
+                ets.Remove(task.Id);
+            else
+            {
+                et = new TaskViewModel { Id = task.Id };
+                _tasks.Add(et);
+            }
+
+            et.Name = task.Name;
+            et.Ninja = task.NinjaAddress;
+            et.Status = task.Status;
+
+            var isRunning = task.Status == QueuedTaskStatus.Running || task.Status == QueuedTaskStatus.CancelRequested;
+            var isCompleted = task.Status == QueuedTaskStatus.Completed;
+
+            var state = task.NinjaState;
+            if (state != null)
+            {
+                et.Progress = state.ProgressPercent * 100;
+                et.Start = state.StartTime;
+                if (isRunning)
+                    et.Elapsed = DateTime.Now - state.StartTime.ToLocalTime();
+                else if (isCompleted)
+                    et.Elapsed = state.EndTime - state.StartTime;
+                et.Message = state.Message;
+            }
+
+            var inError = state == null || state.Status == Domain.Dtos.TaskStatus.Error || state.Status == Domain.Dtos.TaskStatus.EndedWithoutSupervision;
+
+
+            if (inError)
+                et.ProgressStatus = ProgressStatus.Exception;
+            else if (isRunning)
+                et.ProgressStatus = ProgressStatus.Active;
+            else if (isCompleted)
+            {
+                et.Progress = 100;
+                et.ProgressStatus = ProgressStatus.Success;
+                et.Message = state.Status.ToString();
+            }
+            else 
+            {
+                et.ProgressStatus = ProgressStatus.Normal;
+                et.Message = task.Status.ToString();
+            }
+        }
+
+        foreach (var et in ets.Values)
+            _tasks.Remove(et);
+
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void CancelTask(TaskViewModel task)
+    {
+        Shogun.Cancel(task.Id);
+    }
+
+    private void RemoveTask(TaskViewModel task)
+    {
+        Shogun.DeleteTask(task.Id);
+    }
+
+    public void Dispose()
+    {
+        Timer.Updated -= Updated;
+    }
+
+    class TaskViewModel
+    {
+        public Guid Id { get; set; }
+
+        public string Name { get; set; }
+        public double Progress { get; set; }
+        public ProgressStatus ProgressStatus { get; set; }
+        public QueuedTaskStatus Status { get; set; }
+        public DateTime Start { get; set; }
+        public TimeSpan Elapsed { get; set; }
+        public string Ninja { get; set; }
+        public string Message { get; set; }
+        
+    }
+}
