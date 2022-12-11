@@ -356,7 +356,7 @@ namespace Application.Tests.Dojo
         }
 
         private static QueueDto QueueDto(string name) => new QueueDto { Name = name };
-        private static StartTaskDto StartTaskDto(string command, string arguments = null, int nbCores = 0) 
+        private static StartTaskDto StartTaskDto(string command, string arguments = null, int nbCores = 1) 
             => new StartTaskDto { Command = command, Arguments = arguments, NbCores = nbCores };
         private static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)
             => QueueTestExtensions.TaskDto(id, status, progress);
