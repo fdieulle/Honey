@@ -51,7 +51,33 @@ namespace Application.Dojo
 
         public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length) => _proxy.FetchMessages(id, start, length);
 
-        public Guid StartTask(string command, string arguments, int nbCores = 1) => _proxy.StartTask(command, arguments, nbCores);
+        public Guid StartTask(string command, string arguments, int nbCores = 1)
+        {
+            // Provision untill the real state is asked
+            var previousFreeCores = 0;
+            if (_resources != null)
+            {
+                if (nbCores > 0)
+                    _resources.NbFreeCores -= nbCores;
+                else
+                {
+                    previousFreeCores = _resources.NbFreeCores;
+                    _resources.NbFreeCores = 0;
+                }
+            }
+
+            var id = _proxy.StartTask(command, arguments, nbCores);
+            
+            // Rollback the provision
+            if (id == Guid.Empty && _resources != null)
+            {
+                if (nbCores > 0)
+                    _resources.NbFreeCores += nbCores;
+                else _resources.NbFreeCores = previousFreeCores;
+            }
+
+            return id;
+        }
 
         public void CancelTask(Guid id) => _proxy.CancelTask(id);
 
