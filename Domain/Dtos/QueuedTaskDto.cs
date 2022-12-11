@@ -8,7 +8,9 @@ namespace Domain.Dtos
         Pending,
         Running,
         CancelRequested,
-        Completed
+        CancelPending,
+        Completed,
+        Error
     }
 
     public class QueuedTaskDto
@@ -27,7 +29,7 @@ namespace Domain.Dtos
 
         public ulong Order { get; set; }
 
-        public TaskDto NinjaState { get; set; }
+        public TaskDto NinjaState { get; set; } = new TaskDto { Status = TaskStatus.Pending };
 
         public QueuedTaskDto() { Id = Guid.NewGuid(); }
 
@@ -37,7 +39,6 @@ namespace Domain.Dtos
             Name = name ?? Id.ToString();
             QueueName = queue;
             StartTask = task;
-            NinjaState = new TaskDto { Status = TaskStatus.Pending };
             Order = order;
         }
     }

@@ -2,11 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace Application.Dojo
 {
-    public class Dojo : IDojo, IDisposable
+    public class Dojo : IDojo
     {
         private static readonly Comparer<NinjaDto> heuristic = Comparer<NinjaDto>.Create((x, y) =>
         {
@@ -16,26 +15,22 @@ namespace Application.Dojo
             return x.PercentFreeMemory.CompareTo(y.PercentFreeMemory);
         });
 
-        private readonly INinjaContainer _ninjaContainer;
+        private readonly INinjaFactory _factory;
         private readonly IDojoDb _database;
         private Dictionary<string, Ninja> _ninjas = new Dictionary<string, Ninja>();
-        private readonly ITimer _timer;
 
-        public INinjaContainer Container => _ninjaContainer;
+        public INinjaFactory Container => _factory;
 
         public IEnumerable<Ninja> Ninjas => _ninjas.Values;
 
-        public Dojo(INinjaContainer ninjaContainer, IDojoDb database, ITimer timer)
+        public Dojo(INinjaFactory factory, IDojoDb database)
         {
-            _ninjaContainer = ninjaContainer;
+            _factory = factory;
             _database = database;
-            _timer = timer;
 
             var ninjas = _database.FetchNinjas() ?? Enumerable.Empty<NinjaDto>();
             foreach (var ninja in ninjas)
                 EnrollNinja(ninja.Address, false);
-
-            _timer.Updated += Refresh;
         }
 
         public IEnumerable<NinjaDto> GetNinjas()
@@ -59,7 +54,7 @@ namespace Application.Dojo
             if (_ninjas.ContainsKey(address))
                 return;
 
-            var ninja = new Ninja(address, _ninjaContainer.Resolve(address));
+            var ninja = new Ninja(address, _factory.Create(address));
             _ninjas.Add(address, ninja);
 
             if (withDb)
@@ -78,7 +73,7 @@ namespace Application.Dojo
             }
         }
 
-        private void Refresh()
+        public void Refresh()
         {
             List<Ninja> ninjas;
             lock (_ninjas)
@@ -111,11 +106,6 @@ namespace Application.Dojo
             {
                 return _ninjas.TryGetValue(address, out var ninja) ? ninja : null;
             }
-        }
-
-        public void Dispose()
-        {
-            _timer.Updated -= Refresh;
         }
     }
 }

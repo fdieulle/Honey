@@ -19,5 +19,7 @@ namespace Domain.Entities
         public QueuedTaskStatus Status { get; set; }
 
         public ulong Order { get; set; }
+
+        public Guid NinjaTaskId { get; set; }
     }
 }

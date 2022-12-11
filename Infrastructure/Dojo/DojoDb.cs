@@ -86,6 +86,7 @@ namespace Infrastructure.Dojo
             entity.Command = dto.StartTask.Command;
             entity.Arguments = dto.StartTask.Arguments;
             entity.NbCores = dto.StartTask.NbCores;
+            entity.NinjaTaskId = dto.NinjaState.Id;
         }
         private static QueuedTaskDto ToDto(QueuedTaskEntity entity)
         {
@@ -102,6 +103,11 @@ namespace Infrastructure.Dojo
                     Command = entity.Command,
                     Arguments = entity.Arguments,
                     NbCores = entity.NbCores
+                },
+                NinjaState = new TaskDto
+                {
+                    Id = entity.Id,
+                    Status = TaskStatus.Pending
                 }
             };
         }

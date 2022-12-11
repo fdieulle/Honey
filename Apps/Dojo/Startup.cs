@@ -1,3 +1,4 @@
+using Application.Dojo;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -63,6 +64,8 @@ namespace Dojo
                 endpoints.MapFallbackToPage("/_Host");
                 endpoints.MapControllers();
             });
+
+            app.ApplicationServices.GetService<Poller>().Start();
         }
     }
 }

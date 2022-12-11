@@ -13,10 +13,9 @@ namespace Application.Tests.Dojo
         public void TestExecuteSimpleTask()
         {
             var database = Substitute.For<IDojoDb>();
-            var container = Substitute.For<INinjaContainer>();
-            var timer = Substitute.For<ITimer>();
-            var dojo = new Application.Dojo.Dojo(container, database, timer);
-            var queueProvider = new QueueProvider(dojo, database, timer);
+            var container = Substitute.For<INinjaFactory>();
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
 
             // Setup a ninja
@@ -38,10 +37,9 @@ namespace Application.Tests.Dojo
         public void TestCancelSimpleTask()
         {
             var database = Substitute.For<IDojoDb>();
-            var container = Substitute.For<INinjaContainer>();
-            var timer = Substitute.For<ITimer>();
-            var dojo = new Application.Dojo.Dojo(container, database, timer);
-            var queueProvider = new QueueProvider(dojo, database, timer);
+            var container = Substitute.For<INinjaFactory>();
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -69,10 +67,9 @@ namespace Application.Tests.Dojo
         public void TestExecuteMultipleTasks()
         {
             var database = Substitute.For<IDojoDb>();
-            var container = Substitute.For<INinjaContainer>();
-            var timer = Substitute.For<ITimer>();
-            var dojo = new Application.Dojo.Dojo(container, database, timer);
-            var queueProvider = new QueueProvider(dojo, database, timer);
+            var container = Substitute.For<INinjaFactory>();
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -109,10 +106,9 @@ namespace Application.Tests.Dojo
         public void TestHangingTask()
         {
             var database = Substitute.For<IDojoDb>();
-            var container = Substitute.For<INinjaContainer>();
-            var timer = Substitute.For<ITimer>();
-            var dojo = new Application.Dojo.Dojo(container, database, timer);
-            var queueProvider = new QueueProvider(dojo, database, timer);
+            var container = Substitute.For<INinjaFactory>();
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -156,10 +152,9 @@ namespace Application.Tests.Dojo
         public void TestExecuteTasksInMultipleQueues()
         {
             var database = Substitute.For<IDojoDb>();
-            var container = Substitute.For<INinjaContainer>();
-            var timer = Substitute.For<ITimer>();
-            var dojo = new Application.Dojo.Dojo(container, database, timer);
-            var queueProvider = new QueueProvider(dojo, database, timer);
+            var container = Substitute.For<INinjaFactory>();
+            var dojo = new Application.Dojo.Dojo(container, database);
+            var queueProvider = new QueueProvider(dojo, database);
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -228,7 +223,7 @@ namespace Application.Tests.Dojo
 
             // Make it accessible from the container
             dojo.Container
-                .Resolve(Arg.Is(address))
+                .Create(Arg.Is(address))
                 .Returns(ninja);
 
             // Enroll a ninja and enforce a refresh to set it up
@@ -241,7 +236,7 @@ namespace Application.Tests.Dojo
 
         public static void UpdateNinjaState(this Application.Dojo.Dojo dojo, string address, int nbFreeCores)
         {
-            var proxy = dojo.Container.Resolve(address);
+            var proxy = dojo.Container.Create(address);
             proxy.GetResources().Returns(R(address, nbFreeCores));
 
             dojo.GetNinja(address)

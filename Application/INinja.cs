@@ -21,8 +21,8 @@ namespace Application
         void UpdateTask(TaskStateDto state);
     }
 
-    public interface INinjaContainer
+    public interface INinjaFactory
     {
-        INinja Resolve(string address);
+        INinja Create(string address);
     }
 }

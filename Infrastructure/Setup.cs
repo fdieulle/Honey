@@ -45,10 +45,11 @@ namespace Infrastructure
             #endregion
 
             services.AddSingleton<ITimer>(new ThreadedTimer(3000));
-            services.AddSingleton<INinjaContainer, NinjaContainer>();
+            services.AddSingleton<INinjaFactory, NinjaProxyFactory>();
             services.AddSingleton<Application.Dojo.Dojo>();
             services.AddSingleton<QueueProvider>();
             services.AddSingleton<Shogun>();
+            services.AddSingleton<Poller>();
         }
     }
 }
