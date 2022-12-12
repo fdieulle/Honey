@@ -14,6 +14,7 @@ namespace Application.Tests.Dojo
     {
         private readonly INinjaFactory _factory;
         private readonly DojoDbLogs _db;
+        private readonly TaskTracker _tracker;
         private readonly Application.Dojo.Dojo _dojo;
         private readonly Queue _queue;
 
@@ -22,14 +23,16 @@ namespace Application.Tests.Dojo
             _factory = Substitute.For<INinjaFactory>();
             _db = new DojoDbLogs();
             _dojo = new Application.Dojo.Dojo(_factory, _db);
+            _tracker = new TaskTracker();
 
-            _queue = new Queue(QueueDto("Queue 1"), _dojo, _db);
+            _queue = new Queue(QueueDto("Queue 1"), _dojo, _db, _tracker);
         }
 
         private void Refresh()
         {
             _dojo.Refresh();
             _queue.Refresh();
+            _tracker.Refresh();
         }
 
         [Fact]
@@ -296,7 +299,7 @@ namespace Application.Tests.Dojo
                 TaskDto(task11Id, TaskStatus.Done));
 
             var dojo = new Application.Dojo.Dojo(_factory, _db);
-            var queue = new Queue(QueueDto("Queue 2"), dojo, _db);
+            var queue = new Queue(QueueDto("Queue 2"), dojo, _db, _tracker);
 
             ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             ninja.DidNotReceive().CancelTask(Arg.Any<Guid>());

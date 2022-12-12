@@ -24,6 +24,7 @@ namespace Application.Dojo
                 case QueuedTaskStatus.Pending:
                 case QueuedTaskStatus.Running:
                 case QueuedTaskStatus.CancelRequested:
+                case QueuedTaskStatus.CancelPending:
                     return false;
                 default:
                     return true;

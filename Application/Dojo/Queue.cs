@@ -14,6 +14,7 @@ namespace Application.Dojo
         private readonly object _lock = new object();
         private readonly Dojo _dojo;
         private readonly IDojoDb _database;
+        private readonly TaskTracker _tracker;
         private int _maxParallelTasks;
         private HashSet<string> _ninjas = new HashSet<string>();
         private ulong _orderIncrement;
@@ -22,10 +23,11 @@ namespace Application.Dojo
 
         public QueueDto Dto { get; } = new QueueDto();
 
-        public Queue(QueueDto dto, Dojo dojo, IDojoDb database)
+        public Queue(QueueDto dto, Dojo dojo, IDojoDb database, TaskTracker tracker)
         {
             _dojo = dojo;
             _database = database;
+            _tracker = tracker;
             Dto.Name = dto.Name;
             Update(dto);
 
@@ -142,10 +144,13 @@ namespace Application.Dojo
 
             if (!_tasks.ContainsKey(task.Id))
                 _database.CreateTask(task);
+            else if (status == QueuedTaskStatus.Deleted)
+                _database.DeleteTask(task.Id);
             else
                 _database.UpdateTask(task);
 
             _tasks[task.Id] = task;
+            _tracker.Track(task);
         }
 
         public void CancelTask(Guid id)
@@ -243,26 +248,26 @@ namespace Application.Dojo
 
         public bool DeleteTask(Guid id)
         {
-            QueuedTaskDto task;
             lock (_lock)
             {
-                if (!_tasks.TryGetValue(id, out task) || !task.IsFinalStatus())
+                if (!_tasks.TryGetValue(id, out var task) || !task.IsFinalStatus())
                     return false;
-            }
 
-            // Delete the task from the Ninja
-            if (!string.IsNullOrEmpty(task.NinjaAddress)) 
-            {
-                var ninja = _dojo.GetNinja(task.NinjaAddress);
-                if (ninja == null || task.NinjaState == null) 
-                    return false; // Todo: Should mark as deleted for a deletion later or enforce the delete if no Ninja can remind it existency
+                // Delete the task from the Ninja
+                if (!string.IsNullOrEmpty(task.NinjaAddress))
+                {
+                    var ninja = _dojo.GetNinja(task.NinjaAddress);
+                    if (ninja == null || task.NinjaState == null)
+                        return false; // Todo: Should mark as deleted for a deletion later or enforce the delete if no Ninja can remind it existency
 
-                ninja.DeleteTask(task.NinjaState.Id);
+                    ninja.DeleteTask(task.NinjaState.Id);
+                }
+
+                RecordTask(task, QueuedTaskStatus.Deleted);
+                _tasks.Remove(id);
+
+                return true;
             }
-            
-            _tasks.Remove(id);
-            _database.DeleteTask(id);
-            return true;
         }
 
         private void DequeueTasks(int nbTasksToStart)

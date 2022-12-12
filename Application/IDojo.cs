@@ -30,4 +30,14 @@ namespace Application
 
         void Cancel(Guid id);
     }
+
+    public interface ITaskTracker
+    {
+        IDisposable Subscribe(Guid taskId, Action<QueuedTaskDto> onUpdate);
+    }
+
+    // TODO: ReRun a task in error by keeping the same Id
+    // Todo: Handle the task deletion
+
+    
 }

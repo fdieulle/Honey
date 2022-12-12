@@ -10,7 +10,8 @@ namespace Domain.Dtos
         CancelRequested,
         CancelPending,
         Completed,
-        Error
+        Error,
+        Deleted
     }
 
     public class QueuedTaskDto

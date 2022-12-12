@@ -15,7 +15,7 @@ namespace Application.Tests.Dojo
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaFactory>();
             var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var queueProvider = new QueueProvider(dojo, database, new TaskTracker());
             var shogun = new Shogun(queueProvider);
 
             // Setup a ninja
@@ -39,7 +39,7 @@ namespace Application.Tests.Dojo
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaFactory>();
             var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var queueProvider = new QueueProvider(dojo, database, new TaskTracker());
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -69,7 +69,7 @@ namespace Application.Tests.Dojo
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaFactory>();
             var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var queueProvider = new QueueProvider(dojo, database, new TaskTracker());
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -108,7 +108,7 @@ namespace Application.Tests.Dojo
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaFactory>();
             var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var queueProvider = new QueueProvider(dojo, database, new TaskTracker());
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 
@@ -154,7 +154,7 @@ namespace Application.Tests.Dojo
             var database = Substitute.For<IDojoDb>();
             var container = Substitute.For<INinjaFactory>();
             var dojo = new Application.Dojo.Dojo(container, database);
-            var queueProvider = new QueueProvider(dojo, database);
+            var queueProvider = new QueueProvider(dojo, database, new TaskTracker());
             var shogun = new Shogun(queueProvider);
             var ninjaTaskIds = new List<Guid>();
 

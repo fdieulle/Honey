@@ -9,11 +9,13 @@ namespace Application.Dojo
         private readonly Dictionary<string, Queue> _queues = new Dictionary<string, Queue>();
         private readonly Dojo _dojo;
         private readonly IDojoDb _database;
+        private readonly TaskTracker _tracker;
 
-        public QueueProvider(Dojo dojo, IDojoDb database)
+        public QueueProvider(Dojo dojo, IDojoDb database, TaskTracker tracker)
         {
             _dojo = dojo;
             _database = database;
+            _tracker = tracker;
             var queues = _database.FetchQueues() ?? Enumerable.Empty<QueueDto>();
             foreach (var queue in queues)
                 CreateQueue(queue, false);
@@ -39,7 +41,7 @@ namespace Application.Dojo
         {
             if (_queues.ContainsKey(dto.Name)) return false;
 
-            _queues.Add(dto.Name, new Queue(dto, _dojo, _database));
+            _queues.Add(dto.Name, new Queue(dto, _dojo, _database, _tracker));
             if (withDb)
                 _database.CreateQueue(dto);
             return true;
