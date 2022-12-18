@@ -20,7 +20,6 @@ namespace Application.Dojo
         {
             switch (status)
             {
-                case QueuedTaskStatus.Unknwon:
                 case QueuedTaskStatus.Pending:
                 case QueuedTaskStatus.Running:
                 case QueuedTaskStatus.CancelRequested:
