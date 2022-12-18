@@ -4,12 +4,12 @@ namespace Domain.Dtos
 {
     public enum QueuedTaskStatus
     {
-        Unknwon, // When no ninja status has been received yet
         Pending,
         Running,
+        Completed,
         CancelRequested,
         CancelPending,
-        Completed,
+        Cancel,
         Error,
         Deleted
     }

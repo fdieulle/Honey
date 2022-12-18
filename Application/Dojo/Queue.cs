@@ -3,6 +3,7 @@ using Domain.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 
 namespace Application.Dojo
 {
@@ -160,7 +161,6 @@ namespace Application.Dojo
                 // Try cancel running task
                 if (_runningTasks.TryGetValue(id, out var task))
                 {
-
                     var ninja = _dojo.GetNinja(task.NinjaAddress);
                     if (ninja != null)
                     {
@@ -224,10 +224,16 @@ namespace Application.Dojo
                         task.NinjaState = state;
                         if (state.IsFinal())
                         {
-                            lock (_lock)
-                                _runningTasks.Remove(task.Id);
-                            RecordTask(task, QueuedTaskStatus.Completed);
-                            
+                            _runningTasks.Remove(task.Id);
+
+                            var status = state.Status;
+                            if (status == TaskStatus.Done)
+                                RecordTask(task, QueuedTaskStatus.Completed);
+                            else if(status == TaskStatus.Cancel)
+                                RecordTask(task, QueuedTaskStatus.Cancel);
+                            else
+                                RecordTask(task, QueuedTaskStatus.Error);
+
                             ninja.DeleteTask(task.NinjaState.Id);
                         }
                         else if (task.Status == QueuedTaskStatus.CancelPending)

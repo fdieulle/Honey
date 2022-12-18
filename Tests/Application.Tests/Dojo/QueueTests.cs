@@ -337,7 +337,7 @@ namespace Application.Tests.Dojo
             // Nothing to check for task 8
 
             // Check task 9
-            taskUpdates.Check("Task 9", "Queue 2", "Ninja 1", "cmd 9", task9Id, QueuedTaskStatus.Completed, TaskStatus.Cancel, 0.5);
+            taskUpdates.Check("Task 9", "Queue 2", "Ninja 1", "cmd 9", task9Id, QueuedTaskStatus.Cancel, TaskStatus.Cancel, 0.5);
             ninja.Received(1).DeleteTask(Arg.Is(task9Id));
 
             // Check task 10
