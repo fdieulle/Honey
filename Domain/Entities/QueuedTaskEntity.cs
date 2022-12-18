@@ -3,7 +3,7 @@ using System;
 
 namespace Domain.Entities
 {
-    public class QueuedTaskEntity
+    public class RemoteTaskEntity
     {
         public Guid Id { get; set; }
 

@@ -14,7 +14,7 @@ namespace Domain.Dtos
         Deleted
     }
 
-    public class QueuedTaskDto
+    public class RemoteTaskDto
     {
         public Guid Id { get; set; }
 
@@ -32,9 +32,9 @@ namespace Domain.Dtos
 
         public TaskDto NinjaState { get; set; } = new TaskDto { Status = TaskStatus.Pending };
 
-        public QueuedTaskDto() { Id = Guid.NewGuid(); }
+        public RemoteTaskDto() { Id = Guid.NewGuid(); }
 
-        public QueuedTaskDto(string queue, string name, StartTaskDto task, ulong order)
+        public RemoteTaskDto(string queue, string name, StartTaskDto task, ulong order)
         {
             Id = Guid.NewGuid();
             Name = name ?? Id.ToString();

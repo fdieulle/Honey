@@ -9,7 +9,7 @@ namespace Infrastructure.Dojo
 
         public DbSet<QueueEntity> Queues { get; set; }
 
-        public DbSet<QueuedTaskEntity> Tasks { get; set; }
+        public DbSet<RemoteTaskEntity> Tasks { get; set; }
 
         public DojoDbContext(DbContextOptions<DojoDbContext> options) : base(options)
         {
@@ -24,7 +24,7 @@ namespace Infrastructure.Dojo
                 .HasKey(p => p.Address);
             mb.Entity<QueueEntity>()
                 .HasKey(p => p.Name);
-            mb.Entity<QueuedTaskEntity>()
+            mb.Entity<RemoteTaskEntity>()
                 .HasKey(p => p.Id);
         }
     }

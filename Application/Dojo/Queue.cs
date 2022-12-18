@@ -9,9 +9,9 @@ namespace Application.Dojo
 {
     public class Queue
     {
-        private readonly Queue<QueuedTaskDto> _pendingTasks = new Queue<QueuedTaskDto>();
-        private readonly Dictionary<Guid, QueuedTaskDto> _runningTasks = new Dictionary<Guid, QueuedTaskDto>();
-        private readonly Dictionary<Guid, QueuedTaskDto> _tasks = new Dictionary<Guid, QueuedTaskDto>();
+        private readonly Queue<RemoteTaskDto> _pendingTasks = new Queue<RemoteTaskDto>();
+        private readonly Dictionary<Guid, RemoteTaskDto> _runningTasks = new Dictionary<Guid, RemoteTaskDto>();
+        private readonly Dictionary<Guid, RemoteTaskDto> _tasks = new Dictionary<Guid, RemoteTaskDto>();
         private readonly object _lock = new object();
         private readonly Dojo _dojo;
         private readonly IDojoDb _database;
@@ -32,19 +32,19 @@ namespace Application.Dojo
             Dto.Name = dto.Name;
             Update(dto);
 
-            var tasks = _database.FetchTasks() ?? Enumerable.Empty<QueuedTaskDto>();
+            var tasks = _database.FetchTasks() ?? Enumerable.Empty<RemoteTaskDto>();
             RestoreTasks(tasks.Where(p => p.QueueName == Name));
         }
 
-        public IEnumerable<QueuedTaskDto> GetAllTasks()
+        public IEnumerable<RemoteTaskDto> GetAllTasks()
         {
             lock (_lock)
                 return _tasks.Values.ToList();
         }
 
-        private void RestoreTasks(IEnumerable<QueuedTaskDto> tasks)
+        private void RestoreTasks(IEnumerable<RemoteTaskDto> tasks)
         {
-            var pendingTasks = new List<QueuedTaskDto>();
+            var pendingTasks = new List<RemoteTaskDto>();
             foreach (var task in tasks)
             {
                 _tasks[task.Id] = task;
@@ -89,11 +89,11 @@ namespace Application.Dojo
         {
             lock (_lock)
             {
-                return StartTask(new QueuedTaskDto(Name, name, startTask, _orderIncrement++));
+                return StartTask(new RemoteTaskDto(Name, name, startTask, _orderIncrement++));
             }
         }
 
-        private Guid StartTask(QueuedTaskDto task)
+        private Guid StartTask(RemoteTaskDto task)
         {
             // Make sure we didn't exceed the max number of parallel tasks
             if (_maxParallelTasks > 0 && _runningTasks.Count >= _maxParallelTasks)
@@ -120,7 +120,7 @@ namespace Application.Dojo
             return Hang(task);
         }
         
-        private Guid RunTask(QueuedTaskDto task, Ninja ninja, Guid ninjaTaskId)
+        private Guid RunTask(RemoteTaskDto task, Ninja ninja, Guid ninjaTaskId)
         {
             task.NinjaState.Id = ninjaTaskId;
             task.NinjaAddress = ninja.Address;
@@ -130,7 +130,7 @@ namespace Application.Dojo
             return task.Id;
         }
 
-        private Guid Hang(QueuedTaskDto task)
+        private Guid Hang(RemoteTaskDto task)
         {
             if (!_tasks.ContainsKey(task.Id))
                 _pendingTasks.Enqueue(task);
@@ -139,7 +139,7 @@ namespace Application.Dojo
             return task.Id;
         }
 
-        private void RecordTask(QueuedTaskDto task, QueuedTaskStatus status)
+        private void RecordTask(RemoteTaskDto task, QueuedTaskStatus status)
         {
             task.Status = status;
 

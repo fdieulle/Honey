@@ -7,7 +7,7 @@ namespace Application.Dojo
 {
     public static class Extensions
     {
-        public static Guid StartTask(this INinja ninja, QueuedTaskDto task)
+        public static Guid StartTask(this INinja ninja, RemoteTaskDto task)
         {
             if (task == null) return Guid.Empty;
             var startTask = task.StartTask;
@@ -30,6 +30,6 @@ namespace Application.Dojo
             }
         }
 
-        public static bool IsFinalStatus(this QueuedTaskDto dto) => dto.Status.IsFinal();
+        public static bool IsFinalStatus(this RemoteTaskDto dto) => dto.Status.IsFinal();
     }
 }

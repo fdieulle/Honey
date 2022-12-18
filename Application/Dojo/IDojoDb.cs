@@ -6,9 +6,9 @@ namespace Application.Dojo
 {
     public interface IDojoDb
     {
-        IEnumerable<QueuedTaskDto> FetchTasks();
-        void CreateTask(QueuedTaskDto task);
-        void UpdateTask(QueuedTaskDto task);
+        IEnumerable<RemoteTaskDto> FetchTasks();
+        void CreateTask(RemoteTaskDto task);
+        void UpdateTask(RemoteTaskDto task);
         void DeleteTask(Guid id);
 
         IEnumerable<NinjaDto> FetchNinjas();

@@ -43,7 +43,7 @@ namespace Domain
             }
         }
 
-        public static bool IsFinal(this QueuedTaskDto dto) => dto.Status.IsFinal();
+        public static bool IsFinal(this RemoteTaskDto dto) => dto.Status.IsFinal();
 
         public static bool CanCancel(this QueuedTaskStatus status)
         {
@@ -64,6 +64,6 @@ namespace Domain
             }
         }
 
-        public static bool CanCancel(this QueuedTaskDto dto) => dto.Status.CanCancel();
+        public static bool CanCancel(this RemoteTaskDto dto) => dto.Status.CanCancel();
     }
 }

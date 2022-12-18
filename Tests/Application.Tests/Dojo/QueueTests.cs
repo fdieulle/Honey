@@ -310,8 +310,8 @@ namespace Application.Tests.Dojo
             dojo.Refresh();
             queue.Refresh();
 
-            var taskUpdates = new List<QueuedTaskDto>();
-            QueuedTaskDto dto;
+            var taskUpdates = new List<RemoteTaskDto>();
+            RemoteTaskDto dto;
             while ((dto = _db.TaskTable.NextUpdate()) != null)
                 taskUpdates.Add(dto);
 
@@ -364,8 +364,8 @@ namespace Application.Tests.Dojo
         private static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)
             => QueueTestExtensions.TaskDto(id, status, progress);
         private static ulong taskCounter = 0;
-        private static QueuedTaskDto QueuedTaskDto(string name, string queueName, string ninja, QueuedTaskStatus status, StartTaskDto start, TaskDto state)
-            => new QueuedTaskDto
+        private static RemoteTaskDto QueuedTaskDto(string name, string queueName, string ninja, QueuedTaskStatus status, StartTaskDto start, TaskDto state)
+            => new RemoteTaskDto
             {
                 Id = Guid.NewGuid(),
                 Name = name,
@@ -398,7 +398,7 @@ namespace Application.Tests.Dojo
         public static void SetupAsEmpty(this INinja ninja) => ninja.GetResources().Returns(ResourcesDto(8));
 
         public static bool Check(
-            this List<QueuedTaskDto> list,
+            this List<RemoteTaskDto> list,
             string name, string queueName, string ninjaAdress, string command,
             Guid taskId, QueuedTaskStatus status,
             TaskStatus? taskStatus = null, double? progress = null)
@@ -410,7 +410,7 @@ namespace Application.Tests.Dojo
         }
 
         public static bool Check(
-            this QueuedTaskDto expected, 
+            this RemoteTaskDto expected, 
             string name, string queueName, string ninjaAdress, string command,
             Guid taskId, QueuedTaskStatus status, 
             TaskStatus? taskStatus = null, double? progress = null)
@@ -435,7 +435,7 @@ namespace Application.Tests.Dojo
             return true;
         }
 
-        public static void Check(this QueuedTaskDto expected, QueuedTaskDto actual)
+        public static void Check(this RemoteTaskDto expected, RemoteTaskDto actual)
         {
             if (expected == null && actual == null) return;
 

@@ -12,14 +12,14 @@ namespace Infrastructure.Dojo
     {
         private readonly CrudDbTable<DojoDbContext, NinjaEntity, string, NinjaDto> _crudNinjas;
         private readonly CrudDbTable<DojoDbContext, QueueEntity, string, QueueDto> _crudQueues;
-        private readonly CrudDbTable<DojoDbContext, QueuedTaskEntity, Guid, QueuedTaskDto> _crudTasks;
+        private readonly CrudDbTable<DojoDbContext, RemoteTaskEntity, Guid, RemoteTaskDto> _crudTasks;
         public DojoDb(IDbContextFactory<DojoDbContext> factory)
         {
             _crudNinjas = new CrudDbTable<DojoDbContext, NinjaEntity, string, NinjaDto>(
                 factory, c => c.Ninjas, p => p.Address, ToEntity, UpdateEntity, p => p.Address, ToDto);
             _crudQueues = new CrudDbTable<DojoDbContext, QueueEntity, string, QueueDto>(
                 factory, c => c.Queues, p => p.Name, ToEntity, UpdateEntity, p => p.Name, ToDto);
-            _crudTasks = new CrudDbTable<DojoDbContext, QueuedTaskEntity, Guid, QueuedTaskDto>(
+            _crudTasks = new CrudDbTable<DojoDbContext, RemoteTaskEntity, Guid, RemoteTaskDto>(
                 factory, c => c.Tasks, p => p.Id, ToEntity, UpdateEntity, p => p.Id, ToDto);
         }
 
@@ -37,11 +37,11 @@ namespace Infrastructure.Dojo
 
         public void DeleteQueue(string name) => _crudQueues.Delete(name);
 
-        public IEnumerable<QueuedTaskDto> FetchTasks() => _crudTasks.Fetch();
+        public IEnumerable<RemoteTaskDto> FetchTasks() => _crudTasks.Fetch();
 
-        public void CreateTask(QueuedTaskDto task) => _crudTasks.Create(task);
+        public void CreateTask(RemoteTaskDto task) => _crudTasks.Create(task);
 
-        public void UpdateTask(QueuedTaskDto task) => _crudTasks.Update(task);
+        public void UpdateTask(RemoteTaskDto task) => _crudTasks.Update(task);
 
         public void DeleteTask(Guid id) => _crudTasks.Delete(id);
 
@@ -70,13 +70,13 @@ namespace Infrastructure.Dojo
             };
         }
 
-        private static QueuedTaskEntity ToEntity(QueuedTaskDto dto)
+        private static RemoteTaskEntity ToEntity(RemoteTaskDto dto)
         {
-            var entity = new QueuedTaskEntity { Id = dto.Id };
+            var entity = new RemoteTaskEntity { Id = dto.Id };
             UpdateEntity(dto, entity);
             return entity;
         }
-        private static void UpdateEntity(QueuedTaskDto dto, QueuedTaskEntity entity)
+        private static void UpdateEntity(RemoteTaskDto dto, RemoteTaskEntity entity)
         {
             entity.Name = dto.Name;
             entity.Status = dto.Status;
@@ -88,9 +88,9 @@ namespace Infrastructure.Dojo
             entity.NbCores = dto.StartTask.NbCores;
             entity.NinjaTaskId = dto.NinjaState.Id;
         }
-        private static QueuedTaskDto ToDto(QueuedTaskEntity entity)
+        private static RemoteTaskDto ToDto(RemoteTaskEntity entity)
         {
-            return new QueuedTaskDto
+            return new RemoteTaskDto
             {
                 Id = entity.Id,
                 Name = entity.Name,

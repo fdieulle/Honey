@@ -1,10 +1,12 @@
 ﻿using Application.Ninja;
 using Domain.Dtos;
+using Domain.Dtos.Sequences;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Application.Dojo
 {
@@ -55,9 +57,9 @@ namespace Application.Dojo
             queue.DeleteTask(id);
         }
 
-        public IEnumerable<QueuedTaskDto> GetAllTasks()
+        public IEnumerable<RemoteTaskDto> GetAllTasks()
         {
-            var result = new List<QueuedTaskDto>();
+            var result = new List<RemoteTaskDto>();
             foreach(var queueName in _queueProvider.GetQueues().Select(p => p.Name))
             {
                 var queue = _queueProvider.GetQueue(queueName);

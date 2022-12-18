@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Domain.Dtos;
+using Domain.Dtos.Sequences;
 
 namespace Application
 {
@@ -33,7 +34,7 @@ namespace Application
 
     public interface ITaskTracker
     {
-        IDisposable Subscribe(Guid taskId, Action<QueuedTaskDto> onUpdate);
+        IDisposable Subscribe(Guid taskId, Action<RemoteTaskDto> onUpdate);
     }
 
     // TODO: ReRun a task in error by keeping the same Id

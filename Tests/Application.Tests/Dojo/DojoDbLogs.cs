@@ -10,12 +10,12 @@ namespace Application.Tests.Dojo
     {
         private readonly Table<string, NinjaDto> _ninjaTable = new Table<string, NinjaDto>(p => p.Address);
         private readonly Table<string, QueueDto> _queueTable = new Table<string, QueueDto>(p => p.Name);
-        private readonly Table<Guid, QueuedTaskDto> _taskTable = new Table<Guid, QueuedTaskDto>(p => p.Id);
+        private readonly Table<Guid, RemoteTaskDto> _taskTable = new Table<Guid, RemoteTaskDto>(p => p.Id);
         public void CreateNinja(NinjaDto ninja) => _ninjaTable.Create(ninja);
 
         public void CreateQueue(QueueDto queue) => _queueTable.Create(queue);
 
-        public void CreateTask(QueuedTaskDto task) => _taskTable.Create(task);
+        public void CreateTask(RemoteTaskDto task) => _taskTable.Create(task);
 
         public void DeleteNinja(string address) => _ninjaTable.Delete(address);
 
@@ -27,15 +27,15 @@ namespace Application.Tests.Dojo
 
         public IEnumerable<QueueDto> FetchQueues() => _queueTable.FetchAll();
 
-        public IEnumerable<QueuedTaskDto> FetchTasks() => _taskTable.FetchAll();
+        public IEnumerable<RemoteTaskDto> FetchTasks() => _taskTable.FetchAll();
 
         public void UpdateQueue(QueueDto queue) => _queueTable.Update(queue);
 
-        public void UpdateTask(QueuedTaskDto task) => _taskTable.Update(task);
+        public void UpdateTask(RemoteTaskDto task) => _taskTable.Update(task);
 
         public ITableChecker<string, NinjaDto> NinjaTable => _ninjaTable;
         public ITableChecker<string, QueueDto> QueueTable => _queueTable;
-        public ITableChecker<Guid, QueuedTaskDto> TaskTable => _taskTable;
+        public ITableChecker<Guid, RemoteTaskDto> TaskTable => _taskTable;
 
         public void ClearLogs()
         {
