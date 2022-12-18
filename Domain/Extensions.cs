@@ -15,7 +15,6 @@ namespace Domain
                 case TaskStatus.Done:
                 case TaskStatus.Cancel:
                 case TaskStatus.Error:
-                case TaskStatus.EndedWithoutSupervision:
                     return true;
                 default:
                     throw new NotImplementedException();

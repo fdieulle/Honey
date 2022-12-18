@@ -8,8 +8,7 @@ namespace Domain.Dtos
         Running,
         Done,
         Cancel,
-        Error,
-        EndedWithoutSupervision,
+        Error
     }
 
     public class TaskDto

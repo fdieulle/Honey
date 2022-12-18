@@ -86,7 +86,6 @@ namespace Application.Ninja
                 case TaskStatus.Done:
                 case TaskStatus.Cancel:
                 case TaskStatus.Error:
-                case TaskStatus.EndedWithoutSupervision:
                     break;
             }
 
@@ -155,10 +154,9 @@ namespace Application.Ninja
         {
             if (!Status.IsFinal())
             {
-                if (_process == null)
-                    Status = TaskStatus.EndedWithoutSupervision;
-                else
-                    Status = _process.ExitCode == 0 ? TaskStatus.Done : TaskStatus.Error;
+                Status = _process != null && _process.ExitCode == 0 
+                    ? TaskStatus.Done 
+                    : TaskStatus.Error;
                 _taskDto.EndTime = DateTime.UtcNow;
             }
             
