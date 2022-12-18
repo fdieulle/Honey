@@ -7,9 +7,9 @@ namespace Application.Dojo
 {
     public class TaskTracker : ITaskTracker
     {
-        private readonly ConcurrentQueue<QueuedTaskDto> _queue = new ConcurrentQueue<QueuedTaskDto>();
-        private readonly ConcurrentDictionary<Guid, List<Action<QueuedTaskDto>>> _listeners = new ConcurrentDictionary<Guid, List<Action<QueuedTaskDto>>>();
-        public void Track(QueuedTaskDto task) => _queue.Enqueue(task);
+        private readonly ConcurrentQueue<RemoteTaskDto> _queue = new ConcurrentQueue<RemoteTaskDto>();
+        private readonly ConcurrentDictionary<Guid, List<Action<RemoteTaskDto>>> _listeners = new ConcurrentDictionary<Guid, List<Action<RemoteTaskDto>>>();
+        public void Track(RemoteTaskDto task) => _queue.Enqueue(task);
 
         public void Refresh()
         {
@@ -21,9 +21,9 @@ namespace Application.Dojo
             }
         }
 
-        public IDisposable Subscribe(Guid taskId, Action<QueuedTaskDto> onUpdate)
+        public IDisposable Subscribe(Guid taskId, Action<RemoteTaskDto> onUpdate)
         {
-            var list = _listeners.GetOrAdd(taskId, new List<Action<QueuedTaskDto>>());
+            var list = _listeners.GetOrAdd(taskId, new List<Action<RemoteTaskDto>>());
             list.Add(onUpdate);
 
             return new Disposable(() => list.Remove(onUpdate));
