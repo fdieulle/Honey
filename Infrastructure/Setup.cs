@@ -46,6 +46,9 @@ namespace Infrastructure
 
             services.AddSingleton<ITimer>(new ThreadedTimer(3000));
             services.AddSingleton<INinjaFactory, NinjaProxyFactory>();
+            var taskTracker = new TaskTracker();
+            services.AddSingleton<ITaskTracker>(taskTracker);
+            services.AddSingleton(taskTracker);
             services.AddSingleton<Application.Dojo.Dojo>();
             services.AddSingleton<QueueProvider>();
             services.AddSingleton<Shogun>();
