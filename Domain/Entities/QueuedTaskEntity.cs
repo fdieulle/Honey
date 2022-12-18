@@ -16,7 +16,7 @@ namespace Domain.Entities
         public string Arguments { get; set; }
         public int NbCores { get; set; } = 1;
 
-        public QueuedTaskStatus Status { get; set; }
+        public RemoteTaskStatus Status { get; set; }
 
         public ulong Order { get; set; }
 

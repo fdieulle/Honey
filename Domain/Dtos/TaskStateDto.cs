@@ -2,7 +2,8 @@
 
 namespace Domain.Dtos
 {
-    public class TaskStateDto
+    // Use by the Ninja client to notify the process state
+    public class TaskStateDto 
     {
         public Guid TaskId { get; set; }
 

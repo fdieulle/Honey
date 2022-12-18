@@ -16,14 +16,14 @@ namespace Application.Dojo
             return ninja.StartTask(startTask.Command, startTask.Arguments, startTask.NbCores);
         }
 
-        public static bool IsFinal(this QueuedTaskStatus status)
+        public static bool IsFinal(this RemoteTaskStatus status)
         {
             switch (status)
             {
-                case QueuedTaskStatus.Pending:
-                case QueuedTaskStatus.Running:
-                case QueuedTaskStatus.CancelRequested:
-                case QueuedTaskStatus.CancelPending:
+                case RemoteTaskStatus.Pending:
+                case RemoteTaskStatus.Running:
+                case RemoteTaskStatus.CancelRequested:
+                case RemoteTaskStatus.CancelPending:
                     return false;
                 default:
                     return true;

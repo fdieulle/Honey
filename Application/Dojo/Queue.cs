@@ -51,12 +51,12 @@ namespace Application.Dojo
 
                 switch (task.Status)
                 {
-                    case QueuedTaskStatus.Pending:
+                    case RemoteTaskStatus.Pending:
                         pendingTasks.Add(task);
                         break;
-                    case QueuedTaskStatus.Running:
-                    case QueuedTaskStatus.CancelRequested:
-                    case QueuedTaskStatus.CancelPending:
+                    case RemoteTaskStatus.Running:
+                    case RemoteTaskStatus.CancelRequested:
+                    case RemoteTaskStatus.CancelPending:
                         _runningTasks[task.Id] = task;
                         break;   
                 }
@@ -126,7 +126,7 @@ namespace Application.Dojo
             task.NinjaAddress = ninja.Address;
 
             _runningTasks[task.Id] = task;
-            RecordTask(task, QueuedTaskStatus.Running);
+            RecordTask(task, RemoteTaskStatus.Running);
             return task.Id;
         }
 
@@ -135,17 +135,17 @@ namespace Application.Dojo
             if (!_tasks.ContainsKey(task.Id))
                 _pendingTasks.Enqueue(task);
 
-            RecordTask(task, QueuedTaskStatus.Pending);
+            RecordTask(task, RemoteTaskStatus.Pending);
             return task.Id;
         }
 
-        private void RecordTask(RemoteTaskDto task, QueuedTaskStatus status)
+        private void RecordTask(RemoteTaskDto task, RemoteTaskStatus status)
         {
             task.Status = status;
 
             if (!_tasks.ContainsKey(task.Id))
                 _database.CreateTask(task);
-            else if (status == QueuedTaskStatus.Deleted)
+            else if (status == RemoteTaskStatus.Deleted)
                 _database.DeleteTask(task.Id);
             else
                 _database.UpdateTask(task);
@@ -168,16 +168,16 @@ namespace Application.Dojo
                         {
                             // Todo: The Ninja didn't give any status yet, We can only remove it
                             // Todo: Should we try to wait a bit the Ninja cache update before to take any action ?
-                            RecordTask(task, QueuedTaskStatus.Error);
+                            RecordTask(task, RemoteTaskStatus.Error);
                             return;
                         }
 
-                        RecordTask(task, QueuedTaskStatus.CancelRequested);
+                        RecordTask(task, RemoteTaskStatus.CancelRequested);
                         ninja.CancelTask(task.NinjaState.Id);
                     }
                     else
                     {
-                        RecordTask(task, QueuedTaskStatus.CancelPending);
+                        RecordTask(task, RemoteTaskStatus.CancelPending);
                     }
                 }
                 else // The task is pending
@@ -188,7 +188,7 @@ namespace Application.Dojo
                         task = _pendingTasks.Dequeue();
                         if (task.Id == id)
                         {
-                            RecordTask(task, QueuedTaskStatus.Completed);
+                            RecordTask(task, RemoteTaskStatus.Completed);
                             continue;
                         }
                         _pendingTasks.Enqueue(task);
@@ -214,7 +214,7 @@ namespace Application.Dojo
                     {
                         // TODO: Should we remove this task because it is not known by the Ninja
                         // Todo: Should we try to wait a bit the Ninja cache update before to take any action ?
-                        RecordTask(task, QueuedTaskStatus.Error);
+                        RecordTask(task, RemoteTaskStatus.Error);
                         continue;
                     }
 
@@ -228,18 +228,18 @@ namespace Application.Dojo
 
                             var status = state.Status;
                             if (status == TaskStatus.Done)
-                                RecordTask(task, QueuedTaskStatus.Completed);
+                                RecordTask(task, RemoteTaskStatus.Completed);
                             else if(status == TaskStatus.Cancel)
-                                RecordTask(task, QueuedTaskStatus.Cancel);
+                                RecordTask(task, RemoteTaskStatus.Cancel);
                             else
-                                RecordTask(task, QueuedTaskStatus.Error);
+                                RecordTask(task, RemoteTaskStatus.Error);
 
                             ninja.DeleteTask(task.NinjaState.Id);
                         }
-                        else if (task.Status == QueuedTaskStatus.CancelPending)
+                        else if (task.Status == RemoteTaskStatus.CancelPending)
                         {
                             ninja.CancelTask(task.NinjaState.Id);
-                            RecordTask(task, QueuedTaskStatus.CancelRequested);
+                            RecordTask(task, RemoteTaskStatus.CancelRequested);
                         }
                         else RecordTask(task, task.Status);
                     }
@@ -269,7 +269,7 @@ namespace Application.Dojo
                     ninja.DeleteTask(task.NinjaState.Id);
                 }
 
-                RecordTask(task, QueuedTaskStatus.Deleted);
+                RecordTask(task, RemoteTaskStatus.Deleted);
                 _tasks.Remove(id);
 
                 return true;

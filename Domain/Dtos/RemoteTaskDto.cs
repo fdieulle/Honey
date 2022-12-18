@@ -2,7 +2,7 @@
 
 namespace Domain.Dtos
 {
-    public enum QueuedTaskStatus
+    public enum RemoteTaskStatus
     {
         Pending,
         Running,
@@ -26,7 +26,7 @@ namespace Domain.Dtos
 
         public StartTaskDto StartTask { get; set; }
 
-        public QueuedTaskStatus Status { get; set; }
+        public RemoteTaskStatus Status { get; set; }
 
         public ulong Order { get; set; }
 

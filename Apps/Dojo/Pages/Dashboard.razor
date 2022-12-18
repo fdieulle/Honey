@@ -66,8 +66,8 @@
             et.Status = task.Status;
             et.StatusAsAlert = ToAlertType(task.Status);            
 
-            var isRunning = task.Status == QueuedTaskStatus.Running || task.Status == QueuedTaskStatus.CancelRequested;
-            var isCompleted = task.Status == QueuedTaskStatus.Completed;
+            var isRunning = task.Status == RemoteTaskStatus.Running || task.Status == RemoteTaskStatus.CancelRequested;
+            var isCompleted = task.Status == RemoteTaskStatus.Completed;
 
             var state = task.NinjaState;
             if (state != null)
@@ -81,7 +81,7 @@
                 et.Message = state.Message;
             }
 
-            var inError = state == null || state.Status == Domain.Dtos.TaskStatus.Error || state.Status == Domain.Dtos.TaskStatus.EndedWithoutSupervision;
+            var inError = state == null || state.Status == Domain.Dtos.TaskStatus.Error;
 
 
             if (inError)
@@ -108,17 +108,17 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private static string ToAlertType(QueuedTaskStatus status)
+    private static string ToAlertType(RemoteTaskStatus status)
     {
         switch (status)
         {
-            case QueuedTaskStatus.Pending:
+            case RemoteTaskStatus.Pending:
                 return AlertType.Info;
-            case QueuedTaskStatus.Running:
-            case QueuedTaskStatus.Completed:
+            case RemoteTaskStatus.Running:
+            case RemoteTaskStatus.Completed:
                 return AlertType.Success;
-            case QueuedTaskStatus.CancelRequested:
-            case QueuedTaskStatus.CancelPending:
+            case RemoteTaskStatus.CancelRequested:
+            case RemoteTaskStatus.CancelPending:
                 return AlertType.Warning;
             default:
                 return AlertType.Error;
@@ -147,7 +147,7 @@
         public string Name { get; set; }
         public double Progress { get; set; }
         public ProgressStatus ProgressStatus { get; set; }
-        public QueuedTaskStatus Status { get; set; }
+        public RemoteTaskStatus Status { get; set; }
         public string StatusAsAlert { get; set; }
         public DateTime Start { get; set; }
         public TimeSpan Elapsed { get; set; }
