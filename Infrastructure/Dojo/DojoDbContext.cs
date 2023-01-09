@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Entities.Pipelines;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Dojo
@@ -10,6 +11,10 @@ namespace Infrastructure.Dojo
         public DbSet<QueueEntity> Queues { get; set; }
 
         public DbSet<RemoteTaskEntity> Tasks { get; set; }
+
+        public DbSet<JobEntity> Jobs { get; set; }
+
+        public DbSet<PipelineEntity> Pipelines { get; set; }
 
         public DojoDbContext(DbContextOptions<DojoDbContext> options) : base(options)
         {
@@ -25,6 +30,17 @@ namespace Infrastructure.Dojo
             mb.Entity<QueueEntity>()
                 .HasKey(p => p.Name);
             mb.Entity<RemoteTaskEntity>()
+                .HasKey(p => p.Id);
+
+            mb.Entity<JobEntity>()
+                .HasKey(p => p.Id);
+            mb.Entity<SingleTaskJobEntity>()
+                .HasBaseType<JobEntity>();
+            mb.Entity<ParallelJobsEntity>()
+                .HasBaseType<JobEntity>();
+            mb.Entity<LinkedJobsEntity>()
+                .HasBaseType<JobEntity>();
+            mb.Entity<PipelineEntity>()
                 .HasKey(p => p.Id);
         }
     }

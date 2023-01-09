@@ -1,5 +1,6 @@
 ﻿using Application.Dojo;
 using Domain.Dtos;
+using Domain.Dtos.Pipelines;
 using System;
 using System.Collections.Generic;
 using Xunit;
@@ -11,6 +12,8 @@ namespace Application.Tests.Dojo
         private readonly Table<string, NinjaDto> _ninjaTable = new Table<string, NinjaDto>(p => p.Address);
         private readonly Table<string, QueueDto> _queueTable = new Table<string, QueueDto>(p => p.Name);
         private readonly Table<Guid, RemoteTaskDto> _taskTable = new Table<Guid, RemoteTaskDto>(p => p.Id);
+        private readonly Table<Guid, JobDto> _jobTable = new Table<Guid, JobDto>(p => p.Id);
+        private readonly Table<Guid, PipelineDto> _pipelineTable = new Table<Guid, PipelineDto>(p => p.Id);
         public void CreateNinja(NinjaDto ninja) => _ninjaTable.Create(ninja);
 
         public void CreateQueue(QueueDto queue) => _queueTable.Create(queue);
@@ -33,15 +36,39 @@ namespace Application.Tests.Dojo
 
         public void UpdateTask(RemoteTaskDto task) => _taskTable.Update(task);
 
+        public IEnumerable<JobDto> FetchJobs() => _jobTable.FetchAll();
+
+        public JobDto FetchJob(Guid id) => _jobTable.Fetch(id);
+
+        public void CreateJob(JobDto job) => _jobTable.Create(job);
+
+        public void UpdateJob(JobDto job) => _jobTable.Update(job);
+
+        public void DeleteJob(Guid id) => _jobTable.Delete(id);
+
+        public IEnumerable<PipelineDto> FetchPipelines() => _pipelineTable.FetchAll();
+
+        public PipelineDto FetchPipeline(Guid id) => _pipelineTable.Fetch(id);
+
+        public void CreatePipeline(PipelineDto pipeline) => _pipelineTable.FetchAll();
+
+        public void UpdatePipeline(PipelineDto pipeline) => _pipelineTable.Update(pipeline);
+
+        public void DeletePipeline(Guid id) => _pipelineTable.Delete(id);
+
         public ITableChecker<string, NinjaDto> NinjaTable => _ninjaTable;
         public ITableChecker<string, QueueDto> QueueTable => _queueTable;
         public ITableChecker<Guid, RemoteTaskDto> TaskTable => _taskTable;
+        public ITableChecker<Guid, JobDto> JobTable => _jobTable;
+        public ITableChecker<Guid, PipelineDto> PipelineTable => _pipelineTable;
 
         public void ClearLogs()
         {
             _ninjaTable.ClearLogs();
             _queueTable.ClearLogs();
             _taskTable.ClearLogs();
+            _jobTable.ClearLogs();
+            _pipelineTable.ClearLogs();
         }
 
         public interface ITableChecker<TKey, T>
@@ -70,6 +97,8 @@ namespace Application.Tests.Dojo
             }
 
             public IEnumerable<T> FetchAll() => _table.Values;
+
+            public T Fetch(TKey key) => _table[key];
 
             public void Create(T item)
             {

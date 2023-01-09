@@ -1,6 +1,8 @@
 ﻿using Application.Dojo;
 using Domain.Dtos;
+using Domain.Dtos.Pipelines;
 using Domain.Entities;
+using Domain.Entities.Pipelines;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -13,21 +15,33 @@ namespace Infrastructure.Dojo
         private readonly CrudDbTable<DojoDbContext, NinjaEntity, string, NinjaDto> _crudNinjas;
         private readonly CrudDbTable<DojoDbContext, QueueEntity, string, QueueDto> _crudQueues;
         private readonly CrudDbTable<DojoDbContext, RemoteTaskEntity, Guid, RemoteTaskDto> _crudTasks;
+        private readonly CrudDbTable<DojoDbContext, JobEntity, Guid, JobDto> _crudJobs;
+        private readonly CrudDbTable<DojoDbContext, PipelineEntity, Guid, PipelineDto> _crudPipelines;
         public DojoDb(IDbContextFactory<DojoDbContext> factory)
         {
             _crudNinjas = new CrudDbTable<DojoDbContext, NinjaEntity, string, NinjaDto>(
-                factory, c => c.Ninjas, p => p.Address, ToEntity, UpdateEntity, p => p.Address, ToDto);
+                factory, c => c.Ninjas, p => p.Address, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Address, e => e.ToDto());
             _crudQueues = new CrudDbTable<DojoDbContext, QueueEntity, string, QueueDto>(
-                factory, c => c.Queues, p => p.Name, ToEntity, UpdateEntity, p => p.Name, ToDto);
+                factory, c => c.Queues, p => p.Name, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Name, e => e.ToDto());
             _crudTasks = new CrudDbTable<DojoDbContext, RemoteTaskEntity, Guid, RemoteTaskDto>(
-                factory, c => c.Tasks, p => p.Id, ToEntity, UpdateEntity, p => p.Id, ToDto);
+                factory, c => c.Tasks, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
+            _crudJobs = new CrudDbTable<DojoDbContext, JobEntity, Guid, JobDto>(
+                factory, c => c.Jobs, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
+            _crudPipelines = new CrudDbTable<DojoDbContext, PipelineEntity, Guid, PipelineDto>(
+                factory, c => c.Pipelines, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
         }
+
+        #region Ninja
 
         public IEnumerable<NinjaDto> FetchNinjas() => _crudNinjas.Fetch();
 
         public void CreateNinja(NinjaDto ninja) => _crudNinjas.Create(ninja);
 
         public void DeleteNinja(string address) => _crudNinjas.Delete(address);
+
+        #endregion
+
+        #region Queues
 
         public IEnumerable<QueueDto> FetchQueues() => _crudQueues.Fetch();
 
@@ -37,6 +51,10 @@ namespace Infrastructure.Dojo
 
         public void DeleteQueue(string name) => _crudQueues.Delete(name);
 
+        #endregion
+
+        #region Remote tasks
+
         public IEnumerable<RemoteTaskDto> FetchTasks() => _crudTasks.Fetch();
 
         public void CreateTask(RemoteTaskDto task) => _crudTasks.Create(task);
@@ -45,72 +63,35 @@ namespace Infrastructure.Dojo
 
         public void DeleteTask(Guid id) => _crudTasks.Delete(id);
 
-        private static NinjaEntity ToEntity(NinjaDto dto) => new NinjaEntity { Address = dto.Address };
-        private static void UpdateEntity(NinjaDto dto, NinjaEntity entity) { }
-        private static NinjaDto ToDto(NinjaEntity entity) => new NinjaDto { Address = entity.Address };
+        #endregion
 
-        private const char SEP = ';';
-        private static QueueEntity ToEntity(QueueDto dto)
-        {
-            var entity = new QueueEntity { Name = dto.Name };
-            UpdateEntity(dto, entity);
-            return entity;
-        }
-        private static void UpdateEntity(QueueDto dto, QueueEntity entity) 
-        {
-            entity.MaxParallelTasks = dto.MaxParallelTasks;
-            entity.Ninjas = dto.Ninjas != null ? string.Join(SEP, dto.Ninjas) : null;
-        }
-        private static QueueDto ToDto(QueueEntity entity)
-        {
-            return new QueueDto { 
-                Name = entity.Name,
-                MaxParallelTasks = entity.MaxParallelTasks,
-                Ninjas = entity.Ninjas != null ? entity.Ninjas.Split(SEP) : null
-            };
-        }
+        #region Jobs
 
-        private static RemoteTaskEntity ToEntity(RemoteTaskDto dto)
-        {
-            var entity = new RemoteTaskEntity { Id = dto.Id };
-            UpdateEntity(dto, entity);
-            return entity;
-        }
-        private static void UpdateEntity(RemoteTaskDto dto, RemoteTaskEntity entity)
-        {
-            entity.Name = dto.Name;
-            entity.Status = dto.Status;
-            entity.QueueName = dto.QueueName;
-            entity.NinjaAddress = dto.NinjaAddress;
-            entity.Order = dto.Order;
-            entity.Command = dto.StartTask.Command;
-            entity.Arguments = dto.StartTask.Arguments;
-            entity.NbCores = dto.StartTask.NbCores;
-            entity.NinjaTaskId = dto.NinjaState.Id;
-        }
-        private static RemoteTaskDto ToDto(RemoteTaskEntity entity)
-        {
-            return new RemoteTaskDto
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                Status = entity.Status,
-                QueueName = entity.QueueName,
-                NinjaAddress = entity.NinjaAddress,
-                Order = entity.Order,
-                StartTask = new StartTaskDto
-                {
-                    Command = entity.Command,
-                    Arguments = entity.Arguments,
-                    NbCores = entity.NbCores
-                },
-                NinjaState = new TaskDto
-                {
-                    Id = entity.Id,
-                    Status = TaskStatus.Pending
-                }
-            };
-        }
+        public IEnumerable<JobDto> FetchJobs() => _crudJobs.Fetch();
+
+        public JobDto FetchJob(Guid id) => _crudJobs.Fetch().FirstOrDefault(p => p.Id == id);
+
+        public void CreateJob(JobDto job) => _crudJobs.Create(job);
+
+        public void UpdateJob(JobDto job) => _crudJobs.Update(job);
+
+        public void DeleteJob(Guid id) => _crudJobs.Delete(id);
+
+        #endregion
+
+        #region Pipelines
+
+        public IEnumerable<PipelineDto> FetchPipelines() => _crudPipelines.Fetch();
+
+        public PipelineDto FetchPipeline(Guid id) => _crudPipelines.Fetch().FirstOrDefault(p => p.Id == id);
+
+        public void CreatePipeline(PipelineDto pipeline) => _crudPipelines.Create(pipeline);
+
+        public void UpdatePipeline(PipelineDto pipeline) => _crudPipelines.Update(pipeline);
+
+        public void DeletePipeline(Guid id) => _crudJobs.Delete(id);
+
+        #endregion
     }
 
     // Maybe overkill
@@ -194,5 +175,246 @@ namespace Infrastructure.Dojo
                 context.SaveChanges();
             }
         }
+    }
+
+    public static class EntityDtoMapper
+    {
+        #region Ninjas
+
+        public static NinjaEntity ToEntity(this NinjaDto dto) => new NinjaEntity { Address = dto.Address };
+        public static void Update(this NinjaEntity entity, NinjaDto dto) { }
+        public static NinjaDto ToDto(this NinjaEntity entity) => new NinjaDto { Address = entity.Address };
+
+        #endregion
+
+        #region Queues
+        
+        private const char SEP = ';';
+        public static QueueEntity ToEntity(this QueueDto dto)
+        {
+            var entity = new QueueEntity { Name = dto.Name };
+            entity.Update(dto);
+            return entity;
+        }
+        public static void Update(this QueueEntity entity, QueueDto dto)
+        {
+            entity.MaxParallelTasks = dto.MaxParallelTasks;
+            entity.Ninjas = dto.Ninjas != null ? string.Join(SEP, dto.Ninjas) : null;
+        }
+        public static QueueDto ToDto(this QueueEntity entity)
+        {
+            return new QueueDto
+            {
+                Name = entity.Name,
+                MaxParallelTasks = entity.MaxParallelTasks,
+                Ninjas = entity.Ninjas != null ? entity.Ninjas.Split(SEP) : null
+            };
+        }
+
+        #endregion
+
+        #region RemoteTasks
+
+        public static RemoteTaskEntity ToEntity(this RemoteTaskDto dto)
+        {
+            var entity = new RemoteTaskEntity { Id = dto.Id };
+            entity.Update(dto);
+            return entity;
+        }
+        public static void Update(this RemoteTaskEntity entity, RemoteTaskDto dto)
+        {
+            entity.Name = dto.Name;
+            entity.Status = dto.Status;
+            entity.QueueName = dto.QueueName;
+            entity.NinjaAddress = dto.NinjaAddress;
+            entity.Order = dto.Order;
+            entity.Command = dto.StartTask.Command;
+            entity.Arguments = dto.StartTask.Arguments;
+            entity.NbCores = dto.StartTask.NbCores;
+            entity.NinjaTaskId = dto.NinjaState.Id;
+        }
+        public static RemoteTaskDto ToDto(this RemoteTaskEntity entity)
+        {
+            return new RemoteTaskDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Status = entity.Status,
+                QueueName = entity.QueueName,
+                NinjaAddress = entity.NinjaAddress,
+                Order = entity.Order,
+                StartTask = new TaskParameters
+                {
+                    Command = entity.Command,
+                    Arguments = entity.Arguments,
+                    NbCores = entity.NbCores
+                },
+                NinjaState = new TaskDto
+                {
+                    Id = entity.Id,
+                    Status = Domain.Dtos.TaskStatus.Pending
+                }
+            };
+        }
+
+        #endregion
+
+        #region Jobs
+
+        public static JobEntity ToEntity(this JobDto dto)
+        {
+            if (dto is SingleTaskJobDto stj)
+                return stj.ToEntity();
+            else if (dto is ParallelJobsDto pj)
+                return pj.ToEntity();
+            else if (dto is LinkedJobsDto lj)
+                return lj.ToEntity();
+            else
+                throw new InvalidOperationException($"Job dto: {dto?.GetType()} is not supported");
+        }
+        
+        public static void Update(this JobEntity entity, JobDto dto) 
+        {
+            if (entity is SingleTaskJobEntity stje && dto is SingleTaskJobDto stjd)
+                stje.Update(stjd);
+            else if (entity is ParallelJobsEntity pje && dto is ParallelJobsDto pjd)
+                pje.Update(pjd);
+            else if (entity is LinkedJobsEntity lje && dto is LinkedJobsDto ljd)
+                lje.Update(ljd);
+            else
+                throw new InvalidOperationException($"Job entity: {entity?.GetType()} with dto: {dto?.GetType()} is not supported");
+        }
+        public static JobDto ToDto(this JobEntity entity)
+        {
+            if (entity is SingleTaskJobEntity stj)
+                return stj.ToDto();
+            else if (entity is ParallelJobsEntity pj)
+                return pj.ToDto();
+            else if (entity is LinkedJobsEntity lj)
+                return lj.ToDto();
+            else
+                throw new InvalidOperationException($"Job entity: {entity?.GetType()} is not supported");
+        }
+
+        public static SingleTaskJobEntity ToEntity(this SingleTaskJobDto dto)
+        {
+            var entity = new SingleTaskJobEntity { Id = dto.Id };
+            entity.Update(dto);
+            return entity;
+        }
+
+        public static void Update(this SingleTaskJobEntity entity, SingleTaskJobDto dto)
+        {
+            entity.Name = dto.Name;
+            entity.Status = dto.Status;
+            entity.TaskId = dto.TaskId;
+            entity.Command = dto.StartTask.Command;
+            entity.Arguments = dto.StartTask.Arguments;
+            entity.NbCores = dto.StartTask.NbCores;
+        }
+
+        public static SingleTaskJobDto ToDto(this SingleTaskJobEntity entity)
+        {
+            return new SingleTaskJobDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Status = entity.Status,
+                TaskId = entity.TaskId,
+                StartTask = new TaskParameters
+                {
+                    Command = entity.Command,
+                    Arguments = entity.Arguments,
+                    NbCores = entity.NbCores
+                }
+            };
+        }
+
+        public static ParallelJobsEntity ToEntity(this ParallelJobsDto dto)
+        {
+            var entity = new ParallelJobsEntity { Id = dto.Id };
+            entity.Update(dto);
+            return entity;
+        }
+
+        public static void Update(this ParallelJobsEntity entity, ParallelJobsDto dto)
+        {
+            entity.Name = dto.Name;
+            entity.Status = dto.Status;
+            entity.JobIds = string.Join(SEP, dto.JobIds);
+        }
+
+        public static ParallelJobsDto ToDto(this ParallelJobsEntity entity)
+        {
+            var dto = new ParallelJobsDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Status = entity.Status,
+            };
+
+            dto.JobIds = !string.IsNullOrEmpty(entity.JobIds)
+                ? entity.JobIds.Split(SEP).Select(p => Guid.Parse(p)).ToArray()
+                : Array.Empty<Guid>();
+            return dto;
+        }
+
+        public static LinkedJobsEntity ToEntity(this LinkedJobsDto dto)
+        {
+            var entity = new LinkedJobsEntity { Id = dto.Id };
+            entity.Update(dto);
+            return entity;
+        }
+
+        public static void Update(this LinkedJobsEntity entity, LinkedJobsDto dto)
+        {
+            entity.Name = dto.Name;
+            entity.Status = dto.Status;
+            entity.LinkType = dto.LinkType;
+            entity.JobAId = dto.JobAId;
+            entity.JobBId = dto.JobBId;
+        }
+
+        public static LinkedJobsDto ToDto(this LinkedJobsEntity entity)
+        {
+            return new LinkedJobsDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Status = entity.Status,
+                LinkType = entity.LinkType,
+                JobAId = entity.JobAId,
+                JobBId = entity.JobBId,
+            };
+        }
+
+        #endregion
+
+        #region Pipelines
+
+        public static PipelineEntity ToEntity(this PipelineDto dto)
+        {
+            var entity = new PipelineEntity { Id = dto.Id };
+            entity.Update(dto);
+            return entity;
+        }
+        public static void Update(this PipelineEntity entity, PipelineDto dto)
+        {
+            entity.Name = dto.Name;
+            entity.QueueName = dto.QueueName;
+            entity.RootJobId = dto.RootJobId;
+        }
+        public static PipelineDto ToDto(this PipelineEntity entity)
+        {
+            return new PipelineDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                QueueName = entity.QueueName,
+                RootJobId = entity.RootJobId,
+            };
+        }
+
+        #endregion
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Domain.Dtos;
-using Domain.Dtos.Sequences;
+using Domain.Dtos.Pipelines;
 
 namespace Application
 {
@@ -27,9 +27,13 @@ namespace Application
 
     public interface IShogun
     {
-        Guid Execute(string queue, string name, StartTaskDto task);
+        Guid Execute(PipelineParameters parameters);
+
+        Guid ExecuteTask(string queue, string name, TaskParameters task);
 
         void Cancel(Guid id);
+
+        void Delete(Guid id);
     }
 
     public interface ITaskTracker

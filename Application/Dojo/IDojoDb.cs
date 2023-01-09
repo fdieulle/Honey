@@ -1,4 +1,5 @@
 ﻿using Domain.Dtos;
+using Domain.Dtos.Pipelines;
 using System;
 using System.Collections.Generic;
 
@@ -19,5 +20,17 @@ namespace Application.Dojo
         void CreateQueue(QueueDto queue);
         void UpdateQueue(QueueDto queue);
         void DeleteQueue(string name);
+
+        IEnumerable<JobDto> FetchJobs();
+        JobDto FetchJob(Guid id);
+        void CreateJob(JobDto job);
+        void UpdateJob(JobDto job);
+        void DeleteJob(Guid id);
+
+        IEnumerable<PipelineDto> FetchPipelines();
+        PipelineDto FetchPipeline(Guid id);
+        void CreatePipeline(PipelineDto pipeline);
+        void UpdatePipeline(PipelineDto pipeline);
+        void DeletePipeline(Guid id);
     }
 }

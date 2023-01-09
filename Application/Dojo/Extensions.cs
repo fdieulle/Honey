@@ -1,7 +1,7 @@
-﻿using Domain.Dtos;
+﻿using Application.Dojo.Pipelines;
+using Domain.Dtos;
+using Domain.Dtos.Pipelines;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Application.Dojo
 {
@@ -31,5 +31,26 @@ namespace Application.Dojo
         }
 
         public static bool IsFinalStatus(this RemoteTaskDto dto) => dto.Status.IsFinal();
+
+        public static bool IsFinal(this JobStatus status)
+        {
+            switch (status)
+            {
+                case JobStatus.Pending:
+                case JobStatus.Running:
+                case JobStatus.CancelRequested:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        public static bool CanStart(this JobStatus status) => status == JobStatus.Pending;
+        public static bool CanStart(this IJob job) => job.Status.CanStart();
+        public static bool CanCancel(this JobStatus status) => !status.IsFinal() && status != JobStatus.CancelRequested;
+        public static bool CanCancel(this IJob job) => job.Status.CanCancel();
+
+        public static bool CanDelete(this JobStatus status) => status.IsFinal() && status != JobStatus.Deleted;
+        public static bool CanDelete(this IJob job) => job.Status.CanDelete();
     }
 }
