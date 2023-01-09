@@ -33,7 +33,7 @@ namespace Application.Ninja
             _logger = logger;
             _database = database;
             _ninjaResourcesProvider = ninjaResourcesProvider;
-            _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "jobs").CreateFolder(logger);
+            _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "tasks").CreateFolder(logger);
             _workingDrive = Path.GetPathRoot(Path.GetFullPath(_workingFolder)).Replace("\\", "");
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
 
@@ -141,7 +141,6 @@ namespace Application.Ninja
                 _processorAllocator.RemoveProcess(task.Pid);
             }
         }
-        
 
         private void OnWatchDogWalk(object state)
         {
