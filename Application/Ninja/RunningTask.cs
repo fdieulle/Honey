@@ -137,11 +137,12 @@ namespace Application.Ninja
 
         public void Cancel()
         {
-            if (_process == null) return;
+            if (Status.IsFinal() || _process == null) return;
 
             if (_process.HasExited)
             {
-                if (!Status.IsFinal()) Exit();
+                if (!Status.IsFinal()) 
+                    Exit();
                 return;
             }
 
@@ -154,9 +155,13 @@ namespace Application.Ninja
         {
             if (!Status.IsFinal())
             {
-                Status = _process != null && _process.ExitCode == 0 
-                    ? TaskStatus.Done 
-                    : TaskStatus.Error;
+                if (_process != null)
+                {
+                    _process.WaitForExit();
+                    Status = _process.ExitCode == 0 ? TaskStatus.Done : TaskStatus.Error;
+                }
+                else Status = TaskStatus.Error;
+                
                 _taskDto.EndTime = DateTime.UtcNow;
             }
             
