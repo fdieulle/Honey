@@ -1,6 +1,6 @@
 ﻿namespace Domain.Dtos
 {
-    public class StartTaskDto
+    public class TaskParameters
     {
         public string Command { get; set; }
         public string Arguments { get; set; }

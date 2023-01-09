@@ -24,7 +24,7 @@ namespace Domain.Dtos
 
         public string QueueName { get; set; }
 
-        public StartTaskDto StartTask { get; set; }
+        public TaskParameters StartTask { get; set; }
 
         public RemoteTaskStatus Status { get; set; }
 
@@ -34,7 +34,7 @@ namespace Domain.Dtos
 
         public RemoteTaskDto() { Id = Guid.NewGuid(); }
 
-        public RemoteTaskDto(string queue, string name, StartTaskDto task, ulong order)
+        public RemoteTaskDto(string queue, string name, TaskParameters task, ulong order)
         {
             Id = Guid.NewGuid();
             Name = name ?? Id.ToString();

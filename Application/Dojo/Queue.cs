@@ -85,7 +85,7 @@ namespace Application.Dojo
             }
         }
 
-        public Guid StartTask(string name, StartTaskDto startTask)
+        public Guid StartTask(string name, TaskParameters startTask)
         {
             lock (_lock)
             {

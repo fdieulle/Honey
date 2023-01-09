@@ -359,12 +359,12 @@ namespace Application.Tests.Dojo
         }
 
         private static QueueDto QueueDto(string name) => new QueueDto { Name = name };
-        private static StartTaskDto StartTaskDto(string command, string arguments = null, int nbCores = 1) 
-            => new StartTaskDto { Command = command, Arguments = arguments, NbCores = nbCores };
+        private static TaskParameters StartTaskDto(string command, string arguments = null, int nbCores = 1) 
+            => new TaskParameters { Command = command, Arguments = arguments, NbCores = nbCores };
         private static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)
             => QueueTestExtensions.TaskDto(id, status, progress);
         private static ulong taskCounter = 0;
-        private static RemoteTaskDto QueuedTaskDto(string name, string queueName, string ninja, RemoteTaskStatus status, StartTaskDto start, TaskDto state)
+        private static RemoteTaskDto QueuedTaskDto(string name, string queueName, string ninja, RemoteTaskStatus status, TaskParameters start, TaskDto state)
             => new RemoteTaskDto
             {
                 Id = Guid.NewGuid(),
@@ -449,7 +449,7 @@ namespace Application.Tests.Dojo
             expected.NinjaState.Check(actual.NinjaState);
         }
 
-        public static void Check(this StartTaskDto expected, StartTaskDto actual)
+        public static void Check(this TaskParameters expected, TaskParameters actual)
         {
             if (expected == null && actual == null) return;
 
