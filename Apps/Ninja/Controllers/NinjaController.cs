@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Domain.Dtos;
 using Application;
+using Microsoft.Extensions.Logging;
 
 namespace Ninja.Controllers
 {
@@ -11,10 +12,12 @@ namespace Ninja.Controllers
     public class NinjaController : ControllerBase, INinja
     {
         private readonly Application.Ninja.Ninja _ninja;
+        private readonly ILogger<NinjaController> _logger;
 
-        public NinjaController(Application.Ninja.Ninja ninja)
+        public NinjaController(Application.Ninja.Ninja ninja, ILogger<NinjaController> logger)
         {
             _ninja = ninja;
+            _logger = logger;
         }
 
         [HttpGet("GetTasks")]
@@ -32,18 +35,24 @@ namespace Ninja.Controllers
         [HttpPost("StartTask")]
         public Guid StartTask(string command, string arguments, int nbCores = 1)
         {
+            _logger.LogInformation("Start task: command={0}, arguments={1}, nbCores={2}", command, arguments, nbCores);
+
             return _ninja.StartTask(command, arguments, nbCores);
         }
 
         [HttpPost("CancelTask")]
         public void CancelTask(Guid id)
         {
+            _logger.LogInformation("Cancel task: id={0}", id);
+
             _ninja.CancelTask(id);
         }
 
         [HttpDelete("DeleteTask")]
         public void DeleteTask(Guid id)
         {
+            _logger.LogInformation("Delete task: id={0}", id);
+
             _ninja.DeleteTask(id);
         }
 
@@ -56,6 +65,8 @@ namespace Ninja.Controllers
         [HttpPost("UpdateTask")]
         public void UpdateTask(TaskStateDto dto)
         {
+            _logger.LogInformation("Update task: id={0}, progress={1}, message={2}", dto.TaskId, dto.ProgressPercent, dto.Message);
+
             _ninja.UpdateTask(dto);
         }
     }
