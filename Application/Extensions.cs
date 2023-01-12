@@ -44,7 +44,7 @@ namespace Application
 
         #endregion
 
-        public static void UpdateTask(this INinja ninja, Guid taskId, double progressPercent, DateTime expectedEndTime, string message = null)
+        public static void UpdateTask(this INinjaClient ninja, Guid taskId, double progressPercent, DateTime expectedEndTime, string message = null)
         {
             ninja.UpdateTask(new TaskStateDto
             {

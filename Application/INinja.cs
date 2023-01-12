@@ -17,7 +17,10 @@ namespace Application
         void DeleteTask(Guid id);
 
         NinjaResourcesDto GetResources();
+    }
 
+    public interface INinjaClient
+    {
         void UpdateTask(TaskStateDto state);
     }
 

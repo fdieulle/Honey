@@ -61,13 +61,5 @@ namespace Ninja.Controllers
         {
             return _ninja.GetResources();
         }
-
-        [HttpPost("UpdateTask")]
-        public void UpdateTask(TaskStateDto dto)
-        {
-            _logger.LogInformation("Update task: id={0}, progress={1}, message={2}", dto.TaskId, dto.ProgressPercent, dto.Message);
-
-            _ninja.UpdateTask(dto);
-        }
     }
 }

@@ -84,8 +84,5 @@ namespace Application.Dojo
         public void DeleteTask(Guid id) => _proxy.DeleteTask(id);
 
         public NinjaResourcesDto GetResources() => _resources;
-
-        public void UpdateTask(TaskStateDto dto) => 
-            _proxy.UpdateTask(dto);
     }
 }

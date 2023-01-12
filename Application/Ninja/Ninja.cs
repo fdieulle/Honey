@@ -10,7 +10,7 @@ using Domain.Dtos;
 
 namespace Application.Ninja
 {
-    public class Ninja : INinja, IDisposable
+    public class Ninja : INinja, INinjaClient, IDisposable
     {
         private const int WATCH_DOG_PERIOD = 5000;
 
