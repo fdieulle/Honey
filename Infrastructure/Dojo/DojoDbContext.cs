@@ -36,9 +36,7 @@ namespace Infrastructure.Dojo
                 .HasKey(p => p.Id);
             mb.Entity<SingleTaskJobEntity>()
                 .HasBaseType<JobEntity>();
-            mb.Entity<ParallelJobsEntity>()
-                .HasBaseType<JobEntity>();
-            mb.Entity<LinkedJobsEntity>()
+            mb.Entity<ManyJobsEntity>()
                 .HasBaseType<JobEntity>();
             mb.Entity<PipelineEntity>()
                 .HasKey(p => p.Id);

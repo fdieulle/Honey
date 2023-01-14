@@ -263,35 +263,29 @@ namespace Infrastructure.Dojo
 
         public static JobEntity ToEntity(this JobDto dto)
         {
-            if (dto is SingleTaskJobDto stj)
-                return stj.ToEntity();
-            else if (dto is ParallelJobsDto pj)
-                return pj.ToEntity();
-            else if (dto is LinkedJobsDto lj)
-                return lj.ToEntity();
+            if (dto is SingleTaskJobDto sj)
+                return sj.ToEntity();
+            else if (dto is ManyJobsDto mj)
+                return mj.ToEntity();
             else
                 throw new InvalidOperationException($"Job dto: {dto?.GetType()} is not supported");
         }
         
         public static void Update(this JobEntity entity, JobDto dto) 
         {
-            if (entity is SingleTaskJobEntity stje && dto is SingleTaskJobDto stjd)
-                stje.Update(stjd);
-            else if (entity is ParallelJobsEntity pje && dto is ParallelJobsDto pjd)
-                pje.Update(pjd);
-            else if (entity is LinkedJobsEntity lje && dto is LinkedJobsDto ljd)
-                lje.Update(ljd);
+            if (entity is SingleTaskJobEntity sje && dto is SingleTaskJobDto sjd)
+                sje.Update(sjd);
+            else if (entity is ManyJobsEntity mje && dto is ManyJobsDto mjd)
+                mje.Update(mjd);
             else
                 throw new InvalidOperationException($"Job entity: {entity?.GetType()} with dto: {dto?.GetType()} is not supported");
         }
         public static JobDto ToDto(this JobEntity entity)
         {
-            if (entity is SingleTaskJobEntity stj)
-                return stj.ToDto();
-            else if (entity is ParallelJobsEntity pj)
-                return pj.ToDto();
-            else if (entity is LinkedJobsEntity lj)
-                return lj.ToDto();
+            if (entity is SingleTaskJobEntity sj)
+                return sj.ToDto();
+            else if (entity is ManyJobsEntity mj)
+                return mj.ToDto();
             else
                 throw new InvalidOperationException($"Job entity: {entity?.GetType()} is not supported");
         }
@@ -308,9 +302,9 @@ namespace Infrastructure.Dojo
             entity.Name = dto.Name;
             entity.Status = dto.Status;
             entity.TaskId = dto.TaskId;
-            entity.Command = dto.StartTask.Command;
-            entity.Arguments = dto.StartTask.Arguments;
-            entity.NbCores = dto.StartTask.NbCores;
+            entity.Command = dto.Parameters.Command;
+            entity.Arguments = dto.Parameters.Arguments;
+            entity.NbCores = dto.Parameters.NbCores;
         }
 
         public static SingleTaskJobDto ToDto(this SingleTaskJobEntity entity)
@@ -321,7 +315,7 @@ namespace Infrastructure.Dojo
                 Name = entity.Name,
                 Status = entity.Status,
                 TaskId = entity.TaskId,
-                StartTask = new TaskParameters
+                Parameters = new TaskParameters
                 {
                     Command = entity.Command,
                     Arguments = entity.Arguments,
@@ -330,62 +324,35 @@ namespace Infrastructure.Dojo
             };
         }
 
-        public static ParallelJobsEntity ToEntity(this ParallelJobsDto dto)
+        public static ManyJobsEntity ToEntity(this ManyJobsDto dto)
         {
-            var entity = new ParallelJobsEntity { Id = dto.Id };
+            var entity = new ManyJobsEntity { Id = dto.Id };
             entity.Update(dto);
             return entity;
         }
 
-        public static void Update(this ParallelJobsEntity entity, ParallelJobsDto dto)
+        public static void Update(this ManyJobsEntity entity, ManyJobsDto dto)
         {
             entity.Name = dto.Name;
             entity.Status = dto.Status;
+            entity.Behavior = dto.Behavior;
             entity.JobIds = string.Join(SEP, dto.JobIds);
         }
 
-        public static ParallelJobsDto ToDto(this ParallelJobsEntity entity)
+        public static ManyJobsDto ToDto(this ManyJobsEntity entity)
         {
-            var dto = new ParallelJobsDto
+            var dto = new ManyJobsDto
             {
                 Id = entity.Id,
                 Name = entity.Name,
                 Status = entity.Status,
+                Behavior = entity.Behavior
             };
 
             dto.JobIds = !string.IsNullOrEmpty(entity.JobIds)
                 ? entity.JobIds.Split(SEP).Select(p => Guid.Parse(p)).ToArray()
                 : Array.Empty<Guid>();
             return dto;
-        }
-
-        public static LinkedJobsEntity ToEntity(this LinkedJobsDto dto)
-        {
-            var entity = new LinkedJobsEntity { Id = dto.Id };
-            entity.Update(dto);
-            return entity;
-        }
-
-        public static void Update(this LinkedJobsEntity entity, LinkedJobsDto dto)
-        {
-            entity.Name = dto.Name;
-            entity.Status = dto.Status;
-            entity.LinkType = dto.LinkType;
-            entity.JobAId = dto.JobAId;
-            entity.JobBId = dto.JobBId;
-        }
-
-        public static LinkedJobsDto ToDto(this LinkedJobsEntity entity)
-        {
-            return new LinkedJobsDto
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                Status = entity.Status,
-                LinkType = entity.LinkType,
-                JobAId = entity.JobAId,
-                JobBId = entity.JobBId,
-            };
         }
 
         #endregion

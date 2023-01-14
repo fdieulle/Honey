@@ -18,26 +18,38 @@ namespace Application.Dojo.Pipelines
 
         public IJob CreateJob(JobParameters parameters)
         {
-            if (parameters is SingleTaskJobParameters sjp)
-                return new SingleTaskJob(sjp, _queue, _tracker, _db);
-            else if (parameters is ParallelJobsParameters pjp)
-                return new ParallelJobs(pjp, this, _db);
-            else if (parameters is LinkedJobsParameters ljp)
-                return new LinkedJobs(ljp, this, _db);
-            else
-                throw new InvalidOperationException($"Job parameters: {parameters?.GetType()} is not supported");
+            if (parameters is SingleTaskJobParameters sj)
+                return new SingleTaskJob(sj, _queue, _tracker, _db);
+            else if (parameters is ManyJobsParameters mj)
+            {
+                switch (mj.Behavior)
+                {
+                    case JobsBehavior.Parallel:
+                        return new ParallelJobs(mj, this, _db);
+                    case JobsBehavior.Sequential:
+                        return new SequentialJobs(mj, this, _db);
+                }
+            }
+            
+            throw new InvalidOperationException($"Job parameters: {parameters} is not supported");
         }
 
         public IJob CreateJob(JobDto dto)
         {
-            if (dto is SingleTaskJobDto sjd)
-                return new SingleTaskJob(sjd, _queue, _tracker, _db);
-            else if (dto is ParallelJobsDto pjd)
-                return new ParallelJobs(pjd, this, _db);
-            else if (dto is LinkedJobsDto ljd)
-                return new LinkedJobs(ljd, this, _db);
-            else
-                throw new InvalidOperationException($"Job {dto?.GetType()} is not supported");
+            if (dto is SingleTaskJobDto sj)
+                return new SingleTaskJob(sj, _queue, _tracker, _db);
+            else if (dto is ManyJobsDto mj)
+            {
+                switch (mj.Behavior)
+                {
+                    case JobsBehavior.Parallel:
+                        return new ParallelJobs(mj, this, _db);
+                    case JobsBehavior.Sequential:
+                        return new SequentialJobs(mj, this, _db);
+                }
+            }
+
+            throw new InvalidOperationException($"Job {dto} is not supported");
         }
     }
 }

@@ -1,7 +1,10 @@
-﻿namespace Domain.Entities.Pipelines
+﻿using Domain.Dtos.Pipelines;
+
+namespace Domain.Entities.Pipelines
 {
-    public class ParallelJobsEntity : JobEntity
+    public class ManyJobsEntity : JobEntity
     {
+        public JobsBehavior Behavior { get; set; }
         public string JobIds { get; set; }
     }
 }

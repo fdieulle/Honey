@@ -8,6 +8,7 @@
         CancelRequested,
         Cancel,
         Error,
+        DeleteRequested,
         Deleted
     }
 }

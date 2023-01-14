@@ -13,9 +13,10 @@ namespace Application.Tests.Dojo
         [Fact]
         public void MapReduceTest()
         {
-            var mapper = new ParallelJobsParameters
+            var mapper = new ManyJobsParameters
             {
                 Name = "Mapper",
+                Behavior = JobsBehavior.Parallel,
                 Jobs = new JobParameters[]
                 {
                     new SingleTaskJobParameters
@@ -54,12 +55,11 @@ namespace Application.Tests.Dojo
                 }
             };
 
-            var mapReduce = new LinkedJobsParameters
+            var mapReduce = new ManyJobsParameters
             {
                 Name = "MapReduce",
-                JobA = mapper,
-                JobB = reducer,
-                LinkType = LinkedJobType.FinishToStart
+                Behavior = JobsBehavior.Sequential,
+                Jobs = new JobParameters[] {mapper, reducer },
             };
 
             var options = new JsonSerializerOptions
@@ -71,7 +71,7 @@ namespace Application.Tests.Dojo
             var parameters = System.Text.Json.JsonSerializer.Deserialize<JobParameters>(json);
 
             Assert.NotNull(parameters);
-            Assert.IsAssignableFrom<LinkedJobsParameters>(parameters);
+            Assert.IsAssignableFrom<ManyJobsParameters>(parameters);
         }
     }
 }
