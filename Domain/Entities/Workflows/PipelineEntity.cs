@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Domain.Entities.Pipelines
+namespace Domain.Entities.Workflows
 {
-    public class PipelineEntity
+    public class WorkflowEntity
     {
         public Guid Id { get; set; }
 

@@ -1,9 +1,9 @@
-﻿using Domain.Dtos.Pipelines;
+﻿using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Application.Dojo.Pipelines
+namespace Application.Dojo.Workflows
 {
     public abstract class ManyJobs: Job<ManyJobsParameters, ManyJobsDto>
     {

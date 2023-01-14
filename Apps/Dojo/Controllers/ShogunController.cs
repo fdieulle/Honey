@@ -1,7 +1,7 @@
 ﻿using Application;
 using Application.Dojo;
 using Domain.Dtos;
-using Domain.Dtos.Pipelines;
+using Domain.Dtos.Workflows;
 using Microsoft.AspNetCore.Mvc;
 using System;
 
@@ -19,7 +19,7 @@ namespace Dojo.Controllers
         }
 
         [HttpPost("Execute")]
-        public Guid Execute(PipelineParameters parameters)
+        public Guid Execute(WorkflowParameters parameters)
         {
             return _shogun.Execute(parameters);
         }

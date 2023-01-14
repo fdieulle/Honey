@@ -1,6 +1,6 @@
-﻿using Domain.Dtos.Pipelines;
+﻿using Domain.Dtos.Workflows;
 
-namespace Domain.Entities.Pipelines
+namespace Domain.Entities.Workflows
 {
     public class ManyJobsEntity : JobEntity
     {

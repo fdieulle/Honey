@@ -1,5 +1,5 @@
 ﻿using Domain.Entities;
-using Domain.Entities.Pipelines;
+using Domain.Entities.Workflows;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Dojo
@@ -14,7 +14,7 @@ namespace Infrastructure.Dojo
 
         public DbSet<JobEntity> Jobs { get; set; }
 
-        public DbSet<PipelineEntity> Pipelines { get; set; }
+        public DbSet<WorkflowEntity> Workflows { get; set; }
 
         public DojoDbContext(DbContextOptions<DojoDbContext> options) : base(options)
         {
@@ -38,7 +38,7 @@ namespace Infrastructure.Dojo
                 .HasBaseType<JobEntity>();
             mb.Entity<ManyJobsEntity>()
                 .HasBaseType<JobEntity>();
-            mb.Entity<PipelineEntity>()
+            mb.Entity<WorkflowEntity>()
                 .HasKey(p => p.Id);
         }
     }

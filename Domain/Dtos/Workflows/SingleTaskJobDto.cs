@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.Dtos.Pipelines
+namespace Domain.Dtos.Workflows
 {
     public class SingleTaskJobDto : JobDto
     {

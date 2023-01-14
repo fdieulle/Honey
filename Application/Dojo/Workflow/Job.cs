@@ -1,7 +1,7 @@
-﻿using Domain.Dtos.Pipelines;
+﻿using Domain.Dtos.Workflows;
 using System;
 
-namespace Application.Dojo.Pipelines
+namespace Application.Dojo.Workflows
 {
     public abstract class Job<TParameters, TDto> : IJob
         where TParameters : JobParameters

@@ -1,8 +1,8 @@
 ﻿using Application.Dojo;
 using Domain.Dtos;
-using Domain.Dtos.Pipelines;
+using Domain.Dtos.Workflows;
 using Domain.Entities;
-using Domain.Entities.Pipelines;
+using Domain.Entities.Workflows;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace Infrastructure.Dojo
         private readonly CrudDbTable<DojoDbContext, QueueEntity, string, QueueDto> _crudQueues;
         private readonly CrudDbTable<DojoDbContext, RemoteTaskEntity, Guid, RemoteTaskDto> _crudTasks;
         private readonly CrudDbTable<DojoDbContext, JobEntity, Guid, JobDto> _crudJobs;
-        private readonly CrudDbTable<DojoDbContext, PipelineEntity, Guid, PipelineDto> _crudPipelines;
+        private readonly CrudDbTable<DojoDbContext, WorkflowEntity, Guid, WorkflowDto> _crudWorkflows;
         public DojoDb(IDbContextFactory<DojoDbContext> factory)
         {
             _crudNinjas = new CrudDbTable<DojoDbContext, NinjaEntity, string, NinjaDto>(
@@ -27,8 +27,8 @@ namespace Infrastructure.Dojo
                 factory, c => c.Tasks, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
             _crudJobs = new CrudDbTable<DojoDbContext, JobEntity, Guid, JobDto>(
                 factory, c => c.Jobs, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
-            _crudPipelines = new CrudDbTable<DojoDbContext, PipelineEntity, Guid, PipelineDto>(
-                factory, c => c.Pipelines, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
+            _crudWorkflows = new CrudDbTable<DojoDbContext, WorkflowEntity, Guid, WorkflowDto>(
+                factory, c => c.Workflows, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
         }
 
         #region Ninja
@@ -79,17 +79,17 @@ namespace Infrastructure.Dojo
 
         #endregion
 
-        #region Pipelines
+        #region Worflows
 
-        public IEnumerable<PipelineDto> FetchPipelines() => _crudPipelines.Fetch();
+        public IEnumerable<WorkflowDto> FetchWorkflows() => _crudWorkflows.Fetch();
 
-        public PipelineDto FetchPipeline(Guid id) => _crudPipelines.Fetch().FirstOrDefault(p => p.Id == id);
+        public WorkflowDto FetchWorkflow(Guid id) => _crudWorkflows.Fetch().FirstOrDefault(p => p.Id == id);
 
-        public void CreatePipeline(PipelineDto pipeline) => _crudPipelines.Create(pipeline);
+        public void CreateWorkflow(WorkflowDto worflow) => _crudWorkflows.Create(worflow);
 
-        public void UpdatePipeline(PipelineDto pipeline) => _crudPipelines.Update(pipeline);
+        public void UpdateWorkflow(WorkflowDto workflow) => _crudWorkflows.Update(workflow);
 
-        public void DeletePipeline(Guid id) => _crudJobs.Delete(id);
+        public void DeleteWorkflow(Guid id) => _crudWorkflows.Delete(id);
 
         #endregion
     }
@@ -357,23 +357,23 @@ namespace Infrastructure.Dojo
 
         #endregion
 
-        #region Pipelines
+        #region Workflows
 
-        public static PipelineEntity ToEntity(this PipelineDto dto)
+        public static WorkflowEntity ToEntity(this WorkflowDto dto)
         {
-            var entity = new PipelineEntity { Id = dto.Id };
+            var entity = new WorkflowEntity { Id = dto.Id };
             entity.Update(dto);
             return entity;
         }
-        public static void Update(this PipelineEntity entity, PipelineDto dto)
+        public static void Update(this WorkflowEntity entity, WorkflowDto dto)
         {
             entity.Name = dto.Name;
             entity.QueueName = dto.QueueName;
             entity.RootJobId = dto.RootJobId;
         }
-        public static PipelineDto ToDto(this PipelineEntity entity)
+        public static WorkflowDto ToDto(this WorkflowEntity entity)
         {
-            return new PipelineDto
+            return new WorkflowDto
             {
                 Id = entity.Id,
                 Name = entity.Name,

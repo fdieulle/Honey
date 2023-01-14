@@ -1,8 +1,8 @@
 ﻿using Domain.Dtos;
-using Domain.Dtos.Pipelines;
+using Domain.Dtos.Workflows;
 using System;
 
-namespace Application.Dojo.Pipelines
+namespace Application.Dojo.Workflows
 {
     public class SingleTaskJob : Job<SingleTaskJobParameters, SingleTaskJobDto>
     {

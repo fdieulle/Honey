@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Domain.Dtos;
-using Domain.Dtos.Pipelines;
+using Domain.Dtos.Workflows;
 
 namespace Application
 {
@@ -27,7 +27,7 @@ namespace Application
 
     public interface IShogun
     {
-        Guid Execute(PipelineParameters parameters);
+        Guid Execute(WorkflowParameters parameters);
 
         Guid ExecuteTask(string queue, string name, TaskParameters task);
 

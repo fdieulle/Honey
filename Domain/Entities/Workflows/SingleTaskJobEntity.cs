@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.Entities.Pipelines
+namespace Domain.Entities.Workflows
 {
     public class SingleTaskJobEntity : JobEntity
     {

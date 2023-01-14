@@ -1,7 +1,7 @@
-﻿using Domain.Dtos.Pipelines;
+﻿using Domain.Dtos.Workflows;
 using System;
 
-namespace Domain.Entities.Pipelines
+namespace Domain.Entities.Workflows
 {
     public abstract class JobEntity
     {

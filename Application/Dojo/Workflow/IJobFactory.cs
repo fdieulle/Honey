@@ -1,6 +1,6 @@
-﻿using Domain.Dtos.Pipelines;
+﻿using Domain.Dtos.Workflows;
 
-namespace Application.Dojo.Pipelines
+namespace Application.Dojo.Workflows
 {
     public interface IJobFactory
     {

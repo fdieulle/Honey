@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Domain.Dtos.Pipelines
+namespace Domain.Dtos.Workflows
 {
-    public class PipelineDto
+    public class WorkflowDto
     {
         public Guid Id { get; set; }
 
@@ -13,7 +13,7 @@ namespace Domain.Dtos.Pipelines
         public Guid RootJobId { get; set; }
     }
 
-    public class PipelineParameters
+    public class WorkflowParameters
     {
         public string Name { get; set; }
         public string QueueName { get; set; }

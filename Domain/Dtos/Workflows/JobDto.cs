@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace Domain.Dtos.Pipelines
+namespace Domain.Dtos.Workflows
 {
     [JsonDerivedType(typeof(SingleTaskJobDto), typeDiscriminator: "single_task")]
     [JsonDerivedType(typeof(ManyJobsDto), typeDiscriminator: "mnay")]

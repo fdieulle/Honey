@@ -1,4 +1,4 @@
-﻿using Domain.Dtos.Pipelines;
+﻿using Domain.Dtos.Workflows;
 using Domain.Dtos;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace Application.Tests.Dojo
 {
-    public class PipelineTests
+    public class WorkflowTests
     {
         [Fact]
         public void MapReduceTest()

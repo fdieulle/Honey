@@ -1,4 +1,4 @@
-﻿namespace Domain.Dtos.Pipelines
+﻿namespace Domain.Dtos.Workflows
 {
     public enum JobStatus
     {

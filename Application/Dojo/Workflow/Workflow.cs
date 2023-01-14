@@ -1,19 +1,19 @@
 ﻿using Domain.Dtos;
-using Domain.Dtos.Pipelines;
+using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 
-namespace Application.Dojo.Pipelines
+namespace Application.Dojo.Workflows
 {
-    public class Pipeline
+    public class Workflow
     {
         private readonly IJob _rootJob;
 
         public Guid Id => Dto.Id;
-        public PipelineDto Dto { get; }
-        public Pipeline(PipelineParameters parameters, IJobFactory factory, IDojoDb db)
+        public WorkflowDto Dto { get; }
+        public Workflow(WorkflowParameters parameters, IJobFactory factory, IDojoDb db)
         {
-            Dto = new PipelineDto
+            Dto = new WorkflowDto
             {
                 Id = Guid.NewGuid(),
                 Name = parameters.Name,
@@ -23,10 +23,10 @@ namespace Application.Dojo.Pipelines
             _rootJob = factory.CreateJob(parameters.RootJob);
             Dto.RootJobId = _rootJob.Id;
 
-            db.CreatePipeline(Dto);
+            db.CreateWorkflow(Dto);
         }
 
-        public Pipeline(PipelineDto dto, IJobFactory factory, IDojoDb db)
+        public Workflow(WorkflowDto dto, IJobFactory factory, IDojoDb db)
         {
             Dto = dto;
             var jobDto = db.FetchJob(dto.RootJobId);

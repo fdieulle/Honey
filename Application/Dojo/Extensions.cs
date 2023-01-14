@@ -1,6 +1,6 @@
-﻿using Application.Dojo.Pipelines;
+﻿using Application.Dojo.Workflows;
 using Domain.Dtos;
-using Domain.Dtos.Pipelines;
+using Domain.Dtos.Workflows;
 using System;
 
 namespace Application.Dojo
