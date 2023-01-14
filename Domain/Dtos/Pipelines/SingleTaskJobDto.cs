@@ -6,7 +6,7 @@ namespace Domain.Dtos.Pipelines
     {
         public Guid TaskId { get; set; }
 
-        public TaskParameters StartTask { get; set; }
+        public TaskParameters Parameters { get; set; }
     }
 
     public class SingleTaskJobParameters : JobParameters

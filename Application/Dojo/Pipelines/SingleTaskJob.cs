@@ -13,7 +13,7 @@ namespace Application.Dojo.Pipelines
         public SingleTaskJob(SingleTaskJobParameters parameters, Queue queue, ITaskTracker tracker, IDojoDb db)
             : base(parameters, db)
         {
-            Dto.StartTask = parameters.StartTask ?? new TaskParameters();
+            Dto.Parameters = parameters.StartTask ?? new TaskParameters();
             _queue = queue;
             _tracker = tracker;
 
@@ -28,15 +28,13 @@ namespace Application.Dojo.Pipelines
 
             if (dto.TaskId != Guid.Empty)
                 _subscription = tracker.Subscribe(dto.TaskId, OnTaskUpdated);
-
-            // Todo: Handle dojo down time and status changes during the down time
         }
 
         public override void Start()
         {
             if (!Status.CanStart()) return;
 
-            Dto.TaskId = _queue.StartTask(Dto.Name, Dto.StartTask);
+            Dto.TaskId = _queue.StartTask(Dto.Name, Dto.Parameters);
             _subscription = _tracker.Subscribe(Dto.TaskId, OnTaskUpdated);
         }
 
@@ -51,6 +49,8 @@ namespace Application.Dojo.Pipelines
         public override void Delete()
         {
             if (!Status.CanDelete()) return;
+
+            Update(JobStatus.DeleteRequested);
 
             _queue.DeleteTask(Dto.TaskId);
         }
