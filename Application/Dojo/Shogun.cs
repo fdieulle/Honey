@@ -1,6 +1,6 @@
-﻿using Application.Dojo.Pipelines;
+﻿using Application.Dojo.Workflows;
 using Domain.Dtos;
-using Domain.Dtos.Pipelines;
+using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ namespace Application.Dojo
         private readonly ITaskTracker _taskTracker;
         private readonly IDojoDb _db;
         private readonly Dictionary<string, IJobFactory> _factories = new Dictionary<string, IJobFactory>();
-        private readonly Dictionary<Guid, Pipeline> _pipelines = new Dictionary<Guid, Pipeline>();
+        private readonly Dictionary<Guid, Workflow> _workflows = new Dictionary<Guid, Workflow>();
 
         public Shogun(QueueProvider queueProvider, ITaskTracker taskTracker, IDojoDb db)
         {
@@ -21,38 +21,38 @@ namespace Application.Dojo
             _taskTracker = taskTracker;
             _db = db;
 
-            foreach(var pipeline in _db.FetchPipelines())
-                _pipelines[pipeline.Id] = new Pipeline(pipeline, GetJobFactory(pipeline.QueueName), db);
+            foreach(var workflow in _db.FetchWorkflows())
+                _workflows[workflow.Id] = new Workflow(workflow, GetJobFactory(workflow.QueueName), db);
         }
 
-        public Guid Execute(PipelineParameters parameters)
+        public Guid Execute(WorkflowParameters parameters)
         {
             var factory = GetJobFactory(parameters.QueueName);
-            var pipeline = new Pipeline(parameters, factory, _db);
-            _pipelines.Add(pipeline.Id, pipeline);
+            var workflow = new Workflow(parameters, factory, _db);
+            _workflows.Add(workflow.Id, workflow);
 
-            pipeline.Start();
+            workflow.Start();
 
-            return pipeline.Id;
+            return workflow.Id;
         }
 
         public Guid ExecuteTask(string name, string queueName, TaskParameters task) 
-            => Execute(new PipelineParameters { Name = name, QueueName = queueName, RootJob = new SingleTaskJobParameters { Name = name, StartTask = task } });
+            => Execute(new WorkflowParameters { Name = name, QueueName = queueName, RootJob = new SingleTaskJobParameters { Name = name, StartTask = task } });
 
         public void Cancel(Guid id)
         {
-            if (!_pipelines.TryGetValue(id, out var pipeline))
+            if (!_workflows.TryGetValue(id, out var workflow))
                 return;
 
-            pipeline.Cancel();
+            workflow.Cancel();
         }
 
         public void Delete(Guid id)
         {
-            if (!_pipelines.TryGetValue(id, out var pipeline))
+            if (!_workflows.TryGetValue(id, out var workflow))
                 return;
 
-            pipeline.Delete();
+            workflow.Delete();
         }
 
         public IEnumerable<RemoteTaskDto> GetAllTasks()
