@@ -78,7 +78,7 @@ namespace Application.Dojo.Repositories
                 {
                     vm.StartTime = ninjaState.StartTime;
                     vm.Progress = ninjaState.ProgressPercent;
-                    vm.Duration = (ninjaState.IsFinal() ? ninjaState.EndTime : DateTime.Now) - ninjaState.StartTime;
+                    vm.Duration = (ninjaState.IsFinalStatus() ? ninjaState.EndTime : DateTime.Now) - ninjaState.StartTime;
                 }
             }
         }

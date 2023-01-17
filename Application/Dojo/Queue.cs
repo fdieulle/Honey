@@ -222,7 +222,7 @@ namespace Application.Dojo
                     if (state != null)
                     {
                         task.NinjaState = state;
-                        if (state.IsFinal())
+                        if (state.IsFinalStatus())
                         {
                             _runningTasks.Remove(task.Id);
 

@@ -20,7 +20,7 @@ namespace Domain.Dtos
             }
         }
 
-        public static bool IsFinal(this TaskDto task) => task.Status.IsFinal();
+        public static bool IsFinalStatus(this TaskDto task) => task.Status.IsFinal();
 
         public static bool IsFinal(this RemoteTaskStatus status)
         {
