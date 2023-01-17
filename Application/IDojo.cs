@@ -33,7 +33,13 @@ namespace Application
 
         void Cancel(Guid id);
 
+        void Recover(Guid id);
+
         void Delete(Guid id);
+
+        List<RemoteTaskDto> GetTasks();
+        List<JobDto> GetJobs();
+        List<WorkflowDto> GetWorkflows();
     }
 
     public interface ITaskTracker

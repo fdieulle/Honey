@@ -1,7 +1,6 @@
 ﻿using System;
-using Domain.Dtos;
 
-namespace Domain
+namespace Domain.Dtos
 {
     public static class Extensions
     {
@@ -32,17 +31,12 @@ namespace Domain
                 case RemoteTaskStatus.CancelRequested:
                 case RemoteTaskStatus.CancelPending:
                     return false;
-                case RemoteTaskStatus.Completed:
-                case RemoteTaskStatus.Cancel:
-                case RemoteTaskStatus.Error:
-                case RemoteTaskStatus.Deleted:
-                    return true;
                 default:
-                    throw new NotImplementedException();
+                    return true;
             }
         }
 
-        public static bool IsFinal(this RemoteTaskDto dto) => dto.Status.IsFinal();
+        public static bool IsFinalStatus(this RemoteTaskDto dto) => dto.Status.IsFinal();
 
         public static bool CanCancel(this RemoteTaskStatus status)
         {
@@ -64,5 +58,7 @@ namespace Domain
         }
 
         public static bool CanCancel(this RemoteTaskDto dto) => dto.Status.CanCancel();
+
+
     }
 }

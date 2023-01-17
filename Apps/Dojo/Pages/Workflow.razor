@@ -1,0 +1,146 @@
+﻿@page "/workflow/{id:guid}"
+
+@using AntDesign
+@using AntDesign.TableModels
+@using Application;
+@using Application.Dojo
+@using Application.Dojo.Repositories;
+@using Domain.Dtos.Workflows;
+@using Domain.ViewModels;
+
+@inject WorkflowRepository WorkflowRepository
+@inject Shogun Shogun
+@inject NavigationManager Navigation
+@inject ITimer Timer
+
+<div>
+    <h3>@_workflow?.Name</h3>
+    <Tag class="@_workflow.ToCssClass()">@_workflow.Status</Tag>
+    <Text Type="secondary">@_workflow?.Id</Text>
+    <Divider />
+    <Space>
+        <SpaceItem>
+            <Button OnClick="Cancel" Disabled="@(!_workflow.CanCancel())">Cancel</Button>
+        </SpaceItem>
+        <SpaceItem>
+            <Button OnClick="Recover" Disabled="@(!_workflow.CanRecover())">Recover</Button>
+        </SpaceItem>
+        <SpaceItem>
+            <Button Danger OnClick="Delete" Disabled="@(!_workflow.CanDelete())">Delete</Button>
+        </SpaceItem>
+    </Space>
+    <Divider />
+</div>
+
+<Modal Title="@($"Confirm {_modalState.Purpose}")"
+       Visible="@_modalState.IsVisible"
+       OkText="@("Confirm")" OnOk="@_modalState.Accept"
+       CancelText="@("Cancel")" OnCancel="@_modalState.Cancel">
+    <p>Do you want to @_modalState.Purpose ?</p>
+</Modal>
+
+<AntDesign.Tabs Animated>
+    <TabPane Tab="Nodes">
+        <Table DataSource="_jobs" TItem="JobViewModel" TreeChildren="p => p.Children" 
+               RowClassName="@(x => x.Data.ToCssClass())" HidePagination>
+            <Column Title="Name" Field="@context.Name" Sortable Filterable/>
+            <Column Title="Type" Field="@context.Type" Sortable Filterable />
+            <Column Title="Host" Field="@context.Host" Sortable Filterable />
+            <Column Title="Progress" @bind-Field="@context.Progress" Sortable>
+                <Progress Percent="@context.Progress" Status="@context.ToProgressStatus()" Format="_progressFormat" />
+            </Column>
+            <Column Title="Start" Field="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" Sortable Hidden />
+            <Column Title="Duration" Field="@context.Duration" Format="dd\.hh\:mm\:ss" Sortable />
+        </Table>
+    </TabPane>
+    <TabPane Tab="Graph">
+
+    </TabPane>
+    <TabPane Tab="Timeline">
+
+    </TabPane>
+</AntDesign.Tabs>
+
+<style>
+    .running {
+        color: #0c5460;
+        background-color: #d1ecf1;
+        border-color: #bee5eb
+    }
+
+    .completed {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb
+    }
+
+    .cancel {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeeba
+    }
+
+    .error {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb
+    }
+
+    .deleted {
+        color: #1b1e21;
+        background-color: #d6d8d9;
+        border-color: #c6c8ca
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private readonly JobViewModel[] _jobs = new JobViewModel[1] { JobViewModel.Empty };
+    private readonly Func<double, string> _progressFormat = p => $"{Math.Round(p, 2)}";
+    private readonly ModalViewModel _modalState = new ModalViewModel();
+    private WorkflowViewModel _workflow;
+
+    protected override Task OnParametersSetAsync()
+    {
+        _workflow = WorkflowRepository.GetWorkflow(Id);
+        if (_workflow == null)
+            // Todo: Redicrect to Not found
+            ;
+        _jobs[0] = WorkflowRepository.GetWorkflowJobs(Id);
+
+        Timer.Updated -= OnTimerTick;
+        Timer.Updated += OnTimerTick;
+
+        return base.OnParametersSetAsync();
+    }
+
+    private void Cancel()
+    {
+        _modalState.Purpose = "cancel";
+        _modalState.Show(() => Shogun.Cancel(Id));
+    }
+
+    private void Recover()
+    {
+        _modalState.Purpose = "recover";
+        _modalState.Show(() => Shogun.Recover(Id));
+    }
+
+    private void Delete()
+    {
+        _modalState.Purpose = "delete";
+        _modalState.Show(() => {
+            Shogun.Delete(Id);
+            Navigation.NavigateTo("dashboard");
+        });
+    }
+
+    private void OnTimerTick() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Timer.Updated -= OnTimerTick;
+    }
+}

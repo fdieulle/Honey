@@ -1,4 +1,5 @@
-﻿using Domain.Dtos.Workflows;
+﻿using Domain;
+using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ namespace Application.Dojo.Workflows
 {
     public abstract class ManyJobs: Job<ManyJobsParameters, ManyJobsDto>
     {
-        protected IJob[] Jobs { get; }
+        public IJob[] Jobs { get; }
 
         public ManyJobs(ManyJobsParameters parameters, IJobFactory factory, IDojoDb db)
             : base(parameters, db)
@@ -48,7 +49,7 @@ namespace Application.Dojo.Workflows
 
             Update(JobStatus.Running);
 
-            Start(Jobs.Where(p => p.Status.CanStart()));
+            Start(Jobs.Where(p => p.CanStart()));
         }
 
         protected abstract void Start(IEnumerable<IJob> jobs);

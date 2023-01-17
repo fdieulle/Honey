@@ -47,28 +47,20 @@ namespace Application.Dojo
             workflow.Cancel();
         }
 
+        public void Recover(Guid id)
+        {
+            if (!_workflows.TryGetValue(id, out var workflow))
+                return;
+
+            workflow.Recover();
+        }
+
         public void Delete(Guid id)
         {
             if (!_workflows.TryGetValue(id, out var workflow))
                 return;
 
             workflow.Delete();
-        }
-
-        public IEnumerable<RemoteTaskDto> GetAllTasks()
-        {
-            var result = new List<RemoteTaskDto>();
-            foreach(var queueName in _queueProvider.GetQueues().Select(p => p.Name))
-            {
-                var queue = _queueProvider.GetQueue(queueName);
-                if (queue == null) continue;
-                var allTasks = queue.GetAllTasks();
-                if (allTasks == null) continue;
-
-                result.AddRange(allTasks);
-            }
-
-            return result;
         }
 
         private IJobFactory GetJobFactory(string queueName)
@@ -82,5 +74,26 @@ namespace Application.Dojo
             return factory;
         }
 
+        public List<RemoteTaskDto> GetTasks()
+        {
+            return _queueProvider.GetQueues()
+                .Select(p => _queueProvider.GetQueue(p.Name))
+                .Where(q => q != null)
+                .SelectMany(p => p.GetAllTasks())
+                .ToList();
+        }
+
+        public List<JobDto> GetJobs()
+        {
+            return _workflows.Values
+                .SelectMany(p => p.GetJobs())
+                .ToList();
+        }
+
+        public List<WorkflowDto> GetWorkflows()
+        {
+            return _workflows.Values
+                .Select(p => p.Dto).ToList();
+        }
     } 
 }

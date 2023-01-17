@@ -8,6 +8,7 @@ namespace Application.Dojo.Workflows
         event Action<IJob> Updated;
         Guid Id { get; }
         JobStatus Status { get; }
+        JobDto Dto { get; }
         void Start();
         void Cancel();
         void Delete();

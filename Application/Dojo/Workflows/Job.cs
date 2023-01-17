@@ -15,6 +15,7 @@ namespace Application.Dojo.Workflows
 
         public JobStatus Status => Dto.Status;
 
+        JobDto IJob.Dto => Dto;
         public TDto Dto { get; } = new TDto();
 
         protected IDojoDb Db { get; }

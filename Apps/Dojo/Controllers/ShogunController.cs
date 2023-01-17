@@ -4,6 +4,7 @@ using Domain.Dtos;
 using Domain.Dtos.Workflows;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 
 namespace Dojo.Controllers
 {
@@ -36,10 +37,32 @@ namespace Dojo.Controllers
             _shogun.Cancel(id);
         }
 
+        [HttpPost("Recover")]
+        public void Recover(Guid id)
+        {
+            _shogun.Recover(id);
+        }
+
         [HttpPost("Delete")]
         public void Delete(Guid id)
         {
             _shogun.Delete(id);
+        }
+
+        [HttpGet("GetTasks")]
+        public List<RemoteTaskDto> GetTasks() 
+        {
+            return _shogun.GetTasks();
+        }
+
+        [HttpGet("GetJobs")]
+        public List<JobDto> GetJobs() {
+            return _shogun.GetJobs();
+        }
+
+        [HttpGet("GetWorkflows")]
+        public List<WorkflowDto> GetWorkflows() {
+            return _shogun.GetWorkflows();
         }
     }
 }

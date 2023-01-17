@@ -50,10 +50,34 @@ namespace Application.Dojo.Workflows
                 _rootJob.Cancel();
         }
 
+        public void Recover()
+        {
+
+        }
+
         public void Delete() 
         {
             if (_rootJob.CanDelete())
                 _rootJob.Delete();
+        }
+
+        public IEnumerable<JobDto> GetJobs()
+        {
+            if (_rootJob == null) yield break;
+
+            var stack = new Stack<IJob>();
+            stack.Push(_rootJob);
+            while(stack.Count > 0)
+            {
+                var job = stack.Pop();
+                yield return job.Dto;
+
+                if (job is ManyJobs mj)
+                {
+                    foreach (var j in mj.Jobs)
+                        stack.Push(j);
+                }
+            }
         }
     }
 }

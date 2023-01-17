@@ -1,5 +1,5 @@
-﻿using Domain.Dtos.Workflows;
-using System;
+﻿using Domain;
+using Domain.Dtos.Workflows;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,7 +35,7 @@ namespace Application.Dojo.Workflows
 
         private void OnJobUpdated(IJob job)
         {
-            if (job.Status.IsFinal())
+            if (job.IsFinalStatus())
                 job.Updated -= OnJobUpdated;
 
             if (job.Status == JobStatus.Completed)

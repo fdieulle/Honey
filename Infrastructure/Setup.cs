@@ -7,6 +7,7 @@ using Application;
 using Application.Ninja;
 using Infrastructure.Dojo;
 using Application.Dojo;
+using Application.Dojo.Repositories;
 
 namespace Infrastructure
 {
@@ -53,6 +54,8 @@ namespace Infrastructure
             services.AddSingleton<QueueProvider>();
             services.AddSingleton<Shogun>();
             services.AddSingleton<Poller>();
+
+            services.AddSingleton<WorkflowRepository>();
         }
     }
 }

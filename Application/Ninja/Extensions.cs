@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Domain;
+using Domain.Dtos;
 using Domain.Entities;
 
 namespace Application.Ninja
