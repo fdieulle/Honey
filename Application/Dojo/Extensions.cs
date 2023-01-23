@@ -10,7 +10,7 @@ namespace Application.Dojo
         public static Guid StartTask(this INinja ninja, RemoteTaskDto task)
         {
             if (task == null) return Guid.Empty;
-            var startTask = task.StartTask;
+            var startTask = task.Parameters;
             if (startTask == null) return Guid.Empty;
 
             return ninja.StartTask(startTask.Command, startTask.Arguments, startTask.NbCores);

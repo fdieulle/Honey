@@ -24,7 +24,7 @@ namespace Domain.Dtos
 
         public string QueueName { get; set; }
 
-        public TaskParameters StartTask { get; set; }
+        public TaskParameters Parameters { get; set; }
 
         public RemoteTaskStatus Status { get; set; }
 
@@ -39,7 +39,7 @@ namespace Domain.Dtos
             Id = Guid.NewGuid();
             Name = name ?? Id.ToString();
             QueueName = queue;
-            StartTask = task;
+            Parameters = task;
             Order = order;
         }
     }

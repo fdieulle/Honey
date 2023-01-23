@@ -228,9 +228,9 @@ namespace Infrastructure.Dojo
             entity.QueueName = dto.QueueName;
             entity.NinjaAddress = dto.NinjaAddress;
             entity.Order = dto.Order;
-            entity.Command = dto.StartTask.Command;
-            entity.Arguments = dto.StartTask.Arguments;
-            entity.NbCores = dto.StartTask.NbCores;
+            entity.Command = dto.Parameters.Command;
+            entity.Arguments = dto.Parameters.Arguments;
+            entity.NbCores = dto.Parameters.NbCores;
             entity.NinjaTaskId = dto.NinjaState.Id;
         }
         public static RemoteTaskDto ToDto(this RemoteTaskEntity entity)
@@ -243,7 +243,7 @@ namespace Infrastructure.Dojo
                 QueueName = entity.QueueName,
                 NinjaAddress = entity.NinjaAddress,
                 Order = entity.Order,
-                StartTask = new TaskParameters
+                Parameters = new TaskParameters
                 {
                     Command = entity.Command,
                     Arguments = entity.Arguments,

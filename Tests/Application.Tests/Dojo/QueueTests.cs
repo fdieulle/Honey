@@ -372,7 +372,7 @@ namespace Application.Tests.Dojo
                 NinjaAddress = ninja,
                 QueueName = queueName,
                 NinjaState = state,
-                StartTask = start,
+                Parameters = start,
                 Status = status,
                 Order = ++taskCounter,
             };
@@ -419,7 +419,7 @@ namespace Application.Tests.Dojo
             clone.Name = name;
             clone.QueueName = queueName;
             clone.NinjaAddress = ninjaAdress;
-            clone.StartTask.Command = command;
+            clone.Parameters.Command = command;
             clone.Status = status;
 
             if (clone.NinjaState != null)
@@ -444,7 +444,7 @@ namespace Application.Tests.Dojo
             Assert.Equal(expected.QueueName, actual.QueueName);
             Assert.Equal(expected.NinjaAddress, actual.NinjaAddress);
             Assert.Equal(expected.Status, actual.Status);
-            expected.StartTask.Check(actual.StartTask);
+            expected.Parameters.Check(actual.Parameters);
             Assert.Equal(expected.Order, actual.Order);
             expected.NinjaState.Check(actual.NinjaState);
         }
