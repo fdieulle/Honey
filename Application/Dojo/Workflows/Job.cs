@@ -44,6 +44,8 @@ namespace Application.Dojo.Workflows
 
         public abstract void Cancel();
 
+        public abstract void Recover();
+
         public abstract void Delete();
 
         public void Dispose()
@@ -65,5 +67,7 @@ namespace Application.Dojo.Workflows
         }
 
         public override string ToString() => $"[{Name}] {Status} - {Id}";
+
+        
     }
 }

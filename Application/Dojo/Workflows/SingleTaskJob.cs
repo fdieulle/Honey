@@ -35,8 +35,7 @@ namespace Application.Dojo.Workflows
         {
             if (!Status.CanStart()) return;
 
-            Dto.TaskId = _queue.StartTask(Dto.Name, Dto.Parameters);
-            _subscription = _tracker.Subscribe(Dto.TaskId, OnTaskUpdated);
+            StartTask();
         }
 
         public override void Cancel()
@@ -47,6 +46,16 @@ namespace Application.Dojo.Workflows
             _queue.CancelTask(Dto.TaskId);
         }
 
+        public override void Recover()
+        {
+            if (!Status.CanRecover()) return;
+
+            _subscription?.Dispose();
+            _queue.DeleteTask(Dto.TaskId);
+
+            StartTask();
+        }
+
         public override void Delete()
         {
             if (!Status.CanDelete()) return;
@@ -54,6 +63,12 @@ namespace Application.Dojo.Workflows
             Update(JobStatus.DeleteRequested);
 
             _queue.DeleteTask(Dto.TaskId);
+        }
+
+        private void StartTask()
+        {
+            Dto.TaskId = _queue.StartTask(Dto.Name, Dto.Parameters);
+            _subscription = _tracker.Subscribe(Dto.TaskId, OnTaskUpdated);
         }
 
         private void OnTaskUpdated(RemoteTaskDto dto)

@@ -11,6 +11,7 @@ namespace Application.Dojo.Workflows
         JobDto Dto { get; }
         void Start();
         void Cancel();
+        void Recover();
         void Delete();
     }
 }

@@ -52,7 +52,8 @@ namespace Application.Dojo.Workflows
 
         public void Recover()
         {
-
+            if (_rootJob.CanRecover())
+                _rootJob.Recover();
         }
 
         public void Delete() 

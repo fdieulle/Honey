@@ -71,6 +71,18 @@ namespace Application.Dojo.Workflows
                 job.Cancel();
         }
 
+        public override void Recover()
+        {
+            if (Jobs.Length == 0)
+                return;
+
+            if (Jobs.None(s => s.CanRecover()))
+                return;
+
+            foreach (var job in Jobs.Where(p => p.CanRecover()))
+                job.Recover();
+        }
+
         public override void Delete()
         {
             if (Jobs.Length == 0)
