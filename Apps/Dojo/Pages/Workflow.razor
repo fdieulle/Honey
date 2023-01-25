@@ -5,6 +5,10 @@
 @using Application;
 @using Application.Dojo
 @using Application.Dojo.Repositories;
+@using Blazor.Diagrams.Core;
+@using Blazor.Diagrams.Components;
+@using Blazor.Diagrams.Core.Models.Base;
+@using Dojo.Components;
 @using Domain.Dtos.Workflows;
 @using Domain.ViewModels;
 
@@ -15,7 +19,7 @@
 
 <div>
     <h3>@_workflow?.Name</h3>
-    <Tag class="@_workflow.ToCssClass()">@_workflow.Status</Tag>
+    <Tag class="@(_workflow.ToCssClass())">@_workflow.Status</Tag>
     <Text Type="secondary">@_workflow?.Id</Text>
     <Divider />
     <Space>
@@ -41,11 +45,10 @@
 
 <AntDesign.Tabs Animated>
     <TabPane Tab="Nodes">
-        <Table DataSource="_jobs" TItem="JobViewModel" TreeChildren="p => p.Children" 
+        <Table DataSource="_jobs" TItem="JobViewModel" TreeChildren="p => p.Children"
                RowClassName="@(x => x.Data.ToCssClass())" HidePagination>
-            <Column Title="Name" Field="@context.Name" Sortable Filterable/>
+            <Column Title="Name" Field="@context.Name" Sortable Filterable />
             <Column Title="Type" Field="@context.Type" Sortable Filterable />
-            <Column Title="Host" Field="@context.Host" Sortable Filterable />
             <Column Title="Progress" @bind-Field="@context.Progress" Sortable>
                 <Progress Percent="@context.Progress" Status="@context.ToProgressStatus()" Format="_progressFormat" />
             </Column>
@@ -53,43 +56,147 @@
             <Column Title="Duration" Field="@context.Duration" Format="dd\.hh\:mm\:ss" Sortable />
         </Table>
     </TabPane>
-    <TabPane Tab="Graph">
-
+    <TabPane Tab="Graph" ForceRender>
+        <div style="width:100vw; height: 100vh">
+            <CascadingValue Value="Diagram">
+                <DiagramCanvas></DiagramCanvas>
+            </CascadingValue>
+        </div>
     </TabPane>
     <TabPane Tab="Timeline">
 
     </TabPane>
 </AntDesign.Tabs>
 
+<Drawer Width="400" Closable Visible="@_isDrawerVisible" Title='("Task details")' OnClose="@(_ => CloseDrawer())">
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Name:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Name</Text>
+        </Col>
+    </Row>
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Id:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Id</Text>
+        </Col>
+    </Row>
+    <Divider />
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Host:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Host</Text>
+        </Col>
+    </Row>
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Host Id:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.HostId</Text>
+        </Col>
+    </Row>
+    <Divider />
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Command:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Command</Text>
+        </Col>
+    </Row>
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Arguments:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Arguments</Text>
+        </Col>
+    </Row>
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Nb Cores:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.NbCores</Text>
+        </Col>
+    </Row>
+    <Divider />
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Status:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Status</Text>
+        </Col>
+    </Row>
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Start:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.StartTime</Text>
+        </Col>
+    </Row>
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Duration:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Duration</Text>
+        </Col>
+    </Row>
+    <Row Gutter="16">
+        <Col Span="6">
+        <Text Strong="true">Progress:</Text>
+        </Col>
+        <Col Span="10">
+        <Text>@_selectedJob.Progress</Text>
+        </Col>
+    </Row>
+</Drawer>
+
 <style>
-    .running {
+    .job-pending {
+        color: #818182;
+        background-color: #fefefe;
+        border-color: #fdfdfe;
+    }
+
+    .job-running {
         color: #0c5460;
         background-color: #d1ecf1;
-        border-color: #bee5eb
+        border-color: #bee5eb;
     }
 
-    .completed {
+    .job-completed {
         color: #155724;
         background-color: #d4edda;
-        border-color: #c3e6cb
+        border-color: #c3e6cb;
     }
 
-    .cancel {
-        color: #856404;
+    .job-cancel {
+        color : #856404;
         background-color: #fff3cd;
-        border-color: #ffeeba
+        border-color: #ffeeba;
     }
 
-    .error {
+    .job-error {
         color: #721c24;
         background-color: #f8d7da;
-        border-color: #f5c6cb
+        border-color: #f5c6cb;
     }
 
-    .deleted {
+    .job-deleted {
         color: #1b1e21;
         background-color: #d6d8d9;
-        border-color: #c6c8ca
+        border-color: #c6c8ca;
     }
 </style>
 
@@ -97,10 +204,40 @@
     [Parameter]
     public Guid Id { get; set; }
 
+    private static readonly JobViewModel startJob = new JobViewModel { Id = Guid.NewGuid(), Name = "Start", Status = JobStatus.Deleted };
+    private static readonly JobViewModel endJob = new JobViewModel { Id = Guid.NewGuid(), Name = "End", Status = JobStatus.Deleted };
+
     private readonly JobViewModel[] _jobs = new JobViewModel[1] { JobViewModel.Empty };
     private readonly Func<double, string> _progressFormat = p => $"{Math.Round(p, 2)}";
     private readonly ModalViewModel _modalState = new ModalViewModel();
     private WorkflowViewModel _workflow;
+
+    private Diagram Diagram { get; } = new Diagram();
+    private bool _isDrawerVisible;
+    private HostedJobViewModel _selectedJob = HostedJobViewModel.Empty;
+
+    public Workflow()
+    {
+        var options = new DiagramOptions
+            {
+                DefaultNodeComponent = null, // Default component for nodes
+                AllowMultiSelection = true, // Whether to allow multi selection using CTRL
+                                            //EnableVirtualization = true,
+                Links = new DiagramLinkOptions
+                {
+                    // Options related to links
+                },
+                Zoom = new DiagramZoomOptions
+                {
+                    //Minimum = 0.5, // Minimum zoom value
+                    Inverse = false, // Whether to inverse the direction of the zoom when using the wheel
+                                     // Other
+                }
+            };
+
+        Diagram = new Diagram(options);
+        Diagram.RegisterModelComponent<JobNodeModel, JobNodeComponent>();
+    }
 
     protected override Task OnParametersSetAsync()
     {
@@ -109,6 +246,12 @@
             // Todo: Redicrect to Not found
             ;
         _jobs[0] = WorkflowRepository.GetWorkflowJobs(Id);
+
+
+        Diagram.Batch(() => Diagram.BuildGraph(_jobs[0]));
+
+        Diagram.SelectionChanged -= OnNodeSelected;
+        Diagram.SelectionChanged += OnNodeSelected;
 
         Timer.Updated -= OnTimerTick;
         Timer.Updated += OnTimerTick;
@@ -131,10 +274,31 @@
     private void Delete()
     {
         _modalState.Purpose = "delete";
-        _modalState.Show(() => {
+        _modalState.Show(() =>
+        {
             Shogun.Delete(Id);
             Navigation.NavigateTo("dashboard");
         });
+    }
+
+    private void OnNodeSelected(SelectableModel model)
+    {
+        if (model is not JobNodeModel node)
+            return;
+        if (!node.HasDetails())
+            return;
+
+        _selectedJob = node.Details();
+        _isDrawerVisible = true;
+
+        StateHasChanged();
+    }
+
+    private void CloseDrawer()
+    {
+        _isDrawerVisible = false;
+        _selectedJob = HostedJobViewModel.Empty;
+        StateHasChanged();
     }
 
     private void OnTimerTick() => InvokeAsync(StateHasChanged);

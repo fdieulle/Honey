@@ -1,0 +1,63 @@
+﻿@using Blazor.Diagrams.Components.Renderers;
+@using Blazor.Diagrams.Core;
+@using Blazor.Diagrams.Core.Models;
+
+<style>
+    .job-node {
+        display: flex;
+        align-items: center;
+        vertical-align: middle;
+    }
+
+    .job-node-child {
+        float: left;
+    }
+    .job-node-content {
+        display: flex;
+        align-items: center;
+        height: 50px;
+        min-width: 50px;
+        padding-left: 5px;
+        padding-right: 5px;
+        transition: all;
+        border-radius: 5px;
+        border-style: solid;
+        border-width: medium;
+    }
+    
+</style>
+
+<div class="job-node">
+    <div class="job-node-child">
+        @if (_leftPort != null)
+        {
+            <PortRenderer Port="@_leftPort" />
+        }
+    </div>
+    <div class="job-node-child job-node-content @Node.Job.ToCssClass()" style="text-align: center; vertical-align: middle;">
+        @Node.Title
+    </div>
+    <div class="job-node-child">
+        @if (_rightPort != null)
+        {
+            <PortRenderer Port="@_rightPort" />
+        }
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public JobNodeModel Node { get; set; }
+
+    private PortModel _leftPort;
+    private PortModel _rightPort;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        _leftPort = Node.GetPort(PortAlignment.Left);
+        _rightPort = Node.GetPort(PortAlignment.Right);
+    }
+}

@@ -47,45 +47,13 @@
        <p>Do you want to @_modalState.Purpose ?</p>
 </Modal>
 
-<style>
-    .running {
-        color: #0c5460;
-        background-color: #d1ecf1;
-        border-color: #bee5eb
-    }
-
-    .completed {
-        color: #155724;
-        background-color: #d4edda;
-        border-color: #c3e6cb
-    }
-
-    .cancel {
-        color: #856404;
-        background-color: #fff3cd;
-        border-color: #ffeeba
-    }
-
-    .error {
-        color: #721c24;
-        background-color: #f8d7da;
-        border-color: #f5c6cb
-    }
-
-    .deleted {
-        color: #1b1e21;
-        background-color: #d6d8d9;
-        border-color: #c6c8ca
-    }
-</style>
-
 @code {
     private readonly ObservableCollection<WorkflowViewModel> _workflows = new ObservableCollection<WorkflowViewModel>();
     private readonly Func<double, string> _progressFormat = p => $"{Math.Round(p, 2)}";
     private readonly ModalViewModel _modalState = new ModalViewModel();
     private IDisposable _subscription;
 
-    protected override async Task OnInitializedAsync()
+    protected async override Task OnInitializedAsync()
     {
         _subscription = WorkflowRepository.Workflows.Subscribe(_workflows);
 
@@ -93,24 +61,24 @@
         Timer.Updated += OnTimerTick;
     }
 
-    private async void OnRowClick(RowData<WorkflowViewModel> rowData)
+    private void OnRowClick(RowData<WorkflowViewModel> rowData)
     {
         Navigation.NavigateTo($"/workflow/{rowData.Data.Id}");
     }
 
-    private async void Cancel(Guid id)
+    private void Cancel(Guid id)
     {
         _modalState.Purpose = "cancel";
         _modalState.Show(() => Shogun.Cancel(id));
     }
 
-    private async void Recover(Guid id)
+    private void Recover(Guid id)
     {
         _modalState.Purpose = "recover";
         _modalState.Show(() => Shogun.Recover(id));
     }
 
-    private async void Delete(Guid id)
+    private void Delete(Guid id)
     {
         _modalState.Purpose = "delete";
         _modalState.Show(() => Shogun.Delete(id));

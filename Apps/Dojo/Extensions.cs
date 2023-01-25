@@ -11,20 +11,21 @@ namespace Dojo
             switch (status)
             {
                 case JobStatus.Pending:
-                default:
-                    return string.Empty;
+                    return "job-pending";
                 case JobStatus.Running:
-                    return "running";
+                    return "job-running";
                 case JobStatus.Completed:
-                    return "completed";
+                    return "job-completed";
                 case JobStatus.CancelRequested:
                 case JobStatus.Cancel:
-                    return "cancel";
+                    return "job-cancel";
                 case JobStatus.Error:
-                    return "error";
+                    return "job-error";
                 case JobStatus.DeleteRequested:
                 case JobStatus.Deleted:
-                    return "deleted";
+                    return "job-deleted";
+                default:
+                    return string.Empty;
             }
         }
 

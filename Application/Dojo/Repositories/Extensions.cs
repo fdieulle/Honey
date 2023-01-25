@@ -37,12 +37,16 @@ namespace Application.Dojo.Repositories
 
         #region Job
 
-        public static JobViewModel ToViewModel(this JobDto dto) => new JobViewModel
+        public static JobViewModel ToViewModel(this JobDto dto)
         {
-            Id = dto.Id,
-            Name = dto.Name,
-            Status = dto.Status,
-        };
+            var vm = dto is SingleTaskJobDto st ? new HostedJobViewModel() : new JobViewModel();
+
+            vm.Id = dto.Id;
+            vm.Name = dto.Name;
+            vm.Status= dto.Status;
+
+            return vm;
+        }
 
         public static void Update(this JobViewModel vm, JobDto dto)
         {
@@ -54,32 +58,40 @@ namespace Application.Dojo.Repositories
         {
             if (dto is SingleTaskJobDto sj) // This is a leaf
             {
-                vm.Update(sj, tasks);
+                ((HostedJobViewModel)vm).Update(sj, tasks);
                 return;
             }
 
             if (dto is ManyJobsDto mj)
             {
                 vm.Type = mj.Behavior.ToString();
-                vm.Host = "Branch";
                 vm.Children.Clear();
                 vm.Children.AddRange(mj.JobIds.Select(jobs.Get));
             }
         }
 
-        private static void Update(this JobViewModel vm, SingleTaskJobDto dto, Dictionary<Guid, RemoteTaskDto> tasks)
+        private static void Update(this HostedJobViewModel vm, SingleTaskJobDto dto, Dictionary<Guid, RemoteTaskDto> tasks)
         {
             vm.Type = dto.Parameters.Command;
-            if (tasks.TryGetValue(dto.TaskId, out var task))
+            if (!tasks.TryGetValue(dto.TaskId, out var task))
+                return;
+            
+            vm.Host = task.NinjaAddress;
+            var ninjaState = task.NinjaState;
+            if (ninjaState != null)
             {
-                vm.Host = task.NinjaAddress;
-                var ninjaState = task.NinjaState;
-                if (ninjaState != null)
-                {
-                    vm.StartTime = ninjaState.StartTime;
-                    vm.Progress = ninjaState.ProgressPercent;
-                    vm.Duration = (ninjaState.IsFinalStatus() ? ninjaState.EndTime : DateTime.Now) - ninjaState.StartTime;
-                }
+                vm.HostId = ninjaState.Id;
+                vm.StartTime = ninjaState.StartTime;
+                vm.Progress = ninjaState.ProgressPercent;
+                vm.Duration = (ninjaState.IsFinalStatus() ? ninjaState.EndTime : DateTime.Now) - ninjaState.StartTime;
+            }
+
+            var parameters = task.Parameters;
+            if (parameters != null)
+            {
+                vm.Command = parameters.Command;
+                vm.Arguments = parameters.Arguments;
+                vm.NbCores = parameters.NbCores;
             }
         }
 
