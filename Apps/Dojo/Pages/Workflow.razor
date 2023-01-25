@@ -18,8 +18,8 @@
 @inject ITimer Timer
 
 <div>
-    <h3>@_workflow?.Name</h3>
-    <Tag class="@(_workflow.ToCssClass())">@_workflow.Status</Tag>
+    <h3>@_workflow.Name</h3>
+    <Tag class="@_workflow.ToCssClass()">@_workflow.Status</Tag>
     <Text Type="secondary">@_workflow?.Id</Text>
     <Divider />
     <Space>
@@ -46,7 +46,7 @@
 <AntDesign.Tabs Animated>
     <TabPane Tab="Nodes">
         <Table DataSource="_jobs" TItem="JobViewModel" TreeChildren="p => p.Children"
-               RowClassName="@(x => x.Data.ToCssClass())" HidePagination>
+               RowClassName="@(x => x.Data.ToCssClass())" OnRowClick="OnRowClick" HidePagination>
             <Column Title="Name" Field="@context.Name" Sortable Filterable />
             <Column Title="Type" Field="@context.Type" Sortable Filterable />
             <Column Title="Progress" @bind-Field="@context.Progress" Sortable>
@@ -57,14 +57,12 @@
         </Table>
     </TabPane>
     <TabPane Tab="Graph" ForceRender>
-        <div style="width:100vw; height: 100vh">
+        @*<div style="width: 100vw; height: 100vh">*@
+        <div style="height: 100vh">
             <CascadingValue Value="Diagram">
                 <DiagramCanvas></DiagramCanvas>
             </CascadingValue>
         </div>
-    </TabPane>
-    <TabPane Tab="Timeline">
-
     </TabPane>
 </AntDesign.Tabs>
 
@@ -182,7 +180,7 @@
     }
 
     .job-cancel {
-        color : #856404;
+        color: #856404;
         background-color: #fff3cd;
         border-color: #ffeeba;
     }
@@ -203,9 +201,6 @@
 @code {
     [Parameter]
     public Guid Id { get; set; }
-
-    private static readonly JobViewModel startJob = new JobViewModel { Id = Guid.NewGuid(), Name = "Start", Status = JobStatus.Deleted };
-    private static readonly JobViewModel endJob = new JobViewModel { Id = Guid.NewGuid(), Name = "End", Status = JobStatus.Deleted };
 
     private readonly JobViewModel[] _jobs = new JobViewModel[1] { JobViewModel.Empty };
     private readonly Func<double, string> _progressFormat = p => $"{Math.Round(p, 2)}";
@@ -285,10 +280,17 @@
     {
         if (model is not JobNodeModel node)
             return;
-        if (!node.HasDetails())
+        OnSelect(node.Job);
+    }
+
+    private void OnRowClick(RowData<JobViewModel> rowData) => OnSelect(rowData.Data);
+
+    private void OnSelect(JobViewModel job)
+    {
+        if (!job.HasDetails())
             return;
 
-        _selectedJob = node.Details();
+        _selectedJob = job.Details();
         _isDrawerVisible = true;
 
         StateHasChanged();
