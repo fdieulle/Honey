@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Domain;
 using Domain.Dtos;
 
 namespace Application.Ninja
@@ -114,9 +113,6 @@ namespace Application.Ninja
             }
             
             task.Cancel();
-
-            lock (_runningTasks)
-                _database.UpdateTask(task);
         }
 
         public void DeleteTask(Guid id)
@@ -135,7 +131,8 @@ namespace Application.Ninja
 
         private void OnTaskExited(RunningTask task)
         {
-            lock(_runningTasks)
+            task.Exited -= OnTaskExited;
+            lock (_runningTasks)
             {
                 _database.UpdateTask(task);
                 _processorAllocator.RemoveProcess(task.Pid);
@@ -144,16 +141,16 @@ namespace Application.Ninja
 
         private void OnWatchDogWalk(object state)
         {
+            List<RunningTask> tasks;
             lock(_runningTasks)
             {
-                foreach (var task in _runningTasks.Values.Where(j => !j.Status.IsFinal() && !j.IsAlive))
-                {
-                    task.Exit();
-                    _database.UpdateTask(task);
-                }
+                tasks = _runningTasks.Values.Where(j => !j.Status.IsFinal() && !j.IsAlive).ToList();
             }
 
-            if(!_isDisposed)
+            foreach(var task in tasks)
+                task.Exit();
+
+            if (!_isDisposed)
                 _timer.Change(WATCH_DOG_PERIOD, Timeout.Infinite);
         }
 
