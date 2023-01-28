@@ -241,6 +241,40 @@ namespace Application.Tests.Dojo
         }
 
         [Fact]
+        public void StartButHangTaskAndCancelWhenHanging()
+        {
+            var ninja = _factory.Setup("Ninja 1");
+            _dojo.EnrollNinja("Ninja 1");
+            Refresh();
+
+            ninja.SetupStartTask("cmd 1", Guid.NewGuid());
+
+            ninja.SetupAsFull();
+            Refresh();
+
+            var taskId = _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
+
+            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            _db.CheckCreateTask("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
+
+            Refresh();
+            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
+
+            _queue.CancelTask(taskId);
+
+            Refresh();
+            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Cancel);
+
+            ninja.ClearReceivedCalls();
+
+            _queue.Refresh();
+            _db.TaskTable.EmptyLogs();
+        }
+
+
+        [Fact]
         public void StartDojoWithDifferentTaskState()
         {
             var ninja = _factory.Setup("Ninja 1");
@@ -280,7 +314,7 @@ namespace Application.Tests.Dojo
             _db.CreateTask(QueuedTaskDto("Task 10", "Queue 2", "Ninja 1",  RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 10"), null));
             // Running task but ended during dojo stop
             _db.CreateTask(QueuedTaskDto("Task 11", "Queue 2", "Ninja 1",  RemoteTaskStatus.Running, StartTaskDto("cmd 11"), TaskDto(task11Id, TaskStatus.Running)));
-            // Cancel pending task
+            // Cancel pending task should be cancel by Ninja
             _db.CreateTask(QueuedTaskDto("Task 12", "Queue 2", "Ninja 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 12"), TaskDto(task12Id, TaskStatus.Running, 0.5)));
             // Cancel pending task no ninja feedback
             _db.CreateTask(QueuedTaskDto("Task 13", "Queue 2", "Ninja 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 13"), null));

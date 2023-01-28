@@ -188,7 +188,7 @@ namespace Application.Dojo
                         task = _pendingTasks.Dequeue();
                         if (task.Id == id)
                         {
-                            RecordTask(task, RemoteTaskStatus.Completed);
+                            RecordTask(task, RemoteTaskStatus.Cancel);
                             continue;
                         }
                         _pendingTasks.Enqueue(task);
