@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using System.IO;
 using Application;
 using Application.Bee;
-using Infrastructure.Dojo;
-using Application.Dojo;
+using Infrastructure.Beehive;
+using Application.Beehive;
 using Application.Honey;
 
 namespace Infrastructure
@@ -31,17 +31,17 @@ namespace Infrastructure
             services.AddSingleton<Application.Bee.Bee>();
         }
 
-        public static void ConfigureDojo(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureBeehive(this IServiceCollection services, IConfiguration configuration)
         {
             #region Database
 
             var workingFolder = configuration["WorkingFolder"] ?? ".";
             var dataFolder = Path.Combine(workingFolder, "data").CreateFolder();
-            var dbPath = Path.Combine(dataFolder, "Dojo.db");
+            var dbPath = Path.Combine(dataFolder, "Beehive.db");
 
             services.AddEntityFrameworkSqlite()
-                .AddDbContextFactory<DojoDbContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
-            services.AddSingleton<IDojoDb, DojoDb>();
+                .AddDbContextFactory<BeehiveDbContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
+            services.AddSingleton<IBeehiveDb, BeehiveDb>();
 
             #endregion
 
@@ -50,7 +50,7 @@ namespace Infrastructure
             var taskTracker = new TaskTracker();
             services.AddSingleton<ITaskTracker>(taskTracker);
             services.AddSingleton(taskTracker);
-            services.AddSingleton<Application.Dojo.Dojo>();
+            services.AddSingleton<Application.Beehive.Beehive>();
             services.AddSingleton<QueueProvider>();
             services.AddSingleton<Colony>();
             services.AddSingleton<Poller>();

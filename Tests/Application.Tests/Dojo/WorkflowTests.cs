@@ -6,7 +6,7 @@ using System.IO;
 using Xunit;
 using System.Text.Json;
 
-namespace Application.Tests.Dojo
+namespace Application.Tests.Beehive
 {
     public class WorkflowTests
     {

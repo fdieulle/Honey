@@ -1,4 +1,4 @@
-﻿using Application.Dojo;
+﻿using Application.Beehive;
 using Application.Bee;
 using Domain;
 using Domain.Dtos;
@@ -8,29 +8,29 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace Application.Tests.Dojo
+namespace Application.Tests.Beehive
 {
     public class QueueTests
     {
         private readonly IBeeFactory _factory;
-        private readonly DojoDbLogs _db;
+        private readonly BeehiveDbLogs _db;
         private readonly TaskTracker _tracker;
-        private readonly Application.Dojo.Dojo _dojo;
+        private readonly Application.Beehive.Beehive _beehive;
         private readonly Queue _queue;
 
         public QueueTests()
         {
             _factory = Substitute.For<IBeeFactory>();
-            _db = new DojoDbLogs();
-            _dojo = new Application.Dojo.Dojo(_factory, _db);
+            _db = new BeehiveDbLogs();
+            _beehive = new Application.Beehive.Beehive(_factory, _db);
             _tracker = new TaskTracker();
 
-            _queue = new Queue(QueueDto("Queue 1"), _dojo, _db, _tracker);
+            _queue = new Queue(QueueDto("Queue 1"), _beehive, _db, _tracker);
         }
 
         private void Refresh()
         {
-            _dojo.Refresh();
+            _beehive.Refresh();
             _queue.Refresh();
             _tracker.Refresh();
         }
@@ -39,7 +39,7 @@ namespace Application.Tests.Dojo
         public void StartAndRunTask()
         {
             var bee = _factory.Setup("Bee 1");
-            _dojo.EnrollBee("Bee 1");
+            _beehive.EnrollBee("Bee 1");
 
             Refresh();
 
@@ -78,7 +78,7 @@ namespace Application.Tests.Dojo
         public void StartAndRunMultipleTasksOn1Bee()
         {
             var bee = _factory.Setup("Bee 1");
-            _dojo.EnrollBee("Bee 1");
+            _beehive.EnrollBee("Bee 1");
 
             Refresh();
 
@@ -133,8 +133,8 @@ namespace Application.Tests.Dojo
         {
             var bee1 = _factory.Setup("Bee 1");
             var bee2 = _factory.Setup("Bee 2");
-            _dojo.EnrollBee("Bee 1");
-            _dojo.EnrollBee("Bee 2");
+            _beehive.EnrollBee("Bee 1");
+            _beehive.EnrollBee("Bee 2");
 
             Refresh();
 
@@ -195,7 +195,7 @@ namespace Application.Tests.Dojo
         public void StartButHangTaskBecauseNoAvailableBee()
         {
             var bee = _factory.Setup("Bee 1");
-            _dojo.EnrollBee("Bee 1");
+            _beehive.EnrollBee("Bee 1");
             Refresh();
 
             var taskId = Guid.NewGuid();
@@ -244,7 +244,7 @@ namespace Application.Tests.Dojo
         public void StartButHangTaskAndCancelWhenHanging()
         {
             var bee = _factory.Setup("Bee 1");
-            _dojo.EnrollBee("Bee 1");
+            _beehive.EnrollBee("Bee 1");
             Refresh();
 
             bee.SetupStartTask("cmd 1", Guid.NewGuid());
@@ -275,7 +275,7 @@ namespace Application.Tests.Dojo
 
 
         [Fact]
-        public void StartDojoWithDifferentTaskState()
+        public void StartBeehiveWithDifferentTaskState()
         {
             var bee = _factory.Setup("Bee 1");
 
@@ -312,7 +312,7 @@ namespace Application.Tests.Dojo
             _db.CreateTask(QueuedTaskDto("Task 9", "Queue 2", "Bee 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 9"), TaskDto(task9Id, TaskStatus.Running, 0.5)));
             // Cancel requested task no Bee feedback
             _db.CreateTask(QueuedTaskDto("Task 10", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 10"), null));
-            // Running task but ended during dojo stop
+            // Running task but ended during beehive stop
             _db.CreateTask(QueuedTaskDto("Task 11", "Queue 2", "Bee 1",  RemoteTaskStatus.Running, StartTaskDto("cmd 11"), TaskDto(task11Id, TaskStatus.Running)));
             // Cancel pending task should be cancel by Bee
             _db.CreateTask(QueuedTaskDto("Task 12", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 12"), TaskDto(task12Id, TaskStatus.Running, 0.5)));
@@ -332,8 +332,8 @@ namespace Application.Tests.Dojo
                 TaskDto(task12Id, TaskStatus.Running),
                 TaskDto(task11Id, TaskStatus.Done));
 
-            var dojo = new Application.Dojo.Dojo(_factory, _db);
-            var queue = new Queue(QueueDto("Queue 2"), dojo, _db, _tracker);
+            var beehive = new Application.Beehive.Beehive(_factory, _db);
+            var queue = new Queue(QueueDto("Queue 2"), beehive, _db, _tracker);
 
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             bee.DidNotReceive().CancelTask(Arg.Any<Guid>());
@@ -341,7 +341,7 @@ namespace Application.Tests.Dojo
             _db.BeeTable.EmptyLogs();
             _db.TaskTable.EmptyLogs();
 
-            dojo.Refresh();
+            beehive.Refresh();
             queue.Refresh();
 
             var taskUpdates = new List<RemoteTaskDto>();
@@ -511,13 +511,13 @@ namespace Application.Tests.Dojo
         public static void CheckDeleteTask(this IBee bee, Guid id) 
             => bee.Received().DeleteTask(Arg.Is(id));
 
-        public static void CheckCreateTask(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
+        public static void CheckCreateTask(this BeehiveDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
         {
             db.TaskTable.NextCreate().Check(name, queue, bee, command, taskId, status);
             db.TaskTable.EmptyLogs();
         }
 
-        public static void CheckUpdateTask(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
+        public static void CheckUpdateTask(this BeehiveDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
         {
             db.TaskTable.NextUpdate().Check(name, queue, bee, command, taskId, status);
             db.TaskTable.EmptyLogs();
@@ -526,14 +526,14 @@ namespace Application.Tests.Dojo
         public static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)
             => new TaskDto { Id = id, Status = status, ProgressPercent = progress };
 
-        public static void CheckTaskUpdate(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, TaskStatus status, double progress)
+        public static void CheckTaskUpdate(this BeehiveDbLogs db, string name, string queue, string bee, string command, Guid taskId, TaskStatus status, double progress)
         {
             var qStatus = status.IsFinal() ? RemoteTaskStatus.Completed : RemoteTaskStatus.Running;
 
             db.TaskTable.NextUpdate().Check(name, queue, bee, command, taskId, qStatus, status, progress);
         }
 
-        public static void CheckTaskUpdate(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status)
+        public static void CheckTaskUpdate(this BeehiveDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status)
         {
             db.TaskTable.NextUpdate().Check(name, queue, bee, command, taskId, status);
         }

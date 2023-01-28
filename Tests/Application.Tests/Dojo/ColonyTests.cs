@@ -1,26 +1,26 @@
-﻿using Application.Dojo;
+﻿using Application.Beehive;
 using Domain.Dtos;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace Application.Tests.Dojo
+namespace Application.Tests.Beehive
 {
     public class ColonyTests
     {
         [Fact]
         public void TestExecuteSimpleTask()
         {
-            var database = Substitute.For<IDojoDb>();
+            var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var dojo = new Application.Dojo.Dojo(container, database);
+            var beehive = new Application.Beehive.Beehive(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(dojo, database, taskTracker);
+            var queueProvider = new QueueProvider(beehive, database, taskTracker);
             var colony = new Colony(queueProvider, taskTracker, database);
 
             // Setup a bee
-            var bee = dojo.SetupBee("http://bee1:8080");
+            var bee = beehive.SetupBee("http://bee1:8080");
 
             // Create a queue
             queueProvider.CreateQueue("queue");
@@ -37,16 +37,16 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestCancelSimpleTask()
         {
-            var database = Substitute.For<IDojoDb>();
+            var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var dojo = new Application.Dojo.Dojo(container, database);
+            var beehive = new Application.Beehive.Beehive(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(dojo, database, taskTracker);
+            var queueProvider = new QueueProvider(beehive, database, taskTracker);
             var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee = dojo.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee = beehive.SetupBee("http://bee1:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue");
@@ -68,16 +68,16 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestExecuteMultipleTasks()
         {
-            var database = Substitute.For<IDojoDb>();
+            var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var dojo = new Application.Dojo.Dojo(container, database);
+            var beehive = new Application.Beehive.Beehive(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(dojo, database, taskTracker);
+            var queueProvider = new QueueProvider(beehive, database, taskTracker);
             var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee = dojo.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee = beehive.SetupBee("http://bee1:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue");
@@ -108,22 +108,22 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestHangingTask()
         {
-            var database = Substitute.For<IDojoDb>();
+            var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var dojo = new Application.Dojo.Dojo(container, database);
+            var beehive = new Application.Beehive.Beehive(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(dojo, database, taskTracker);
+            var queueProvider = new QueueProvider(beehive, database, taskTracker);
             var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee = dojo.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee = beehive.SetupBee("http://bee1:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue");
 
             // Turn bee too busy
-            dojo.UpdateBeeState("http://bee1:8080", 0);
+            beehive.UpdateBeeState("http://bee1:8080", 0);
 
             var id = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
 
@@ -136,7 +136,7 @@ namespace Application.Tests.Dojo
                 Arg.Is(1));
 
             // Make some room on Bee to run the task
-            dojo.UpdateBeeState("http://bee1:8080", 2);
+            beehive.UpdateBeeState("http://bee1:8080", 2);
 
             var queue = queueProvider.GetQueue("queue");
             queue.Refresh();
@@ -155,17 +155,17 @@ namespace Application.Tests.Dojo
         [Fact]
         public void TestExecuteTasksInMultipleQueues()
         {
-            var database = Substitute.For<IDojoDb>();
+            var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var dojo = new Application.Dojo.Dojo(container, database);
+            var beehive = new Application.Beehive.Beehive(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(dojo, database, taskTracker);
+            var queueProvider = new QueueProvider(beehive, database, taskTracker);
             var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee1 = dojo.SetupBee("http://bee1:8080", beeTaskIds);
-            var bee2 = dojo.SetupBee("http://bee2:8080", beeTaskIds);
+            var bee1 = beehive.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee2 = beehive.SetupBee("http://bee2:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue1", bees: "http://bee1:8080");
@@ -208,7 +208,7 @@ namespace Application.Tests.Dojo
 
     public static class ColonyTestsExtensions
     {
-        public static IBee SetupBee(this Application.Dojo.Dojo dojo, string address, List<Guid> beeIds = null)
+        public static IBee SetupBee(this Application.Beehive.Beehive beehive, string address, List<Guid> beeIds = null)
         {
             var bee = Substitute.For<IBee>();
             beeIds ??= new List<Guid>();
@@ -227,24 +227,24 @@ namespace Application.Tests.Dojo
                 });
 
             // Make it accessible from the container
-            dojo.Container
+            beehive.Container
                 .Create(Arg.Is(address))
                 .Returns(bee);
 
             // Enroll a bee and enforce a refresh to set it up
-            dojo.EnrollBee(address);
-            dojo.GetBee(address)
+            beehive.EnrollBee(address);
+            beehive.GetBee(address)
                 .Refresh();
 
             return bee;
         }
 
-        public static void UpdateBeeState(this Application.Dojo.Dojo dojo, string address, int nbFreeCores)
+        public static void UpdateBeeState(this Application.Beehive.Beehive beehive, string address, int nbFreeCores)
         {
-            var proxy = dojo.Container.Create(address);
+            var proxy = beehive.Container.Create(address);
             proxy.GetResources().Returns(R(address, nbFreeCores));
 
-            dojo.GetBee(address)
+            beehive.GetBee(address)
                 .Refresh();
         }
 

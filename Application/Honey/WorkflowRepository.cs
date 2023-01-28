@@ -4,7 +4,7 @@ using Domain.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Application.Dojo;
+using Application.Beehive;
 
 namespace Application.Honey
 {

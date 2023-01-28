@@ -1,0 +1,94 @@
+﻿@page "/workflows"
+
+@using System.Collections.ObjectModel
+@using AntDesign
+@using AntDesign.TableModels
+@using Domain.Dtos
+@using Application
+@using Application.Beehive
+@using Domain.Dtos.Workflows
+@using Domain.ViewModels;
+@using Application.Honey;
+
+@inject Colony Colony
+@inject WorkflowRepository WorkflowRepository
+@inject NavigationManager Navigation
+@inject ITimer Timer
+
+<h3>Workflows</h3>
+
+<AntDesign.Table 
+    TItem="WorkflowViewModel" DataSource="@_workflows" 
+    OnRowClick="OnRowClick" RowClassName="@(x => x.Data.ToCssClass())">
+    
+    <Column Title="Name" @bind-Field="@context.Name" Sortable Filterable />
+    <Column Title="Queue" @bind-Field="@context.Queue" Sortable Filterable />
+    <Column Title="Progress" @bind-Field="@context.Progress" Sortable>
+        <Progress Percent="@context.Progress" Status="@context.ToProgressStatus()" Format="_progressFormat" />
+    </Column>
+    <Column Title="Start" @bind-Field="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" Sortable />
+    <Column Title="Duration" @bind-Field="@context.Duration" Format="dd\.hh\:mm\:ss" Sortable />
+
+    <ActionColumn Title="Cancel" Width="70">
+        <Button OnClickStopPropagation OnClick="()=>Cancel(context.Id)" Disabled="@(!context.CanCancel())">Cancel</Button>
+    </ActionColumn>
+    <ActionColumn Title="Recover" Width="70">
+        <Button OnClickStopPropagation OnClick="()=>Recover(context.Id)" Disabled="@(!context.CanRecover())">Recover</Button>
+    </ActionColumn>
+    <ActionColumn Title="Delete" Width="70">
+        <Button Danger OnClickStopPropagation OnClick="()=>Delete(context.Id)" Disabled="@(!context.CanDelete())">Delete</Button>
+    </ActionColumn>
+</AntDesign.Table>
+
+<Modal Title="@($"Confirm {_modalState.Purpose}")" 
+       Visible="@_modalState.IsVisible" 
+       OkText="@("Confirm")" OnOk="@_modalState.Accept" 
+       CancelText="@("Cancel")" OnCancel="@_modalState.Cancel">
+       <p>Do you want to @_modalState.Purpose ?</p>
+</Modal>
+
+@code {
+    private readonly ObservableCollection<WorkflowViewModel> _workflows = new ObservableCollection<WorkflowViewModel>();
+    private readonly Func<double, string> _progressFormat = p => $"{Math.Round(p, 2)}";
+    private readonly ModalViewModel _modalState = new ModalViewModel();
+    private IDisposable _subscription;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _subscription = WorkflowRepository.Workflows.Subscribe(_workflows);
+
+        Timer.Updated -= OnTimerTick;
+        Timer.Updated += OnTimerTick;
+    }
+
+    private void OnRowClick(RowData<WorkflowViewModel> rowData)
+    {
+        Navigation.NavigateTo($"/workflow/{rowData.Data.Id}");
+    }
+
+    private void Cancel(Guid id)
+    {
+        _modalState.Purpose = "cancel";
+        _modalState.Show(() => Colony.Cancel(id));
+    }
+
+    private void Recover(Guid id)
+    {
+        _modalState.Purpose = "recover";
+        _modalState.Show(() => Colony.Recover(id));
+    }
+
+    private void Delete(Guid id)
+    {
+        _modalState.Purpose = "delete";
+        _modalState.Show(() => Colony.Delete(id));
+    }
+
+    private void OnTimerTick() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() 
+    {
+        Timer.Updated -= OnTimerTick;
+        _subscription?.Dispose(); 
+    }
+}
