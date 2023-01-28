@@ -6,6 +6,8 @@ using System.Collections.Generic;
 
 namespace Dojo.Controllers
 {
+    [ApiController]
+    [Route("[controller]")]
     public class QueueController : Controller, IQueueProvider
     {
         private readonly QueueProvider _queueProvider;
