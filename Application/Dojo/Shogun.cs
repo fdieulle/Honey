@@ -37,7 +37,7 @@ namespace Application.Dojo
         }
 
         public Guid ExecuteTask(string name, string queueName, TaskParameters task) 
-            => Execute(new WorkflowParameters { Name = name, QueueName = queueName, RootJob = new SingleTaskJobParameters { Name = name, StartTask = task } });
+            => Execute(new WorkflowParameters { Name = name, QueueName = queueName, RootJob = new SingleTaskJobParameters { Name = name, Task = task } });
 
         public void Cancel(Guid id)
         {

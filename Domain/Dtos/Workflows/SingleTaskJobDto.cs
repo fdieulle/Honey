@@ -11,6 +11,6 @@ namespace Domain.Dtos.Workflows
 
     public class SingleTaskJobParameters : JobParameters
     {
-        public TaskParameters StartTask { get; set; }
+        public TaskParameters Task { get; set; }
     }
 }

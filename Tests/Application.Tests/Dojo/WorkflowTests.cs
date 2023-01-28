@@ -22,7 +22,7 @@ namespace Application.Tests.Dojo
                     new SingleTaskJobParameters
                     {
                         Name = "Map 1",
-                        StartTask = new TaskParameters
+                        Task = new TaskParameters
                         {
                             Command = "cmd map 1"
                         }
@@ -30,7 +30,7 @@ namespace Application.Tests.Dojo
                     new SingleTaskJobParameters
                     {
                         Name = "Map 2",
-                        StartTask = new TaskParameters
+                        Task = new TaskParameters
                         {
                             Command = "cmd map 2"
                         }
@@ -38,7 +38,7 @@ namespace Application.Tests.Dojo
                     new SingleTaskJobParameters
                     {
                         Name = "Map 3",
-                        StartTask = new TaskParameters
+                        Task = new TaskParameters
                         {
                             Command = "cmd map 3"
                         }
@@ -49,7 +49,7 @@ namespace Application.Tests.Dojo
             var reducer = new SingleTaskJobParameters
             {
                 Name = "Reducer",
-                StartTask = new TaskParameters
+                Task = new TaskParameters
                 {
                     Command = "cmd reduce"
                 }
