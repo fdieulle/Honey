@@ -9,24 +9,24 @@ namespace Application.Tests.Dojo
 {
     public class DojoDbLogs : IDojoDb
     {
-        private readonly Table<string, NinjaDto> _ninjaTable = new Table<string, NinjaDto>(p => p.Address);
+        private readonly Table<string, BeeDto> _beeTable = new Table<string, BeeDto>(p => p.Address);
         private readonly Table<string, QueueDto> _queueTable = new Table<string, QueueDto>(p => p.Name);
         private readonly Table<Guid, RemoteTaskDto> _taskTable = new Table<Guid, RemoteTaskDto>(p => p.Id);
         private readonly Table<Guid, JobDto> _jobTable = new Table<Guid, JobDto>(p => p.Id);
         private readonly Table<Guid, WorkflowDto> _workflowTable = new Table<Guid, WorkflowDto>(p => p.Id);
-        public void CreateNinja(NinjaDto ninja) => _ninjaTable.Create(ninja);
+        public void CreateBee(BeeDto bee) => _beeTable.Create(bee);
 
         public void CreateQueue(QueueDto queue) => _queueTable.Create(queue);
 
         public void CreateTask(RemoteTaskDto task) => _taskTable.Create(task);
 
-        public void DeleteNinja(string address) => _ninjaTable.Delete(address);
+        public void DeleteBee(string address) => _beeTable.Delete(address);
 
         public void DeleteQueue(string name) => _queueTable.Delete(name);
 
         public void DeleteTask(Guid id) => _taskTable.Delete(id);
 
-        public IEnumerable<NinjaDto> FetchNinjas() => _ninjaTable.FetchAll();
+        public IEnumerable<BeeDto> FetchBees() => _beeTable.FetchAll();
 
         public IEnumerable<QueueDto> FetchQueues() => _queueTable.FetchAll();
 
@@ -56,7 +56,7 @@ namespace Application.Tests.Dojo
 
         public void DeleteWorkflow(Guid id) => _workflowTable.Delete(id);
 
-        public ITableChecker<string, NinjaDto> NinjaTable => _ninjaTable;
+        public ITableChecker<string, BeeDto> BeeTable => _beeTable;
         public ITableChecker<string, QueueDto> QueueTable => _queueTable;
         public ITableChecker<Guid, RemoteTaskDto> TaskTable => _taskTable;
         public ITableChecker<Guid, JobDto> JobTable => _jobTable;
@@ -64,7 +64,7 @@ namespace Application.Tests.Dojo
 
         public void ClearLogs()
         {
-            _ninjaTable.ClearLogs();
+            _beeTable.ClearLogs();
             _queueTable.ClearLogs();
             _taskTable.ClearLogs();
             _jobTable.ClearLogs();

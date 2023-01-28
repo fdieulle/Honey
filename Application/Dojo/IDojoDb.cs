@@ -12,9 +12,9 @@ namespace Application.Dojo
         void UpdateTask(RemoteTaskDto task);
         void DeleteTask(Guid id);
 
-        IEnumerable<NinjaDto> FetchNinjas();
-        void CreateNinja(NinjaDto ninja);
-        void DeleteNinja(string address);
+        IEnumerable<BeeDto> FetchBees();
+        void CreateBee(BeeDto bee);
+        void DeleteBee(string address);
 
         IEnumerable<QueueDto> FetchQueues();
         void CreateQueue(QueueDto queue);

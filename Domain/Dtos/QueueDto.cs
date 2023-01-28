@@ -10,13 +10,13 @@ namespace Domain.Dtos
 
         public int MaxParallelTasks { get; set; }
 
-        public IEnumerable<string> Ninjas { get; set; }
+        public IEnumerable<string> Bees { get; set; }
 
         public QueueDto Clone()
         {
             var clone = (QueueDto)MemberwiseClone();
-            if (Ninjas != null)
-                clone.Ninjas = new List<string>(Ninjas);
+            if (Bees != null)
+                clone.Bees = new List<string>(Bees);
             return clone;
         }
     }

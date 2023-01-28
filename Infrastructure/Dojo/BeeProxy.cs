@@ -7,11 +7,11 @@ using System.Net.Http;
 
 namespace Infrastructure.Dojo
 {
-    internal class NinjaProxy : INinja
+    internal class BeeProxy : IBee
     {
         private readonly HttpClient _client = new HttpClient();
 
-        public NinjaProxy(string address)
+        public BeeProxy(string address)
         {
             _client.BaseAddress = new Uri(address);
             _client.DefaultRequestHeaders.Accept.Clear();
@@ -20,29 +20,29 @@ namespace Infrastructure.Dojo
         }
 
         public IEnumerable<TaskDto> GetTasks() 
-            => _client.GetAsync<List<TaskDto>>("Ninja/GetTasks").Result;
+            => _client.GetAsync<List<TaskDto>>("Bee/GetTasks").Result;
 
         public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length) 
             => _client.GetAsync<List<TaskMessageDto>>(
-                "Ninja/FetchMessages", 
+                "Bee/FetchMessages", 
                 ("id", id.ToString()), 
                 ("start", start.ToString()), 
                 ("length", length.ToString())).Result;
 
         public Guid StartTask(string command, string arguments, int nbCores = 1) 
             => _client.PostAsArgsAsync<Guid>(
-                "Ninja/StartTask", 
+                "Bee/StartTask", 
                 ("command", command), 
                 ("arguments", arguments), 
                 ("nbCores", nbCores.ToString())).Result;
 
         public async void CancelTask(Guid id) 
-            => await _client.PostAsArgsAsync("Ninja/CancelTask", ("id", id.ToString()));
+            => await _client.PostAsArgsAsync("Bee/CancelTask", ("id", id.ToString()));
 
         public async void DeleteTask(Guid id) 
-            => await _client.DeleteAsArgsAsync("Ninja/DeleteTask", ("id", id.ToString()));
+            => await _client.DeleteAsArgsAsync("Bee/DeleteTask", ("id", id.ToString()));
 
-        public NinjaResourcesDto GetResources() 
-            => _client.GetAsync<NinjaResourcesDto>("Ninja/GetResources").Result;
+        public BeeResourcesDto GetResources() 
+            => _client.GetAsync<BeeResourcesDto>("Bee/GetResources").Result;
     }
 }

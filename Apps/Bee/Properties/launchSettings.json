@@ -17,7 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "Ninja": {
+    "Bee": {
       "commandName": "Project",
       "dotnetRunMessages": "true",
       "launchBrowser": true,

@@ -42,23 +42,23 @@ namespace Application.Dojo.Repositories
             => _wfTojobs.TryGetValue(id, out var jobId) && _jobs.TryGetValue(jobId, out var job)
                 ? job : JobViewModel.Empty;
 
-        private List<WorkflowDto> _mockW;
-        private List<JobDto> _mockJ;
-        private List<RemoteTaskDto> _mockT;
+        //private List<WorkflowDto> _mockW;
+        //private List<JobDto> _mockJ;
+        //private List<RemoteTaskDto> _mockT;
         public void Refresh()
         {
             var workflows = _shogun.GetWorkflows();
             var jobs = _shogun.GetJobs();
             var tasks = _shogun.GetTasks();
 
-            if (_mockW == null)
-                (_mockW, _mockJ, _mockT) = CreateWorkflows();
-            else
-            {
-                foreach (var t in _mockT)
-                    t.NinjaState.ProgressPercent = Math.Min(1, t.NinjaState.ProgressPercent + 0.1);
-            }
-            (workflows, jobs, tasks) = (_mockW, _mockJ, _mockT);
+            //if (_mockW == null)
+            //    (_mockW, _mockJ, _mockT) = CreateWorkflows();
+            //else
+            //{
+            //    foreach (var t in _mockT)
+            //        t.BeeState.ProgressPercent = Math.Min(1, t.BeeState.ProgressPercent + 0.1);
+            //}
+            //(workflows, jobs, tasks) = (_mockW, _mockJ, _mockT);
 
             _tasks.Reload(tasks);
             _jobs.Reload(jobs);
@@ -177,8 +177,8 @@ namespace Application.Dojo.Repositories
             var (reducerJob, reducerTask) = CreateTask("Reduce", "python");
             reducerJob.Status = JobStatus.Pending;
             reducerTask.Status = Domain.Dtos.RemoteTaskStatus.Pending;
-            reducerTask.NinjaState.StartTime = default;
-            reducerTask.NinjaState.ProgressPercent = 0;
+            reducerTask.BeeState.StartTime = default;
+            reducerTask.BeeState.ProgressPercent = 0;
             jobs.Add(reducerJob);
             tasks.Add(reducerTask);
 
@@ -205,9 +205,9 @@ namespace Application.Dojo.Repositories
             {
                 Id = Guid.NewGuid(),
                 Name = name,
-                NinjaAddress = "Ninja 1",
+                BeeAddress = "Bee 1",
                 Status = Domain.Dtos.RemoteTaskStatus.Running,
-                NinjaState = new TaskDto
+                BeeState = new TaskDto
                 {
                     StartTime = DateTime.Now,
                     ProgressPercent = 0.2,

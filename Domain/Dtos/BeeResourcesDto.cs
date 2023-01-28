@@ -1,6 +1,6 @@
 ﻿namespace Domain.Dtos
 {
-    public class NinjaResourcesDto
+    public class BeeResourcesDto
     {
         public string MachineName { get; set; }
 

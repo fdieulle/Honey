@@ -7,10 +7,10 @@ using Application;
 
 namespace Infrastructure
 {
-    public class NinjaClient : INinjaClient
+    public class BeeClient : IBeeClient
     {
         private readonly HttpClient _client = new HttpClient();
-        public NinjaClient(string address)
+        public BeeClient(string address)
         {
             _client.BaseAddress = new Uri(address);
             _client.DefaultRequestHeaders.Accept.Clear();
@@ -20,7 +20,7 @@ namespace Infrastructure
 
         public void UpdateTask(TaskStateDto dto)
         {
-            _client.PostAsJsonAsync("NinjaClient/UpdateTask", dto).Wait();
+            _client.PostAsJsonAsync("BeeClient/UpdateTask", dto).Wait();
         }
 
         public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime = default, string message = null)

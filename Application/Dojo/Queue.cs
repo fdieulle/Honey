@@ -17,7 +17,7 @@ namespace Application.Dojo
         private readonly IDojoDb _database;
         private readonly TaskTracker _tracker;
         private int _maxParallelTasks;
-        private HashSet<string> _ninjas = new HashSet<string>();
+        private HashSet<string> _bees = new HashSet<string>();
         private ulong _orderIncrement;
 
         public string Name => Dto.Name;
@@ -71,9 +71,9 @@ namespace Application.Dojo
             lock (_lock)
             {
                 Dto.MaxParallelTasks = dto.MaxParallelTasks;
-                Dto.Ninjas = new List<string>(dto.Ninjas ?? Enumerable.Empty<string>());
+                Dto.Bees = new List<string>(dto.Bees ?? Enumerable.Empty<string>());
 
-                _ninjas = new HashSet<string>(dto.Ninjas ?? Enumerable.Empty<string>());
+                _bees = new HashSet<string>(dto.Bees ?? Enumerable.Empty<string>());
 
                 var current = _maxParallelTasks;
                 _maxParallelTasks = dto.MaxParallelTasks;
@@ -99,20 +99,20 @@ namespace Application.Dojo
             if (_maxParallelTasks > 0 && _runningTasks.Count >= _maxParallelTasks)
                 return Hang(task);
 
-            var ninjas = new HashSet<string>(_ninjas);
-            Ninja ninja;
-            while ((ninja = _dojo.GetNextNinja(ninjas)) != null)
+            var bees = new HashSet<string>(_bees);
+            Bee bee;
+            while ((bee = _dojo.GetNextBee(bees)) != null)
             {
-                var ninjaId = ninja.StartTask(task);
+                var beeId = bee.StartTask(task);
                 // If a task has been launched we record it
-                if (ninjaId != Guid.Empty)
-                    return RunTask(task, ninja, ninjaId);
+                if (beeId != Guid.Empty)
+                    return RunTask(task, bee, beeId);
 
-                // Otherwise retry with another ninja by banning the faulted one
-                ninjas.Remove(ninja.Address);
+                // Otherwise retry with another bee by banning the faulted one
+                bees.Remove(bee.Address);
 
-                // If there is no more usable ninjas we stop retries.
-                if (ninjas.Count == 0)
+                // If there is no more usable bees we stop retries.
+                if (bees.Count == 0)
                     break;
             }
 
@@ -120,10 +120,10 @@ namespace Application.Dojo
             return Hang(task);
         }
         
-        private Guid RunTask(RemoteTaskDto task, Ninja ninja, Guid ninjaTaskId)
+        private Guid RunTask(RemoteTaskDto task, Bee bee, Guid beeTaskId)
         {
-            task.NinjaState.Id = ninjaTaskId;
-            task.NinjaAddress = ninja.Address;
+            task.BeeState.Id = beeTaskId;
+            task.BeeAddress = bee.Address;
 
             _runningTasks[task.Id] = task;
             RecordTask(task, RemoteTaskStatus.Running);
@@ -161,19 +161,19 @@ namespace Application.Dojo
                 // Try cancel running task
                 if (_runningTasks.TryGetValue(id, out var task))
                 {
-                    var ninja = _dojo.GetNinja(task.NinjaAddress);
-                    if (ninja != null)
+                    var bee = _dojo.GetBee(task.BeeAddress);
+                    if (bee != null)
                     {
-                        if (task.NinjaState == null)
+                        if (task.BeeState == null)
                         {
-                            // Todo: The Ninja didn't give any status yet, We can only remove it
-                            // Todo: Should we try to wait a bit the Ninja cache update before to take any action ?
+                            // Todo: The Bee didn't give any status yet, We can only remove it
+                            // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
                             RecordTask(task, RemoteTaskStatus.Error);
                             return;
                         }
 
                         RecordTask(task, RemoteTaskStatus.CancelRequested);
-                        ninja.CancelTask(task.NinjaState.Id);
+                        bee.CancelTask(task.BeeState.Id);
                     }
                     else
                     {
@@ -204,24 +204,24 @@ namespace Application.Dojo
                 var runningTasks = _runningTasks.Values.ToList();
                 foreach (var task in runningTasks)
                 {
-                    if (string.IsNullOrEmpty(task.NinjaAddress)) // Skip pending tasks
+                    if (string.IsNullOrEmpty(task.BeeAddress)) // Skip pending tasks
                         continue;
 
-                    var ninja = _dojo.GetNinja(task.NinjaAddress);
-                    if (ninja == null) continue; // TODO: Should we consider a state after a long run without ninja up like a timeout and allow delete the task ?
+                    var bee = _dojo.GetBee(task.BeeAddress);
+                    if (bee == null) continue; // TODO: Should we consider a state after a long run without bee up like a timeout and allow delete the task ?
 
-                    if (task.NinjaState == null)
+                    if (task.BeeState == null)
                     {
-                        // TODO: Should we remove this task because it is not known by the Ninja
-                        // Todo: Should we try to wait a bit the Ninja cache update before to take any action ?
+                        // TODO: Should we remove this task because it is not known by the Bee
+                        // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
                         RecordTask(task, RemoteTaskStatus.Error);
                         continue;
                     }
 
-                    var state = ninja.GetTaskState(task.NinjaState.Id);
+                    var state = bee.GetTaskState(task.BeeState.Id);
                     if (state != null)
                     {
-                        task.NinjaState = state;
+                        task.BeeState = state;
                         if (state.IsFinalStatus())
                         {
                             _runningTasks.Remove(task.Id);
@@ -234,11 +234,11 @@ namespace Application.Dojo
                             else
                                 RecordTask(task, RemoteTaskStatus.Error);
 
-                            ninja.DeleteTask(task.NinjaState.Id);
+                            bee.DeleteTask(task.BeeState.Id);
                         }
                         else if (task.Status == RemoteTaskStatus.CancelPending)
                         {
-                            ninja.CancelTask(task.NinjaState.Id);
+                            bee.CancelTask(task.BeeState.Id);
                             RecordTask(task, RemoteTaskStatus.CancelRequested);
                         }
                         else RecordTask(task, task.Status);
@@ -259,14 +259,14 @@ namespace Application.Dojo
                 if (!_tasks.TryGetValue(id, out var task) || !task.IsFinalStatus())
                     return false;
 
-                // Delete the task from the Ninja
-                if (!string.IsNullOrEmpty(task.NinjaAddress))
+                // Delete the task from the Bee
+                if (!string.IsNullOrEmpty(task.BeeAddress))
                 {
-                    var ninja = _dojo.GetNinja(task.NinjaAddress);
-                    if (ninja == null || task.NinjaState == null)
-                        return false; // Todo: Should mark as deleted for a deletion later or enforce the delete if no Ninja can remind it existency
+                    var bee = _dojo.GetBee(task.BeeAddress);
+                    if (bee == null || task.BeeState == null)
+                        return false; // Todo: Should mark as deleted for a deletion later or enforce the delete if no Bee can remind it existency
 
-                    ninja.DeleteTask(task.NinjaState.Id);
+                    bee.DeleteTask(task.BeeState.Id);
                 }
 
                 RecordTask(task, RemoteTaskStatus.Deleted);
@@ -285,7 +285,7 @@ namespace Application.Dojo
                 var task = _pendingTasks.Peek();
                 StartTask(task);
 
-                if (task.NinjaState != null && task.NinjaState.Id != Guid.Empty)
+                if (task.BeeState != null && task.BeeState.Id != Guid.Empty)
                     _pendingTasks.Dequeue();
                 else break;
             }

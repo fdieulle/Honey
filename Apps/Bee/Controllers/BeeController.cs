@@ -5,31 +5,31 @@ using Domain.Dtos;
 using Application;
 using Microsoft.Extensions.Logging;
 
-namespace Ninja.Controllers
+namespace Bee.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class NinjaController : ControllerBase, INinja
+    public class BeeController : ControllerBase, IBee
     {
-        private readonly Application.Ninja.Ninja _ninja;
-        private readonly ILogger<NinjaController> _logger;
+        private readonly Application.Bee.Bee _bee;
+        private readonly ILogger<BeeController> _logger;
 
-        public NinjaController(Application.Ninja.Ninja ninja, ILogger<NinjaController> logger)
+        public BeeController(Application.Bee.Bee bee, ILogger<BeeController> logger)
         {
-            _ninja = ninja;
+            _bee = bee;
             _logger = logger;
         }
 
         [HttpGet("GetTasks")]
         public IEnumerable<TaskDto> GetTasks()
         {
-            return _ninja.GetTasks();
+            return _bee.GetTasks();
         }
 
         [HttpGet("FetchMessages")]
         public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length)
         {
-            return _ninja.FetchMessages(id, start, length);
+            return _bee.FetchMessages(id, start, length);
         }
 
         [HttpPost("StartTask")]
@@ -37,7 +37,7 @@ namespace Ninja.Controllers
         {
             _logger.LogInformation("Start task: command={0}, arguments={1}, nbCores={2}", command, arguments, nbCores);
 
-            return _ninja.StartTask(command, arguments, nbCores);
+            return _bee.StartTask(command, arguments, nbCores);
         }
 
         [HttpPost("CancelTask")]
@@ -45,7 +45,7 @@ namespace Ninja.Controllers
         {
             _logger.LogInformation("Cancel task: id={0}", id);
 
-            _ninja.CancelTask(id);
+            _bee.CancelTask(id);
         }
 
         [HttpDelete("DeleteTask")]
@@ -53,13 +53,13 @@ namespace Ninja.Controllers
         {
             _logger.LogInformation("Delete task: id={0}", id);
 
-            _ninja.DeleteTask(id);
+            _bee.DeleteTask(id);
         }
 
         [HttpGet("GetResources")]
-        public NinjaResourcesDto GetResources()
+        public BeeResourcesDto GetResources()
         {
-            return _ninja.GetResources();
+            return _bee.GetResources();
         }
     }
 }

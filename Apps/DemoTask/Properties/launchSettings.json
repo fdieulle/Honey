@@ -4,8 +4,8 @@
       "commandName": "Project",
       "commandLineArgs": "10",
       "environmentVariables": {
-        "NINJA_BASE_URI": "https://localhost:44355",
-        "NINJA_TASK_ID": "563d0a4d-c999-48da-82ec-c348d9245a29"
+        "BEE_BASE_URI": "https://localhost:44355",
+        "BEE_TASK_ID": "563d0a4d-c999-48da-82ec-c348d9245a29"
       }
     }
   }

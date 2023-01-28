@@ -5,19 +5,19 @@ using System.Linq;
 
 namespace Application.Dojo
 {
-    public class Ninja : INinja
+    public class Bee : IBee
     {
-        private readonly INinja _proxy;
+        private readonly IBee _proxy;
         private Dictionary<Guid, TaskDto> _tasks = new Dictionary<Guid, TaskDto>();
-        private NinjaResourcesDto _resources;
+        private BeeResourcesDto _resources;
 
         public string Address => Dto.Address;
 
-        public NinjaDto Dto { get; } = new NinjaDto();
+        public BeeDto Dto { get; } = new BeeDto();
 
-        public Ninja(string address, INinja ninja)
+        public Bee(string address, IBee bee)
         {
-            _proxy = ninja;
+            _proxy = bee;
             Dto.Address = address;
         }
 
@@ -83,6 +83,6 @@ namespace Application.Dojo
 
         public void DeleteTask(Guid id) => _proxy.DeleteTask(id);
 
-        public NinjaResourcesDto GetResources() => _resources;
+        public BeeResourcesDto GetResources() => _resources;
     }
 }

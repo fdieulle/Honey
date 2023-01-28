@@ -28,12 +28,12 @@
         <FormItem Label="Max number of parallel tasks" Help="A value <= 0 means no restrictions.">
             <AntDesign.InputNumber @bind-Value="@context.MaxParallelTasks" />
         </FormItem>
-        <FormItem Label="Ninjas" Help="No selection means allowing the queue to run on all ninjas.">
+        <FormItem Label="Bees" Help="No selection means allowing the queue to run on all bees.">
             <Select Mode="multiple"
-                    DataSource="@_ninjas"
-                    @bind-Values="@context.Ninjas"
-                    LabelName="@nameof(NinjaDto.Address)"
-                    ValueName="@nameof(NinjaDto.Address)"
+                    DataSource="@_bees"
+                    @bind-Values="@context.Bees"
+                    LabelName="@nameof(BeeDto.Address)"
+                    ValueName="@nameof(BeeDto.Address)"
                     Placeholder="Please select"
                     EnableSearch
                     AllowClear>
@@ -58,7 +58,7 @@
     <RowTemplate>
         <Column Title="Name" Field="@context.Name" />
         <Column Title="Max Parallel" Field="@context.MaxParallelTasks" />
-        <Column Title="Nb Ninjas" Field="@Count(context.Ninjas)" />
+        <Column Title="Nb Bees" Field="@Count(context.Bees)" />
         <ActionColumn>
             <Space>
                 <SpaceItem><Button Danger OnClick="()=>RemoveQueue(context.Name)">Delete</Button></SpaceItem>
@@ -66,7 +66,7 @@
         </ActionColumn>
     </RowTemplate>
     <ExpandTemplate Context="rowData">
-        <Table DataSource="rowData.Data.NinjasVM" Loading="rowData.Data.NinjasVM==null" TItem="NinjaDto" HidePagination>
+        <Table DataSource="rowData.Data.BeesVM" Loading="rowData.Data.BeesVM==null" TItem="BeeDto" HidePagination>
             <Column Title="OS" Field="@context.OS">
                 <Image Preview=false Width="25px" Src="@GetOSImage(context.OS)" />
             </Column>
@@ -92,11 +92,11 @@
     bool _isVisible;
     QueueDto _model = new QueueDto();
     List<QueueVM> _queues = new List<QueueVM>();
-    List<NinjaDto> _ninjas = new List<NinjaDto>();
+    List<BeeDto> _bees = new List<BeeDto>();
 
-    protected override async Task OnInitializedAsync()
+    protected async override Task OnInitializedAsync()
     {
-        _ninjas.AddRange(Dojo.GetNinjas());
+        _bees.AddRange(Dojo.GetBees());
         _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
     }
 
@@ -132,24 +132,24 @@
         StateHasChanged();
     }
 
-    async Task OnRowExpand(RowData<QueueVM> rowData)
+    private async Task OnRowExpand(RowData<QueueVM> rowData)
     {
-        var allNinjas = Dojo.GetNinjas().ToDictionary(p => p.Address, p => p);
-        var names = new List<string>(rowData.Data.Ninjas ?? Enumerable.Empty<string>());
+        var allBees = Dojo.GetBees().ToDictionary(p => p.Address, p => p);
+        var names = new List<string>(rowData.Data.Bees ?? Enumerable.Empty<string>());
         if (names.Count == 0)
         {
-            rowData.Data.NinjasVM = allNinjas.Values.ToList();
+            rowData.Data.BeesVM = allBees.Values.ToList();
         }
         else
         {
-            var ninjas = new List<NinjaDto>();
+            var bees = new List<BeeDto>();
             foreach (var name in names)
             {
-                if (allNinjas.TryGetValue(name, out var ninja))
-                    ninjas.Add(ninja);
+                if (allBees.TryGetValue(name, out var bee))
+                    bees.Add(bee);
             }
 
-            rowData.Data.NinjasVM = ninjas;
+            rowData.Data.BeesVM = bees;
         }
 
         StateHasChanged();
@@ -159,11 +159,11 @@
     {
     }
 
-    int Count(IEnumerable<string> ninjas)
+    int Count(IEnumerable<string> bees)
     {
-        return ninjas == null || !ninjas.Any()
-            ? _ninjas.Count
-            : ninjas.Count();
+        return bees == null || !bees.Any()
+            ? _bees.Count
+            : bees.Count();
     }
 
     string GetColor(double percent)
@@ -199,9 +199,9 @@
         {
             Name = dto.Name;
             MaxParallelTasks = dto.MaxParallelTasks;
-            Ninjas = dto.Ninjas;
+            Bees = dto.Bees;
         }
 
-        public List<NinjaDto> NinjasVM { get; set; }
+        public List<BeeDto> BeesVM { get; set; }
     }
 }

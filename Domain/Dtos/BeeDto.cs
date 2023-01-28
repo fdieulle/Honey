@@ -2,7 +2,7 @@
 
 namespace Domain.Dtos
 {
-    public class NinjaDto
+    public class BeeDto
     {
         public string OS { get; set; }
 

@@ -6,7 +6,7 @@ namespace Infrastructure.Dojo
 {
     internal class DojoDbContext : DbContext
     {
-        public DbSet<NinjaEntity> Ninjas { get; set; }
+        public DbSet<BeeEntity> Bees { get; set; }
 
         public DbSet<QueueEntity> Queues { get; set; }
 
@@ -25,7 +25,7 @@ namespace Infrastructure.Dojo
         {
             base.OnModelCreating(mb);
 
-            mb.Entity<NinjaEntity>()
+            mb.Entity<BeeEntity>()
                 .HasKey(p => p.Address);
             mb.Entity<QueueEntity>()
                 .HasKey(p => p.Name);

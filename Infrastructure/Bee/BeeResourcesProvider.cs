@@ -1,11 +1,11 @@
 ﻿using Hardware.Info;
 using System;
 using System.Linq;
-using Application.Ninja;
+using Application.Bee;
 
-namespace Infrastructure.Ninja
+namespace Infrastructure.Bee
 {
-    internal class NinjaResourcesProvider : INinjaResourcesProvider
+    internal class BeeResourcesProvider : IBeeResourcesProvider
     {
         private static readonly IHardwareInfo hardwareInfo = new HardwareInfo(useAsteriskInWMI: false);
 

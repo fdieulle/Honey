@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Infrastructure;
 
-namespace Ninja
+namespace Bee
 {
     public class Startup
     {
@@ -20,12 +20,12 @@ namespace Ninja
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.ConfigureNinja(Configuration);
+            services.ConfigureBee(Configuration);
             
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Ninja", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Bee", Version = "v1" });
             });
         }
 
@@ -36,7 +36,7 @@ namespace Ninja
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ninja v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Bee v1"));
             }
 
             app.UseHttpsRedirection();

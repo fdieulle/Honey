@@ -1,4 +1,4 @@
-﻿@page "/ninjas"
+﻿@page "/bees"
 
 @using AntDesign
 @using Domain.Dtos
@@ -8,17 +8,17 @@
 @inject Dojo Dojo
 @inject ITimer Timer
 
-<h3>Ninjas</h3>
+<h3>Bees</h3>
 
 <Space>
-    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@(()=>{ _isVisible = true; })">Enroll Ninja</Button></SpaceItem>
+    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@(()=>{ _isVisible = true; })">Enroll Bee</Button></SpaceItem>
     <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@AddDummy">Add dummy</Button></SpaceItem>
 </Space>
 
-<Modal Title="New Ninja"
+<Modal Title="New Bee"
        Visible="@_isVisible"
        Footer="@null">
-       <Form Model="@_newNinja"
+       <Form Model="@_newBee"
              OnFinish="@Enroll"
              OnFinishFailed="@EnrollmentFailed">
             <FormItem Label="Url">
@@ -43,8 +43,8 @@
        </Form>
 </Modal>
 <AntDesign.Table 
-    TItem="NinjaDto"
-    DataSource="@_ninjas"   
+    TItem="BeeDto"
+    DataSource="@_bees"   
 >
     <Column Title="OS" Field="@context.OS">
         <Image Preview=false Width="25px" Src="@GetOSImage(context.OS)" />
@@ -71,14 +71,14 @@
 </AntDesign.Table>
 
 @code {
-    List<NinjaDto> _ninjas = new List<NinjaDto>();
+    List<BeeDto> _bees = new List<BeeDto>();
     bool _isVisible;
-    NinjaDto _newNinja = new NinjaDto();
+    BeeDto _newBee = new BeeDto();
 
     protected override async Task OnInitializedAsync()
     {
         Timer.Updated += Updated;
-        _ninjas = Dojo.GetNinjas().ToList();
+        _bees = Dojo.GetBees().ToList();
     }
 
     private void Updated()
@@ -88,10 +88,10 @@
 
     private void Enroll(EditContext editContext)
     {
-        Dojo.EnrollNinja(_newNinja.Address);
+        Dojo.EnrollBee(_newBee.Address);
         _isVisible = false;
 
-        _ninjas = Dojo.GetNinjas().ToList();
+        _bees = Dojo.GetBees().ToList();
         StateHasChanged();
     }
 
@@ -107,9 +107,9 @@
 
     private void Revoke(string name)
     {
-        Dojo.RevokeNinja(name);
+        Dojo.RevokeBee(name);
 
-        _ninjas = Dojo.GetNinjas().ToList();
+        _bees = Dojo.GetBees().ToList();
         StateHasChanged();
     }
 
@@ -147,22 +147,22 @@
 
     private void AddDummy()
     {
-        var dummy = _dummies[_ninjas.Count % _dummies.Count];
-        _ninjas.Add(
-            new NinjaDto
+        var dummy = _dummies[_bees.Count % _dummies.Count];
+        _bees.Add(
+            new BeeDto
             {
                 IsUp = dummy.IsUp,
                 OS = dummy.OS,
-                Address = $"https://machine{_ninjas.Count + 1}:8080",
+                Address = $"https://machine{_bees.Count + 1}:8080",
                 PercentFreeCores = dummy.PercentFreeCores,
                 PercentFreeMemory = dummy.PercentFreeMemory,
                 PercentFreeDiskSpace = dummy.PercentFreeDiskSpace,
             });
     }
 
-    private readonly List<NinjaDto> _dummies = new List<NinjaDto>
+    private readonly List<BeeDto> _dummies = new List<BeeDto>
     {
-        new NinjaDto
+        new BeeDto
         {
             IsUp = true,
             OS = "Unix",
@@ -171,7 +171,7 @@
             PercentFreeMemory = 30,
             PercentFreeDiskSpace = 30,
         },
-        new NinjaDto
+        new BeeDto
         {
             IsUp = true,
             OS = "MacOSX",
@@ -180,7 +180,7 @@
             PercentFreeMemory = 75,
             PercentFreeDiskSpace = 75,
         },
-        new NinjaDto
+        new BeeDto
         {
             IsUp = true,
             OS = "Win32NT",
@@ -189,7 +189,7 @@
             PercentFreeMemory = 90,
             PercentFreeDiskSpace = 90,
         },
-        new NinjaDto
+        new BeeDto
         {
             OS = "Xbox",
             Address = "Machine 4",
@@ -197,7 +197,7 @@
             PercentFreeMemory = 50,
             PercentFreeDiskSpace = 80,
         },
-        new NinjaDto
+        new BeeDto
         {
             OS = "Other",
             Address = "Machine 5",

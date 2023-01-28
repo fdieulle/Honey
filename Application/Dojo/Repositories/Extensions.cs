@@ -76,14 +76,14 @@ namespace Application.Dojo.Repositories
             if (!tasks.TryGetValue(dto.TaskId, out var task))
                 return;
             
-            vm.Host = task.NinjaAddress;
-            var ninjaState = task.NinjaState;
-            if (ninjaState != null)
+            vm.Host = task.BeeAddress;
+            var beeState = task.BeeState;
+            if (beeState != null)
             {
-                vm.HostId = ninjaState.Id;
-                vm.StartTime = ninjaState.StartTime;
-                vm.Progress = ninjaState.ProgressPercent;
-                vm.Duration = (ninjaState.IsFinalStatus() ? ninjaState.EndTime : DateTime.Now) - ninjaState.StartTime;
+                vm.HostId = beeState.Id;
+                vm.StartTime = beeState.StartTime;
+                vm.Progress = beeState.ProgressPercent;
+                vm.Duration = (beeState.IsFinalStatus() ? beeState.EndTime : DateTime.Now) - beeState.StartTime;
             }
 
             var parameters = task.Parameters;

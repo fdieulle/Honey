@@ -1,21 +1,21 @@
-﻿using Application.Ninja;
+﻿using Application.Bee;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Infrastructure.Ninja
+namespace Infrastructure.Bee
 {
-    internal class NinjaDb : INinjaDb
+    internal class BeeDb : IBeeDb
     {
-        private readonly IDbContextFactory<NinjaDbContext> _factory;
-        private readonly INinjaResourcesProvider _ninjaResourcesProvider;
+        private readonly IDbContextFactory<BeeDbContext> _factory;
+        private readonly IBeeResourcesProvider _beeResourcesProvider;
 
-        public NinjaDb(IDbContextFactory<NinjaDbContext> factory, INinjaResourcesProvider ninjaResourcesProvider)
+        public BeeDb(IDbContextFactory<BeeDbContext> factory, IBeeResourcesProvider beeResourcesProvider)
         {
             _factory = factory;
-            _ninjaResourcesProvider = ninjaResourcesProvider;
+            _beeResourcesProvider = beeResourcesProvider;
         }        
 
         public void CreateTask(RunningTask task)
@@ -24,7 +24,7 @@ namespace Infrastructure.Ninja
                 CreateTask(context, task);
         }
 
-        private void CreateTask(NinjaDbContext context, RunningTask task)
+        private void CreateTask(BeeDbContext context, RunningTask task)
         {
             var dto = task.ToDto();
             var model = new TaskEntity
@@ -84,7 +84,7 @@ namespace Infrastructure.Ninja
             using (var context = _factory.CreateDbContext())
             {
                 foreach (var task in context.Tasks)
-                    result.Add(new RunningTask(_ninjaResourcesProvider.GetBaseUri(), task));
+                    result.Add(new RunningTask(_beeResourcesProvider.GetBaseUri(), task));
             }
             return result;
         }

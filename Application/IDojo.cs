@@ -7,11 +7,11 @@ namespace Application
 {
     public interface IDojo
     {
-        IEnumerable<NinjaDto> GetNinjas();
+        IEnumerable<BeeDto> GetBees();
         
-        void EnrollNinja(string address);
+        void EnrollBee(string address);
         
-        void RevokeNinja(string address);
+        void RevokeBee(string address);
     }
 
     public interface IQueueProvider

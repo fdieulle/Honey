@@ -4,7 +4,7 @@ using Domain.Dtos;
 
 namespace Application
 {
-    public interface INinja
+    public interface IBee
     {
         IEnumerable<TaskDto> GetTasks();
 
@@ -16,16 +16,16 @@ namespace Application
 
         void DeleteTask(Guid id);
 
-        NinjaResourcesDto GetResources();
+        BeeResourcesDto GetResources();
     }
 
-    public interface INinjaClient
+    public interface IBeeClient
     {
         void UpdateTask(TaskStateDto state);
     }
 
-    public interface INinjaFactory
+    public interface IBeeFactory
     {
-        INinja Create(string address);
+        IBee Create(string address);
     }
 }

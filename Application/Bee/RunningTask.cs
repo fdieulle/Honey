@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Domain;
 using Domain.Dtos;
 using Domain.Entities;
 
 
-namespace Application.Ninja
+namespace Application.Bee
 {
     public class RunningTask : IDisposable
     {
@@ -109,8 +108,8 @@ namespace Application.Ninja
                 WorkingDirectory = workingFolder,
             };
 
-            startInfo.EnvironmentVariables.Add("NINJA_TASK_ID", Id.ToString());
-            startInfo.EnvironmentVariables.Add("NINJA_BASE_URI", _baseUri);
+            startInfo.EnvironmentVariables.Add("BEE_TASK_ID", Id.ToString());
+            startInfo.EnvironmentVariables.Add("BEE_BASE_URI", _baseUri);
 
             return new Process
             {

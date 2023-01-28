@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Domain.Dtos;
 using Domain.Entities;
 
-namespace Application.Ninja
+namespace Application.Bee
 {
     public static class Extensions
     {

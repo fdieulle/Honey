@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Application.Ninja
+namespace Application.Bee
 {
-    public interface INinjaDb
+    public interface IBeeDb
     {
         void CreateTask(RunningTask task);
 

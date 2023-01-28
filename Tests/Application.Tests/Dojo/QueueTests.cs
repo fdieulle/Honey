@@ -1,5 +1,5 @@
 ﻿using Application.Dojo;
-using Application.Ninja;
+using Application.Bee;
 using Domain;
 using Domain.Dtos;
 using NSubstitute;
@@ -12,7 +12,7 @@ namespace Application.Tests.Dojo
 {
     public class QueueTests
     {
-        private readonly INinjaFactory _factory;
+        private readonly IBeeFactory _factory;
         private readonly DojoDbLogs _db;
         private readonly TaskTracker _tracker;
         private readonly Application.Dojo.Dojo _dojo;
@@ -20,7 +20,7 @@ namespace Application.Tests.Dojo
 
         public QueueTests()
         {
-            _factory = Substitute.For<INinjaFactory>();
+            _factory = Substitute.For<IBeeFactory>();
             _db = new DojoDbLogs();
             _dojo = new Application.Dojo.Dojo(_factory, _db);
             _tracker = new TaskTracker();
@@ -38,36 +38,36 @@ namespace Application.Tests.Dojo
         [Fact]
         public void StartAndRunTask()
         {
-            var ninja = _factory.Setup("Ninja 1");
-            _dojo.EnrollNinja("Ninja 1");
+            var bee = _factory.Setup("Bee 1");
+            _dojo.EnrollBee("Bee 1");
 
             Refresh();
 
             var taskId = Guid.NewGuid();
-            ninja.StartTask(Arg.Is("App 1"), Arg.Is("Arg1, Arg2"), Arg.Is(1)).Returns(taskId);
+            bee.StartTask(Arg.Is("App 1"), Arg.Is("Arg1, Arg2"), Arg.Is(1)).Returns(taskId);
 
             _queue.StartTask("Task 1", StartTaskDto("App 1", "Arg1, Arg2", 1));
 
-            ninja.Received(1).StartTask(Arg.Is("App 1"), Arg.Is("Arg1, Arg2"), Arg.Is(1));
-            _db.TaskTable.NextCreate().Check("Task 1", "Queue 1", "Ninja 1", "App 1", taskId, RemoteTaskStatus.Running);
+            bee.Received(1).StartTask(Arg.Is("App 1"), Arg.Is("Arg1, Arg2"), Arg.Is(1));
+            _db.TaskTable.NextCreate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running);
             _db.TaskTable.EmptyLogs();
 
-            ninja.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Running, 0.1) });
+            bee.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Running, 0.1) });
 
             Refresh();
-            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Ninja 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.1);
+            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.1);
             _db.TaskTable.EmptyLogs();
 
-            ninja.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Running, 0.5) });
+            bee.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Running, 0.5) });
 
             Refresh();
-            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Ninja 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
+            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
             _db.TaskTable.EmptyLogs();
 
-            ninja.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Done, 1.0) });
+            bee.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Done, 1.0) });
 
             Refresh();
-            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Ninja 1", "App 1", taskId, RemoteTaskStatus.Completed, TaskStatus.Done, 1.0);
+            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Completed, TaskStatus.Done, 1.0);
             _db.TaskTable.EmptyLogs();
 
             Refresh();
@@ -75,166 +75,166 @@ namespace Application.Tests.Dojo
         }
 
         [Fact]
-        public void StartAndRunMultipleTasksOn1Ninja()
+        public void StartAndRunMultipleTasksOn1Bee()
         {
-            var ninja = _factory.Setup("Ninja 1");
-            _dojo.EnrollNinja("Ninja 1");
+            var bee = _factory.Setup("Bee 1");
+            _dojo.EnrollBee("Bee 1");
 
             Refresh();
 
             var task1Id = Guid.NewGuid();
             var task2Id = Guid.NewGuid();
 
-            ninja.SetupStartTask("cmd 1", task1Id);
-            ninja.SetupStartTask("cmd 2", task2Id);
+            bee.SetupStartTask("cmd 1", task1Id);
+            bee.SetupStartTask("cmd 2", task2Id);
 
             _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
 
-            ninja.CheckStartTask("cmd 1");
-            _db.CheckCreateTask("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id);
+            bee.CheckStartTask("cmd 1");
+            _db.CheckCreateTask("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id);
 
-            ninja.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.1));
+            bee.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.1));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
 
             _queue.StartTask("Task 2", StartTaskDto("cmd 2"));
 
-            ninja.CheckStartTask("cmd 2");
-            _db.CheckCreateTask("Task 2", "Queue 1", "Ninja 1", "cmd 2", task2Id);
+            bee.CheckStartTask("cmd 2");
+            _db.CheckCreateTask("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id);
 
-            ninja.SetupTaskState(
+            bee.SetupTaskState(
                 TaskDto(task1Id, TaskStatus.Running, 0.5),
                 TaskDto(task2Id, TaskStatus.Running, 0.2));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Ninja 1", "cmd 2", task2Id, TaskStatus.Running, 0.2);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
+            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Running, 0.2);
 
-            ninja.SetupTaskState(
+            bee.SetupTaskState(
                 TaskDto(task1Id, TaskStatus.Done, 1.0),
                 TaskDto(task2Id, TaskStatus.Running, 0.8));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Ninja 1", "cmd 2", task2Id, TaskStatus.Running, 0.8);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Running, 0.8);
 
-            ninja.SetupTaskState(TaskDto(task2Id, TaskStatus.Done, 1.0));
+            bee.SetupTaskState(TaskDto(task2Id, TaskStatus.Done, 1.0));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Ninja 1", "cmd 2", task2Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Done, 1.0);
 
             Refresh();
             _db.TaskTable.EmptyLogs();
         }
 
         [Fact]
-        public void StartAndRunMultipleTasksOnMultipleNinjas()
+        public void StartAndRunMultipleTasksOnMultipleBees()
         {
-            var ninja1 = _factory.Setup("Ninja 1");
-            var ninja2 = _factory.Setup("Ninja 2");
-            _dojo.EnrollNinja("Ninja 1");
-            _dojo.EnrollNinja("Ninja 2");
+            var bee1 = _factory.Setup("Bee 1");
+            var bee2 = _factory.Setup("Bee 2");
+            _dojo.EnrollBee("Bee 1");
+            _dojo.EnrollBee("Bee 2");
 
             Refresh();
 
             var task1Id = Guid.NewGuid();
             var task2Id = Guid.NewGuid();
 
-            ninja2.SetupAsFull();
-            ninja1.SetupStartTask("cmd 1", task1Id);
-            ninja2.SetupStartTask("cmd 2", task2Id);
+            bee2.SetupAsFull();
+            bee1.SetupStartTask("cmd 1", task1Id);
+            bee2.SetupStartTask("cmd 2", task2Id);
 
             _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
 
-            ninja1.CheckStartTask("cmd 1");
-            _db.CheckCreateTask("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id);
+            bee1.CheckStartTask("cmd 1");
+            _db.CheckCreateTask("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id);
 
-            ninja1.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.1));
+            bee1.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.1));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
 
-            ninja1.SetupAsFull();
-            ninja2.SetupAsEmpty();
+            bee1.SetupAsFull();
+            bee2.SetupAsEmpty();
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
 
             _queue.StartTask("Task 2", StartTaskDto("cmd 2"));
 
-            ninja2.CheckStartTask("cmd 2");
-            _db.CheckCreateTask("Task 2", "Queue 1", "Ninja 2", "cmd 2", task2Id);
+            bee2.CheckStartTask("cmd 2");
+            _db.CheckCreateTask("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id);
 
-            ninja1.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.5));
-            ninja2.SetupTaskState(TaskDto(task2Id, TaskStatus.Running, 0.2));
-
-            Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Ninja 2", "cmd 2", task2Id, TaskStatus.Running, 0.2);
-
-            ninja1.SetupTaskState(TaskDto(task1Id, TaskStatus.Done, 1.0));
-            ninja2.SetupTaskState(TaskDto(task2Id, TaskStatus.Running, 0.8));
+            bee1.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.5));
+            bee2.SetupTaskState(TaskDto(task2Id, TaskStatus.Running, 0.2));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Ninja 2", "cmd 2", task2Id, TaskStatus.Running, 0.8);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
+            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Running, 0.2);
 
-            ninja2.SetupTaskState(TaskDto(task2Id, TaskStatus.Done, 1.0));
+            bee1.SetupTaskState(TaskDto(task1Id, TaskStatus.Done, 1.0));
+            bee2.SetupTaskState(TaskDto(task2Id, TaskStatus.Running, 0.8));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Ninja 2", "cmd 2", task2Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Running, 0.8);
 
-            ninja1.ClearReceivedCalls();
-            ninja2.ClearReceivedCalls();
+            bee2.SetupTaskState(TaskDto(task2Id, TaskStatus.Done, 1.0));
+
+            Refresh();
+            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Done, 1.0);
+
+            bee1.ClearReceivedCalls();
+            bee2.ClearReceivedCalls();
 
             Refresh();
             _db.TaskTable.EmptyLogs();
         }
 
         [Fact]
-        public void StartButHangTaskBecauseNoAvailableNinja()
+        public void StartButHangTaskBecauseNoAvailableBee()
         {
-            var ninja = _factory.Setup("Ninja 1");
-            _dojo.EnrollNinja("Ninja 1");
+            var bee = _factory.Setup("Bee 1");
+            _dojo.EnrollBee("Bee 1");
             Refresh();
 
             var taskId = Guid.NewGuid();
-            ninja.SetupStartTask("cmd 1", taskId);
+            bee.SetupStartTask("cmd 1", taskId);
 
-            ninja.SetupAsFull();
+            bee.SetupAsFull();
             Refresh();
 
             _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
 
-            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             _db.CheckCreateTask("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
             Refresh();
-            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
-            ninja.SetupAsEmpty();
+            bee.SetupAsEmpty();
 
             Refresh();
-            ninja.CheckStartTask("cmd 1");
-            _db.CheckUpdateTask("Task 1", "Queue 1", "Ninja 1", "cmd 1", taskId, RemoteTaskStatus.Running);
+            bee.CheckStartTask("cmd 1");
+            _db.CheckUpdateTask("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, RemoteTaskStatus.Running);
 
-            ninja.SetupTaskState(TaskDto(taskId, TaskStatus.Running, 0.1));
-
-            Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", taskId, TaskStatus.Running, 0.1);
-
-            ninja.SetupTaskState(TaskDto(taskId, TaskStatus.Running, 0.5));
+            bee.SetupTaskState(TaskDto(taskId, TaskStatus.Running, 0.1));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", taskId, TaskStatus.Running, 0.5);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, TaskStatus.Running, 0.1);
 
-            ninja.SetupTaskState(TaskDto(taskId, TaskStatus.Done, 1.0));
+            bee.SetupTaskState(TaskDto(taskId, TaskStatus.Running, 0.5));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Ninja 1", "cmd 1", taskId, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, TaskStatus.Running, 0.5);
 
-            ninja.ClearReceivedCalls();
+            bee.SetupTaskState(TaskDto(taskId, TaskStatus.Done, 1.0));
+
+            Refresh();
+            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, TaskStatus.Done, 1.0);
+
+            bee.ClearReceivedCalls();
 
             _queue.Refresh();
             _db.TaskTable.EmptyLogs();
@@ -243,31 +243,31 @@ namespace Application.Tests.Dojo
         [Fact]
         public void StartButHangTaskAndCancelWhenHanging()
         {
-            var ninja = _factory.Setup("Ninja 1");
-            _dojo.EnrollNinja("Ninja 1");
+            var bee = _factory.Setup("Bee 1");
+            _dojo.EnrollBee("Bee 1");
             Refresh();
 
-            ninja.SetupStartTask("cmd 1", Guid.NewGuid());
+            bee.SetupStartTask("cmd 1", Guid.NewGuid());
 
-            ninja.SetupAsFull();
+            bee.SetupAsFull();
             Refresh();
 
             var taskId = _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
 
-            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             _db.CheckCreateTask("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
             Refresh();
-            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
             _queue.CancelTask(taskId);
 
             Refresh();
-            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Cancel);
 
-            ninja.ClearReceivedCalls();
+            bee.ClearReceivedCalls();
 
             _queue.Refresh();
             _db.TaskTable.EmptyLogs();
@@ -277,10 +277,10 @@ namespace Application.Tests.Dojo
         [Fact]
         public void StartDojoWithDifferentTaskState()
         {
-            var ninja = _factory.Setup("Ninja 1");
+            var bee = _factory.Setup("Bee 1");
 
-            // Create a ninja
-            _db.CreateNinja(new NinjaDto { Address = "Ninja 1" });
+            // Create a Bee
+            _db.CreateBee(new BeeDto { Address = "Bee 1" });
 
             var task1Id = Guid.NewGuid();
             var task2Id = Guid.NewGuid();
@@ -293,38 +293,38 @@ namespace Application.Tests.Dojo
             var task14Id = Guid.NewGuid();
 
             // Not in the queue task
-            _db.CreateTask(QueuedTaskDto("Task 1", "Queue 1", "Ninja 1", RemoteTaskStatus.Running, StartTaskDto("cmd 1"), TaskDto(task1Id, TaskStatus.Running)));
+            _db.CreateTask(QueuedTaskDto("Task 1", "Queue 1", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 1"), TaskDto(task1Id, TaskStatus.Running)));
             // Pending task
-            _db.CreateTask(QueuedTaskDto("Task 2", "Queue 2", "Ninja 1", RemoteTaskStatus.Pending, StartTaskDto("cmd 2"), TaskDto(Guid.Empty, TaskStatus.Pending)));
+            _db.CreateTask(QueuedTaskDto("Task 2", "Queue 2", "Bee 1", RemoteTaskStatus.Pending, StartTaskDto("cmd 2"), TaskDto(Guid.Empty, TaskStatus.Pending)));
             // Running task
-            _db.CreateTask(QueuedTaskDto("Task 3", "Queue 2", "Ninja 1", RemoteTaskStatus.Running, StartTaskDto("cmd 3"), TaskDto(task3Id, TaskStatus.Running)));
-            // Running task no ninja feedback yet
-            _db.CreateTask(QueuedTaskDto("Task 4", "Queue 2", "Ninja 1", RemoteTaskStatus.Running, StartTaskDto("cmd 4"), null));
+            _db.CreateTask(QueuedTaskDto("Task 3", "Queue 2", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 3"), TaskDto(task3Id, TaskStatus.Running)));
+            // Running task no Bee feedback yet
+            _db.CreateTask(QueuedTaskDto("Task 4", "Queue 2", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 4"), null));
             // Completed task
-            _db.CreateTask(QueuedTaskDto("Task 5", "Queue 2", "Ninja 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 5"), TaskDto(task5Id, TaskStatus.Done, 1.0)));
-            // Completed task no ninja feedback
-            _db.CreateTask(QueuedTaskDto("Task 6", "Queue 2", "Ninja 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 6"), null));
+            _db.CreateTask(QueuedTaskDto("Task 5", "Queue 2", "Bee 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 5"), TaskDto(task5Id, TaskStatus.Done, 1.0)));
+            // Completed task no Bee feedback
+            _db.CreateTask(QueuedTaskDto("Task 6", "Queue 2", "Bee 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 6"), null));
             // Error task
-            _db.CreateTask(QueuedTaskDto("Task 7", "Queue 2", "Ninja 1", RemoteTaskStatus.Error, StartTaskDto("cmd 7"), TaskDto(task7Id, TaskStatus.Running, 0.5)));
-            // Error task no ninja feedback
-            _db.CreateTask(QueuedTaskDto("Task 8", "Queue 2", "Ninja 1", RemoteTaskStatus.Error, StartTaskDto("cmd 8"), null));
+            _db.CreateTask(QueuedTaskDto("Task 7", "Queue 2", "Bee 1", RemoteTaskStatus.Error, StartTaskDto("cmd 7"), TaskDto(task7Id, TaskStatus.Running, 0.5)));
+            // Error task no Bee feedback
+            _db.CreateTask(QueuedTaskDto("Task 8", "Queue 2", "Bee 1", RemoteTaskStatus.Error, StartTaskDto("cmd 8"), null));
             // Cancel requested task
-            _db.CreateTask(QueuedTaskDto("Task 9", "Queue 2", "Ninja 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 9"), TaskDto(task9Id, TaskStatus.Running, 0.5)));
-            // Cancel requested task no ninja feedback
-            _db.CreateTask(QueuedTaskDto("Task 10", "Queue 2", "Ninja 1",  RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 10"), null));
+            _db.CreateTask(QueuedTaskDto("Task 9", "Queue 2", "Bee 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 9"), TaskDto(task9Id, TaskStatus.Running, 0.5)));
+            // Cancel requested task no Bee feedback
+            _db.CreateTask(QueuedTaskDto("Task 10", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 10"), null));
             // Running task but ended during dojo stop
-            _db.CreateTask(QueuedTaskDto("Task 11", "Queue 2", "Ninja 1",  RemoteTaskStatus.Running, StartTaskDto("cmd 11"), TaskDto(task11Id, TaskStatus.Running)));
-            // Cancel pending task should be cancel by Ninja
-            _db.CreateTask(QueuedTaskDto("Task 12", "Queue 2", "Ninja 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 12"), TaskDto(task12Id, TaskStatus.Running, 0.5)));
-            // Cancel pending task no ninja feedback
-            _db.CreateTask(QueuedTaskDto("Task 13", "Queue 2", "Ninja 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 13"), null));
-            // Cancel requested task not canceled yet on ninja side
-            _db.CreateTask(QueuedTaskDto("Task 14", "Queue 2", "Ninja 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 14"), TaskDto(task14Id, TaskStatus.Running, 0.5)));
+            _db.CreateTask(QueuedTaskDto("Task 11", "Queue 2", "Bee 1",  RemoteTaskStatus.Running, StartTaskDto("cmd 11"), TaskDto(task11Id, TaskStatus.Running)));
+            // Cancel pending task should be cancel by Bee
+            _db.CreateTask(QueuedTaskDto("Task 12", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 12"), TaskDto(task12Id, TaskStatus.Running, 0.5)));
+            // Cancel pending task no Bee feedback
+            _db.CreateTask(QueuedTaskDto("Task 13", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 13"), null));
+            // Cancel requested task not canceled yet on Bee side
+            _db.CreateTask(QueuedTaskDto("Task 14", "Queue 2", "Bee 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 14"), TaskDto(task14Id, TaskStatus.Running, 0.5)));
 
             _db.ClearLogs();
 
-            ninja.SetupStartTask("cmd 2", task2Id);
-            ninja.SetupTaskState(
+            bee.SetupStartTask("cmd 2", task2Id);
+            bee.SetupTaskState(
                 TaskDto(task3Id, TaskStatus.Running),
                 TaskDto(task7Id, TaskStatus.Running),
                 TaskDto(task9Id, TaskStatus.Cancel),
@@ -335,10 +335,10 @@ namespace Application.Tests.Dojo
             var dojo = new Application.Dojo.Dojo(_factory, _db);
             var queue = new Queue(QueueDto("Queue 2"), dojo, _db, _tracker);
 
-            ninja.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
-            ninja.DidNotReceive().CancelTask(Arg.Any<Guid>());
-            ninja.DidNotReceive().DeleteTask(Arg.Any<Guid>());
-            _db.NinjaTable.EmptyLogs();
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+            bee.DidNotReceive().CancelTask(Arg.Any<Guid>());
+            bee.DidNotReceive().DeleteTask(Arg.Any<Guid>());
+            _db.BeeTable.EmptyLogs();
             _db.TaskTable.EmptyLogs();
 
             dojo.Refresh();
@@ -350,19 +350,19 @@ namespace Application.Tests.Dojo
                 taskUpdates.Add(dto);
 
             // Check task 1
-            ninja.DidNotReceive().StartTask(Arg.Is("cmd 1"), Arg.Any<string>(), Arg.Any<int>());
-            ninja.DidNotReceive().CancelTask(task1Id);
-            ninja.DidNotReceive().DeleteTask(task1Id);
+            bee.DidNotReceive().StartTask(Arg.Is("cmd 1"), Arg.Any<string>(), Arg.Any<int>());
+            bee.DidNotReceive().CancelTask(task1Id);
+            bee.DidNotReceive().DeleteTask(task1Id);
 
             // Check task 2
-            ninja.CheckStartTask("cmd 2");
-            taskUpdates.Check("Task 2", "Queue 2", "Ninja 1", "cmd 2", task2Id, RemoteTaskStatus.Running);
+            bee.CheckStartTask("cmd 2");
+            taskUpdates.Check("Task 2", "Queue 2", "Bee 1", "cmd 2", task2Id, RemoteTaskStatus.Running);
 
             // Check task 3
-            taskUpdates.Check("Task 3", "Queue 2", "Ninja 1", "cmd 3", task3Id, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
+            taskUpdates.Check("Task 3", "Queue 2", "Bee 1", "cmd 3", task3Id, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
 
             // Check task 4
-            taskUpdates.Check("Task 4", "Queue 2", "Ninja 1", "cmd 4", Guid.Empty, RemoteTaskStatus.Error);
+            taskUpdates.Check("Task 4", "Queue 2", "Bee 1", "cmd 4", Guid.Empty, RemoteTaskStatus.Error);
 
             // Nothing to check for task 5
             // Nothing to check for task 6
@@ -371,25 +371,25 @@ namespace Application.Tests.Dojo
             // Nothing to check for task 8
 
             // Check task 9
-            taskUpdates.Check("Task 9", "Queue 2", "Ninja 1", "cmd 9", task9Id, RemoteTaskStatus.Cancel, TaskStatus.Cancel, 0.5);
-            ninja.Received(1).DeleteTask(Arg.Is(task9Id));
+            taskUpdates.Check("Task 9", "Queue 2", "Bee 1", "cmd 9", task9Id, RemoteTaskStatus.Cancel, TaskStatus.Cancel, 0.5);
+            bee.Received(1).DeleteTask(Arg.Is(task9Id));
 
             // Check task 10
-            taskUpdates.Check("Task 10", "Queue 2", "Ninja 1", "cmd 10", Guid.Empty, RemoteTaskStatus.Error);
+            taskUpdates.Check("Task 10", "Queue 2", "Bee 1", "cmd 10", Guid.Empty, RemoteTaskStatus.Error);
 
             // Check task 11
-            taskUpdates.Check("Task 11", "Queue 2", "Ninja 1", "cmd 11", task11Id, RemoteTaskStatus.Completed, TaskStatus.Done, 0.5);
-            ninja.Received(1).DeleteTask(Arg.Is(task11Id));
+            taskUpdates.Check("Task 11", "Queue 2", "Bee 1", "cmd 11", task11Id, RemoteTaskStatus.Completed, TaskStatus.Done, 0.5);
+            bee.Received(1).DeleteTask(Arg.Is(task11Id));
 
             // Check task 12
-            taskUpdates.Check("Task 12", "Queue 2", "Ninja 1", "cmd 12", task12Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
-            ninja.Received(1).CancelTask(Arg.Is(task12Id));
+            taskUpdates.Check("Task 12", "Queue 2", "Bee 1", "cmd 12", task12Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
+            bee.Received(1).CancelTask(Arg.Is(task12Id));
 
             // Check task 13
-            taskUpdates.Check("Task 13", "Queue 2", "Ninja 1", "cmd 13", Guid.Empty, RemoteTaskStatus.Error);
+            taskUpdates.Check("Task 13", "Queue 2", "Bee 1", "cmd 13", Guid.Empty, RemoteTaskStatus.Error);
 
             // Check task 14
-            taskUpdates.Check("Task 14", "Queue 2", "Ninja 1", "cmd 14", task14Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
+            taskUpdates.Check("Task 14", "Queue 2", "Bee 1", "cmd 14", task14Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
         }
 
         private static QueueDto QueueDto(string name) => new QueueDto { Name = name };
@@ -398,14 +398,14 @@ namespace Application.Tests.Dojo
         private static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)
             => QueueTestExtensions.TaskDto(id, status, progress);
         private static ulong taskCounter = 0;
-        private static RemoteTaskDto QueuedTaskDto(string name, string queueName, string ninja, RemoteTaskStatus status, TaskParameters start, TaskDto state)
+        private static RemoteTaskDto QueuedTaskDto(string name, string queueName, string bee, RemoteTaskStatus status, TaskParameters start, TaskDto state)
             => new RemoteTaskDto
             {
                 Id = Guid.NewGuid(),
                 Name = name,
-                NinjaAddress = ninja,
+                BeeAddress = bee,
                 QueueName = queueName,
-                NinjaState = state,
+                BeeState = state,
                 Parameters = start,
                 Status = status,
                 Order = ++taskCounter,
@@ -414,55 +414,55 @@ namespace Application.Tests.Dojo
 
     public static class QueueTestExtensions
     {
-        public static INinja Setup(this INinjaFactory factory, string name)
+        public static IBee Setup(this IBeeFactory factory, string name)
         {
-            var ninja = Substitute.For<INinja>();
-            ninja.SetupAsEmpty();
-            factory.Create(Arg.Is(name)).Returns(ninja);
-            return ninja;
+            var bee = Substitute.For<IBee>();
+            bee.SetupAsEmpty();
+            factory.Create(Arg.Is(name)).Returns(bee);
+            return bee;
         }
 
-        public static void SetupStartTask(this INinja ninja, string command, Guid taskId)
-            => ninja.StartTask(Arg.Is(command), Arg.Any<string>(), Arg.Any<int>()).Returns(taskId);
+        public static void SetupStartTask(this IBee bee, string command, Guid taskId)
+            => bee.StartTask(Arg.Is(command), Arg.Any<string>(), Arg.Any<int>()).Returns(taskId);
 
-        public static void SetupTaskState(this INinja ninja, params TaskDto[] tasks) 
-            => ninja.GetTasks().Returns(tasks);
+        public static void SetupTaskState(this IBee bee, params TaskDto[] tasks) 
+            => bee.GetTasks().Returns(tasks);
 
-        public static void SetupAsFull(this INinja ninja) => ninja.GetResources().Returns(ResourcesDto(0));
-        public static void SetupAsEmpty(this INinja ninja) => ninja.GetResources().Returns(ResourcesDto(8));
+        public static void SetupAsFull(this IBee bee) => bee.GetResources().Returns(ResourcesDto(0));
+        public static void SetupAsEmpty(this IBee bee) => bee.GetResources().Returns(ResourcesDto(8));
 
         public static bool Check(
             this List<RemoteTaskDto> list,
-            string name, string queueName, string ninjaAdress, string command,
+            string name, string queueName, string beeAddress, string command,
             Guid taskId, RemoteTaskStatus status,
             TaskStatus? taskStatus = null, double? progress = null)
         {
             var update = list.FirstOrDefault(p => p.Name == name);
-            update.Check(name, queueName, ninjaAdress, command, taskId, status, taskStatus, progress);
+            update.Check(name, queueName, beeAddress, command, taskId, status, taskStatus, progress);
             list.Remove(update);
             return true;
         }
 
         public static bool Check(
             this RemoteTaskDto expected, 
-            string name, string queueName, string ninjaAdress, string command,
+            string name, string queueName, string beeAdress, string command,
             Guid taskId, RemoteTaskStatus status, 
             TaskStatus? taskStatus = null, double? progress = null)
         {
             var clone = expected.DeepCopy();
             clone.Name = name;
             clone.QueueName = queueName;
-            clone.NinjaAddress = ninjaAdress;
+            clone.BeeAddress = beeAdress;
             clone.Parameters.Command = command;
             clone.Status = status;
 
-            if (clone.NinjaState != null)
+            if (clone.BeeState != null)
             {
-                clone.NinjaState.Id = taskId;
+                clone.BeeState.Id = taskId;
                 if (taskStatus.HasValue)
-                    clone.NinjaState.Status = taskStatus.Value;
+                    clone.BeeState.Status = taskStatus.Value;
                 if (progress.HasValue)
-                    clone.NinjaState.ProgressPercent = progress.Value;
+                    clone.BeeState.ProgressPercent = progress.Value;
             }
 
             expected.Check(clone);
@@ -476,11 +476,11 @@ namespace Application.Tests.Dojo
             Assert.Equal(expected.Id, actual.Id);
             Assert.Equal(expected.Name, actual.Name);
             Assert.Equal(expected.QueueName, actual.QueueName);
-            Assert.Equal(expected.NinjaAddress, actual.NinjaAddress);
+            Assert.Equal(expected.BeeAddress, actual.BeeAddress);
             Assert.Equal(expected.Status, actual.Status);
             expected.Parameters.Check(actual.Parameters);
             Assert.Equal(expected.Order, actual.Order);
-            expected.NinjaState.Check(actual.NinjaState);
+            expected.BeeState.Check(actual.BeeState);
         }
 
         public static void Check(this TaskParameters expected, TaskParameters actual)
@@ -505,42 +505,42 @@ namespace Application.Tests.Dojo
             Assert.Equal(expected.Message, actual.Message);
         }
 
-        public static void CheckStartTask(this INinja ninja, string command) 
-            => ninja.Received(1).StartTask(Arg.Is(command), Arg.Any<string>(), Arg.Any<int>());
+        public static void CheckStartTask(this IBee bee, string command) 
+            => bee.Received(1).StartTask(Arg.Is(command), Arg.Any<string>(), Arg.Any<int>());
 
-        public static void CheckDeleteTask(this INinja ninja, Guid id) 
-            => ninja.Received().DeleteTask(Arg.Is(id));
+        public static void CheckDeleteTask(this IBee bee, Guid id) 
+            => bee.Received().DeleteTask(Arg.Is(id));
 
-        public static void CheckCreateTask(this DojoDbLogs db, string name, string queue, string ninja, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
+        public static void CheckCreateTask(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
         {
-            db.TaskTable.NextCreate().Check(name, queue, ninja, command, taskId, status);
+            db.TaskTable.NextCreate().Check(name, queue, bee, command, taskId, status);
             db.TaskTable.EmptyLogs();
         }
 
-        public static void CheckUpdateTask(this DojoDbLogs db, string name, string queue, string ninja, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
+        public static void CheckUpdateTask(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
         {
-            db.TaskTable.NextUpdate().Check(name, queue, ninja, command, taskId, status);
+            db.TaskTable.NextUpdate().Check(name, queue, bee, command, taskId, status);
             db.TaskTable.EmptyLogs();
         }
 
         public static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)
             => new TaskDto { Id = id, Status = status, ProgressPercent = progress };
 
-        public static void CheckTaskUpdate(this DojoDbLogs db, string name, string queue, string ninja, string command, Guid taskId, TaskStatus status, double progress)
+        public static void CheckTaskUpdate(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, TaskStatus status, double progress)
         {
             var qStatus = status.IsFinal() ? RemoteTaskStatus.Completed : RemoteTaskStatus.Running;
 
-            db.TaskTable.NextUpdate().Check(name, queue, ninja, command, taskId, qStatus, status, progress);
+            db.TaskTable.NextUpdate().Check(name, queue, bee, command, taskId, qStatus, status, progress);
         }
 
-        public static void CheckTaskUpdate(this DojoDbLogs db, string name, string queue, string ninja, string command, Guid taskId, RemoteTaskStatus status)
+        public static void CheckTaskUpdate(this DojoDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status)
         {
-            db.TaskTable.NextUpdate().Check(name, queue, ninja, command, taskId, status);
+            db.TaskTable.NextUpdate().Check(name, queue, bee, command, taskId, status);
         }
 
-        private static NinjaResourcesDto ResourcesDto(int nbFreeCores)
+        private static BeeResourcesDto ResourcesDto(int nbFreeCores)
         {
-            return new NinjaResourcesDto
+            return new BeeResourcesDto
             {
                 NbCores = 8,
                 NbFreeCores = nbFreeCores

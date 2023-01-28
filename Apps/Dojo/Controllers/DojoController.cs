@@ -17,22 +17,22 @@ namespace Dojo.Controllers
             _dojo = dojo;
         }
 
-        [HttpGet("Ninjas")]
-        public IEnumerable<NinjaDto> GetNinjas()
+        [HttpGet("Bees")]
+        public IEnumerable<BeeDto> GetBees()
         {
-            return _dojo.GetNinjas();
+            return _dojo.GetBees();
         }
 
-        [HttpPost("EnrollNinja")]
-        public void EnrollNinja(string address)
+        [HttpPost("EnrollBee")]
+        public void EnrollBee(string address)
         {
-            _dojo.EnrollNinja(address);
+            _dojo.EnrollBee(address);
         }
 
-        [HttpDelete("RevokeNinja")]
-        public void RevokeNinja(string address)
+        [HttpDelete("RevokeBee")]
+        public void RevokeBee(string address)
         {
-            _dojo.RevokeNinja(address);
+            _dojo.RevokeBee(address);
         }
     }
 }

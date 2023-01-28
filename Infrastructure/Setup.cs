@@ -1,10 +1,10 @@
-﻿using Infrastructure.Ninja;
+﻿using Infrastructure.Bee;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
 using Application;
-using Application.Ninja;
+using Application.Bee;
 using Infrastructure.Dojo;
 using Application.Dojo;
 using Application.Dojo.Repositories;
@@ -13,22 +13,22 @@ namespace Infrastructure
 {
     public static class Setup
     {
-        public static void ConfigureNinja(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureBee(this IServiceCollection services, IConfiguration configuration)
         {
             #region Database
 
             var workingFolder = configuration["WorkingFolder"] ?? ".";
             var dataFolder = Path.Combine(workingFolder, "data").CreateFolder();
-            var dbPath = Path.Combine(dataFolder, "Ninja.db");
+            var dbPath = Path.Combine(dataFolder, "Bee.db");
 
             services.AddEntityFrameworkSqlite()
-                .AddDbContextFactory<NinjaDbContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
-            services.AddSingleton<INinjaDb, NinjaDb>();
+                .AddDbContextFactory<BeeDbContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
+            services.AddSingleton<IBeeDb, BeeDb>();
 
             #endregion
 
-            services.AddSingleton<INinjaResourcesProvider, NinjaResourcesProvider>();
-            services.AddSingleton<Application.Ninja.Ninja>();
+            services.AddSingleton<IBeeResourcesProvider, BeeResourcesProvider>();
+            services.AddSingleton<Application.Bee.Bee>();
         }
 
         public static void ConfigureDojo(this IServiceCollection services, IConfiguration configuration)
@@ -46,7 +46,7 @@ namespace Infrastructure
             #endregion
 
             services.AddSingleton<ITimer>(new ThreadedTimer(3000));
-            services.AddSingleton<INinjaFactory, NinjaProxyFactory>();
+            services.AddSingleton<IBeeFactory, BeeProxyFactory>();
             var taskTracker = new TaskTracker();
             services.AddSingleton<ITaskTracker>(taskTracker);
             services.AddSingleton(taskTracker);

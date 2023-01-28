@@ -2,7 +2,7 @@
 
 namespace Domain.Dtos
 {
-    // Use by the Ninja client to notify the process state
+    // Use by the Bee client to notify the process state
     public class TaskStateDto 
     {
         public Guid TaskId { get; set; }

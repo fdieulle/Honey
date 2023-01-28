@@ -2,18 +2,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Ninja.Controllers
+namespace Bee.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class NinjaClientController
+    public class BeeClientController
     {
-        private readonly Application.Ninja.Ninja _ninja;
-        private readonly ILogger<NinjaClientController> _logger;
+        private readonly Application.Bee.Bee _bee;
+        private readonly ILogger<BeeClientController> _logger;
 
-        public NinjaClientController(Application.Ninja.Ninja ninja, ILogger<NinjaClientController> logger)
+        public BeeClientController(Application.Bee.Bee bee, ILogger<BeeClientController> logger)
         {
-            _ninja = ninja;
+            _bee = bee;
             _logger = logger;
         }
 
@@ -22,7 +22,7 @@ namespace Ninja.Controllers
         {
             _logger.LogInformation("Update task: id={0}, progress={1}, message={2}", dto.TaskId, dto.ProgressPercent, dto.Message);
 
-            _ninja.UpdateTask(dto);
+            _bee.UpdateTask(dto);
         }
     }
 }

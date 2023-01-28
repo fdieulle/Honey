@@ -1,8 +1,8 @@
 ﻿using Domain.Dtos;
 
-namespace Application.Ninja
+namespace Application.Bee
 {
-    public interface INinjaResourcesProvider
+    public interface IBeeResourcesProvider
     {
         string GetMachineName();
 

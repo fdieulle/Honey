@@ -8,7 +8,7 @@ namespace Domain.Entities
         public Guid Id { get; set; }
 
         public string Name { get; set; }
-        public string NinjaAddress { get; set; }
+        public string BeeAddress { get; set; }
 
         public string QueueName { get; set; }
 
@@ -20,6 +20,6 @@ namespace Domain.Entities
 
         public ulong Order { get; set; }
 
-        public Guid NinjaTaskId { get; set; }
+        public Guid BeeTaskId { get; set; }
     }
 }

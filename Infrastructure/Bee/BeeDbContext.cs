@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 
-namespace Infrastructure.Ninja
+namespace Infrastructure.Bee
 {
-    internal class NinjaDbContext : DbContext
+    internal class BeeDbContext : DbContext
     {
         public DbSet<TaskEntity> Tasks { get; set; }
 
-        public NinjaDbContext(DbContextOptions<NinjaDbContext> options) : base(options)
+        public BeeDbContext(DbContextOptions<BeeDbContext> options) : base(options)
         {
             Database.EnsureCreated();
         }

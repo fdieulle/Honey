@@ -1,4 +1,4 @@
-﻿namespace Application.Ninja
+﻿namespace Application.Bee
 {
     public class ProcessAffinity
     {

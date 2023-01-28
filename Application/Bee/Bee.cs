@@ -7,31 +7,31 @@ using System.Linq;
 using System.Threading;
 using Domain.Dtos;
 
-namespace Application.Ninja
+namespace Application.Bee
 {
-    public class Ninja : INinja, INinjaClient, IDisposable
+    public class Bee : IBee, IBeeClient, IDisposable
     {
         private const int WATCH_DOG_PERIOD = 5000;
 
         private readonly Dictionary<Guid, RunningTask> _runningTasks = new Dictionary<Guid, RunningTask>();
-        private readonly ILogger<Ninja> _logger;
-        private readonly INinjaDb _database;
-        private readonly INinjaResourcesProvider _ninjaResourcesProvider;
+        private readonly ILogger<Bee> _logger;
+        private readonly IBeeDb _database;
+        private readonly IBeeResourcesProvider _beeResourcesProvider;
         private readonly string _workingFolder;
         private readonly string _workingDrive;
         private readonly Timer _timer;
         private readonly ProcessorAllocator _processorAllocator = new ProcessorAllocator();
         private bool _isDisposed;
 
-        public Ninja(
-            ILogger<Ninja> logger, 
+        public Bee(
+            ILogger<Bee> logger, 
             IConfiguration config,
-            INinjaDb database,
-            INinjaResourcesProvider ninjaResourcesProvider)
+            IBeeDb database,
+            IBeeResourcesProvider beeResourcesProvider)
         {
             _logger = logger;
             _database = database;
-            _ninjaResourcesProvider = ninjaResourcesProvider;
+            _beeResourcesProvider = beeResourcesProvider;
             _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "tasks").CreateFolder(logger);
             _workingDrive = Path.GetPathRoot(Path.GetFullPath(_workingFolder)).Replace("\\", "");
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
@@ -71,7 +71,7 @@ namespace Application.Ninja
         public Guid StartTask(string command, string arguments, int nbCores = -1)
         {
             var task = new RunningTask(
-                _ninjaResourcesProvider.GetBaseUri(), 
+                _beeResourcesProvider.GetBaseUri(), 
                 command, arguments, _workingFolder);
 
             _logger.LogInformation("Start a new task with Id={0}", task.Id);
@@ -160,16 +160,16 @@ namespace Application.Ninja
             _timer.Dispose();
         }
 
-        public NinjaResourcesDto GetResources()
+        public BeeResourcesDto GetResources()
         {
-            var memory = _ninjaResourcesProvider.GetPhysicalMemory();
-            var disk = _ninjaResourcesProvider.GetDiskSpace(_workingDrive);
+            var memory = _beeResourcesProvider.GetPhysicalMemory();
+            var disk = _beeResourcesProvider.GetDiskSpace(_workingDrive);
 
-            return new NinjaResourcesDto
+            return new BeeResourcesDto
             {
-                MachineName = _ninjaResourcesProvider.GetMachineName(),
-                OSPlatform = _ninjaResourcesProvider.GetOSPlatform(),
-                OSVersion = _ninjaResourcesProvider.GetOSVersion(),
+                MachineName = _beeResourcesProvider.GetMachineName(),
+                OSPlatform = _beeResourcesProvider.GetOSPlatform(),
+                OSVersion = _beeResourcesProvider.GetOSVersion(),
                 NbCores = _processorAllocator.NbCores,
                 NbFreeCores = _processorAllocator.NbCores - _processorAllocator.NbUsedCores,
                 TotalPhysicalMemory = memory.Total,

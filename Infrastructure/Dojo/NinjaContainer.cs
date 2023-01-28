@@ -2,8 +2,8 @@
 
 namespace Infrastructure.Dojo
 {
-    internal class NinjaProxyFactory : INinjaFactory
+    internal class BeeProxyFactory : IBeeFactory
     {
-        public INinja Create(string address) => new NinjaProxy(address);
+        public IBee Create(string address) => new BeeProxy(address);
     }
 }

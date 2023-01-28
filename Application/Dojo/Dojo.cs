@@ -1,5 +1,4 @@
 ﻿using Domain.Dtos;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,7 +6,7 @@ namespace Application.Dojo
 {
     public class Dojo : IDojo
     {
-        private static readonly Comparer<NinjaDto> heuristic = Comparer<NinjaDto>.Create((x, y) =>
+        private static readonly Comparer<BeeDto> heuristic = Comparer<BeeDto>.Create((x, y) =>
         {
             var compare = x.PercentFreeCores.CompareTo(y.PercentFreeCores);
             if (compare != 0) return compare;
@@ -15,96 +14,96 @@ namespace Application.Dojo
             return x.PercentFreeMemory.CompareTo(y.PercentFreeMemory);
         });
 
-        private readonly INinjaFactory _factory;
+        private readonly IBeeFactory _factory;
         private readonly IDojoDb _database;
-        private Dictionary<string, Ninja> _ninjas = new Dictionary<string, Ninja>();
+        private Dictionary<string, Bee> _bees = new Dictionary<string, Bee>();
 
-        public INinjaFactory Container => _factory;
+        public IBeeFactory Container => _factory;
 
-        public IEnumerable<Ninja> Ninjas => _ninjas.Values;
+        public IEnumerable<Bee> Bees => _bees.Values;
 
-        public Dojo(INinjaFactory factory, IDojoDb database)
+        public Dojo(IBeeFactory factory, IDojoDb database)
         {
             _factory = factory;
             _database = database;
 
-            var ninjas = _database.FetchNinjas() ?? Enumerable.Empty<NinjaDto>();
-            foreach (var ninja in ninjas)
-                EnrollNinja(ninja.Address, false);
+            var bees = _database.FetchBees() ?? Enumerable.Empty<BeeDto>();
+            foreach (var bee in bees)
+                EnrollBee(bee.Address, false);
         }
 
-        public IEnumerable<NinjaDto> GetNinjas()
+        public IEnumerable<BeeDto> GetBees()
         {
-            lock (_ninjas)
+            lock (_bees)
             {
-                return _ninjas.Values.Select(p => p.Dto).ToList();
+                return _bees.Values.Select(p => p.Dto).ToList();
             }
         }
 
-        public void EnrollNinja(string address)
+        public void EnrollBee(string address)
         {
-            lock (_ninjas)
+            lock (_bees)
             {
-                EnrollNinja(address, true);
+                EnrollBee(address, true);
             }
         }
 
-        private void EnrollNinja(string address, bool withDb)
+        private void EnrollBee(string address, bool withDb)
         {
-            if (_ninjas.ContainsKey(address))
+            if (_bees.ContainsKey(address))
                 return;
 
-            var ninja = new Ninja(address, _factory.Create(address));
-            _ninjas.Add(address, ninja);
+            var bee = new Bee(address, _factory.Create(address));
+            _bees.Add(address, bee);
 
             if (withDb)
-                _database.CreateNinja(ninja.Dto);
+                _database.CreateBee(bee.Dto);
         }
 
-        public void RevokeNinja(string address)
+        public void RevokeBee(string address)
         {
-            lock (_ninjas)
+            lock (_bees)
             {
-                if (!_ninjas.TryGetValue(address, out var ninja))
+                if (!_bees.TryGetValue(address, out var bee))
                     return;
 
-                _ninjas.Remove(address);
-                _database.DeleteNinja(address);
+                _bees.Remove(address);
+                _database.DeleteBee(address);
             }
         }
 
         public void Refresh()
         {
-            List<Ninja> ninjas;
-            lock (_ninjas)
+            List<Bee> bees;
+            lock (_bees)
             {
-                ninjas = _ninjas.Values.ToList();
+                bees = _bees.Values.ToList();
             }
             
-            foreach (var ninja in ninjas)
-                ninja.Refresh();
+            foreach (var bee in bees)
+                bee.Refresh();
         }
 
-        public Ninja GetNextNinja(HashSet<string> ninjas = null)
+        public Bee GetNextBee(HashSet<string> bees = null)
         {
-            lock (_ninjas)
+            lock (_bees)
             {
-                var selectedNinjas = _ninjas.Values.Where(p => p.Dto.IsUp);
-                if (ninjas != null && ninjas.Count > 0)
-                    selectedNinjas = selectedNinjas.Where(p => ninjas.Contains(p.Address));
+                var selectedBees = _bees.Values.Where(p => p.Dto.IsUp);
+                if (bees != null && bees.Count > 0)
+                    selectedBees = selectedBees.Where(p => bees.Contains(p.Address));
 
-                return selectedNinjas
+                return selectedBees
                     .OrderByDescending(p => p.Dto, heuristic)
                     .Where(p => p.Dto.PercentFreeCores > 0)
                     .FirstOrDefault();
             }
         }
 
-        public Ninja GetNinja(string address)
+        public Bee GetBee(string address)
         {
-            lock (_ninjas)
+            lock (_bees)
             {
-                return _ninjas.TryGetValue(address, out var ninja) ? ninja : null;
+                return _bees.TryGetValue(address, out var bee) ? bee : null;
             }
         }
     }

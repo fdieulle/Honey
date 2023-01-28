@@ -7,13 +7,13 @@ namespace Application.Dojo
 {
     public static class Extensions
     {
-        public static Guid StartTask(this INinja ninja, RemoteTaskDto task)
+        public static Guid StartTask(this IBee bee, RemoteTaskDto task)
         {
             if (task == null) return Guid.Empty;
-            var startTask = task.Parameters;
-            if (startTask == null) return Guid.Empty;
+            var parameters = task.Parameters;
+            if (parameters == null) return Guid.Empty;
 
-            return ninja.StartTask(startTask.Command, startTask.Arguments, startTask.NbCores);
+            return bee.StartTask(parameters.Command, parameters.Arguments, parameters.NbCores);
         }
     }
 }

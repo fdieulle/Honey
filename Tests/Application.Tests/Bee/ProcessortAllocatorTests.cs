@@ -1,9 +1,8 @@
-using Application.Ninja;
-using Application.Tests.Ninja;
+using Application.Bee;
 using System.Collections.Generic;
 using Xunit;
 
-namespace Application.Tests.Ninja
+namespace Application.Tests.Bee
 {
     public class ProcessortAllocatorTests
     {

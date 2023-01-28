@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Application.Ninja
+namespace Application.Bee
 {
     public class ProcessorAllocator
     {

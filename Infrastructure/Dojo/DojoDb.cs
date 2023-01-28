@@ -12,15 +12,15 @@ namespace Infrastructure.Dojo
 {
     internal class DojoDb : IDojoDb
     {
-        private readonly CrudDbTable<DojoDbContext, NinjaEntity, string, NinjaDto> _crudNinjas;
+        private readonly CrudDbTable<DojoDbContext, BeeEntity, string, BeeDto> _crudBees;
         private readonly CrudDbTable<DojoDbContext, QueueEntity, string, QueueDto> _crudQueues;
         private readonly CrudDbTable<DojoDbContext, RemoteTaskEntity, Guid, RemoteTaskDto> _crudTasks;
         private readonly CrudDbTable<DojoDbContext, JobEntity, Guid, JobDto> _crudJobs;
         private readonly CrudDbTable<DojoDbContext, WorkflowEntity, Guid, WorkflowDto> _crudWorkflows;
         public DojoDb(IDbContextFactory<DojoDbContext> factory)
         {
-            _crudNinjas = new CrudDbTable<DojoDbContext, NinjaEntity, string, NinjaDto>(
-                factory, c => c.Ninjas, p => p.Address, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Address, e => e.ToDto());
+            _crudBees = new CrudDbTable<DojoDbContext, BeeEntity, string, BeeDto>(
+                factory, c => c.Bees, p => p.Address, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Address, e => e.ToDto());
             _crudQueues = new CrudDbTable<DojoDbContext, QueueEntity, string, QueueDto>(
                 factory, c => c.Queues, p => p.Name, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Name, e => e.ToDto());
             _crudTasks = new CrudDbTable<DojoDbContext, RemoteTaskEntity, Guid, RemoteTaskDto>(
@@ -31,13 +31,13 @@ namespace Infrastructure.Dojo
                 factory, c => c.Workflows, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
         }
 
-        #region Ninja
+        #region Bee
 
-        public IEnumerable<NinjaDto> FetchNinjas() => _crudNinjas.Fetch();
+        public IEnumerable<BeeDto> FetchBees() => _crudBees.Fetch();
 
-        public void CreateNinja(NinjaDto ninja) => _crudNinjas.Create(ninja);
+        public void CreateBee(BeeDto bee) => _crudBees.Create(bee);
 
-        public void DeleteNinja(string address) => _crudNinjas.Delete(address);
+        public void DeleteBee(string address) => _crudBees.Delete(address);
 
         #endregion
 
@@ -179,11 +179,11 @@ namespace Infrastructure.Dojo
 
     public static class EntityDtoMapper
     {
-        #region Ninjas
+        #region Bees
 
-        public static NinjaEntity ToEntity(this NinjaDto dto) => new NinjaEntity { Address = dto.Address };
-        public static void Update(this NinjaEntity entity, NinjaDto dto) { }
-        public static NinjaDto ToDto(this NinjaEntity entity) => new NinjaDto { Address = entity.Address };
+        public static BeeEntity ToEntity(this BeeDto dto) => new BeeEntity { Address = dto.Address };
+        public static void Update(this BeeEntity entity, BeeDto dto) { }
+        public static BeeDto ToDto(this BeeEntity entity) => new BeeDto { Address = entity.Address };
 
         #endregion
 
@@ -199,7 +199,7 @@ namespace Infrastructure.Dojo
         public static void Update(this QueueEntity entity, QueueDto dto)
         {
             entity.MaxParallelTasks = dto.MaxParallelTasks;
-            entity.Ninjas = dto.Ninjas != null ? string.Join(SEP, dto.Ninjas) : null;
+            entity.Bees = dto.Bees != null ? string.Join(SEP, dto.Bees) : null;
         }
         public static QueueDto ToDto(this QueueEntity entity)
         {
@@ -207,7 +207,7 @@ namespace Infrastructure.Dojo
             {
                 Name = entity.Name,
                 MaxParallelTasks = entity.MaxParallelTasks,
-                Ninjas = entity.Ninjas != null ? entity.Ninjas.Split(SEP) : null
+                Bees = entity.Bees != null ? entity.Bees.Split(SEP) : null
             };
         }
 
@@ -226,12 +226,12 @@ namespace Infrastructure.Dojo
             entity.Name = dto.Name;
             entity.Status = dto.Status;
             entity.QueueName = dto.QueueName;
-            entity.NinjaAddress = dto.NinjaAddress;
+            entity.BeeAddress = dto.BeeAddress;
             entity.Order = dto.Order;
             entity.Command = dto.Parameters.Command;
             entity.Arguments = dto.Parameters.Arguments;
             entity.NbCores = dto.Parameters.NbCores;
-            entity.NinjaTaskId = dto.NinjaState.Id;
+            entity.BeeTaskId = dto.BeeState.Id;
         }
         public static RemoteTaskDto ToDto(this RemoteTaskEntity entity)
         {
@@ -241,7 +241,7 @@ namespace Infrastructure.Dojo
                 Name = entity.Name,
                 Status = entity.Status,
                 QueueName = entity.QueueName,
-                NinjaAddress = entity.NinjaAddress,
+                BeeAddress = entity.BeeAddress,
                 Order = entity.Order,
                 Parameters = new TaskParameters
                 {
@@ -249,7 +249,7 @@ namespace Infrastructure.Dojo
                     Arguments = entity.Arguments,
                     NbCores = entity.NbCores
                 },
-                NinjaState = new TaskDto
+                BeeState = new TaskDto
                 {
                     Id = entity.Id,
                     Status = Domain.Dtos.TaskStatus.Pending

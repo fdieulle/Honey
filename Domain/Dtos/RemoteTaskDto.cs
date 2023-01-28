@@ -20,7 +20,7 @@ namespace Domain.Dtos
 
         public string Name { get; set; }
 
-        public string NinjaAddress { get; set; }
+        public string BeeAddress { get; set; }
 
         public string QueueName { get; set; }
 
@@ -30,7 +30,7 @@ namespace Domain.Dtos
 
         public ulong Order { get; set; }
 
-        public TaskDto NinjaState { get; set; } = new TaskDto { Status = TaskStatus.Pending };
+        public TaskDto BeeState { get; set; } = new TaskDto { Status = TaskStatus.Pending };
 
         public RemoteTaskDto() { Id = Guid.NewGuid(); }
 
