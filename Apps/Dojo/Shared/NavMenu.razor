@@ -1,6 +1,13 @@
 ﻿@using Dojo.Pages
 <div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">Dojo</a>
+    <a class="navbar-brand" href="">
+        <div style="display: flex">
+            <AntDesign.Image Src="images/honeycomb_icon.png" Width="47px" Preview=false Style="padding-right: 12px" />
+            <div style="vertical-align: middle; color: #333333; font-weight: bold;">
+                Honey
+            </div>
+        </div>
+    </a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -9,39 +16,25 @@
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <ul class="nav flex-column">
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
             <NavLink class="nav-link" href="workflows" Match="NavLinkMatch.All">
-                <AntDesign.Space>
-                    <AntDesign.SpaceItem>
-                        <AntDesign.Image Src="images/face_helmet_japanese_mask_samurai_icon.png" Width="17px" Preview=false />
-                    </AntDesign.SpaceItem>
-                    <AntDesign.SpaceItem>
-                        Workflows
-                    </AntDesign.SpaceItem>
-                </AntDesign.Space>
+                <AntDesign.Image Src="images/workflow_icon.png" Width="32px" Preview=false Style="padding-right: 12px" /> Workflows
             </NavLink>
         </li>
          <li class="nav-item px-3">
             <NavLink class="nav-link" href="ninjas" Match="NavLinkMatch.All">
-                <AntDesign.Space>
-                    <AntDesign.SpaceItem>
-                        <AntDesign.Image Src="images/ninja_avatar_samurai_warrior_icon.png" Width="17px" Preview=false />
-                    </AntDesign.SpaceItem>
-                    <AntDesign.SpaceItem>
-                        Ninjas
-                    </AntDesign.SpaceItem>
-                </AntDesign.Space>
+                <AntDesign.Image Src="images/bee_icon.png" Width="32px" Preview=false Style="padding-right: 12px" /> Bees
             </NavLink>
         </li>
          <li class="nav-item px-3">
             <NavLink class="nav-link" href="queues" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Queues
+                <span class="oi oi-people" style="color: #424242" aria-hidden="true"></span> Queues
             </NavLink>
         </li>
+        @*<li class="nav-item px-3">
+            <NavLink class="nav-link" href="sandbox" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Sandbox
+            </NavLink>
+        </li>*@
     </ul>
 </div>
 
