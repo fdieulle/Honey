@@ -12,6 +12,10 @@ var secondsStr = args.Length > 0 ? args[0] : "10";
 if (!double.TryParse(secondsStr, out var seconds))
     seconds = 10;
 
+var shouldCrashStr = args.Length > 1 ? args[1] : "false";
+if (!bool.TryParse(shouldCrashStr, out var shouldCrash))
+    shouldCrash = false;
+
 var ninjaStr = Environment.GetEnvironmentVariable("NINJA_BASE_URI");
 var taskIdStr = Environment.GetEnvironmentVariable("NINJA_TASK_ID");
 
@@ -40,6 +44,9 @@ while (DateTime.Now < end)
     Log($"Step {++counter}");
     Thread.Sleep(1000);
 }
+
+if (shouldCrash) throw new Exception("Carsh !");
+
 
 ninja.UpdateTask(taskId, 1.0, end, $"Done !");
 Log($"Step {++counter}");
