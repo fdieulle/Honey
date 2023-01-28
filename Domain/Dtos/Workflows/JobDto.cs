@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Domain.Dtos.Workflows
 {
     [JsonDerivedType(typeof(SingleTaskJobDto), typeDiscriminator: "single_task")]
-    [JsonDerivedType(typeof(ManyJobsDto), typeDiscriminator: "mnay")]
+    [JsonDerivedType(typeof(ManyJobsDto), typeDiscriminator: "many")]
     public class JobDto
     { 
         public Guid Id { get; set; }
@@ -15,7 +15,7 @@ namespace Domain.Dtos.Workflows
     }
 
     [JsonDerivedType(typeof(SingleTaskJobParameters), typeDiscriminator: "single_task")]
-    [JsonDerivedType(typeof(ManyJobsParameters), typeDiscriminator: "mnay")]
+    [JsonDerivedType(typeof(ManyJobsParameters), typeDiscriminator: "many")]
     public class JobParameters
     {
         public string Name { get; set; }
