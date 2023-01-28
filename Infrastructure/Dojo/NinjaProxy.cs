@@ -36,11 +36,11 @@ namespace Infrastructure.Dojo
                 ("arguments", arguments), 
                 ("nbCores", nbCores.ToString())).Result;
 
-        public void CancelTask(Guid id) 
-            => _client.PostAsArgsAsync("Ninja/CancelTask", ("id", id.ToString())).Wait();
+        public async void CancelTask(Guid id) 
+            => await _client.PostAsArgsAsync("Ninja/CancelTask", ("id", id.ToString()));
 
-        public void DeleteTask(Guid id) 
-            => _client.DeleteAsArgsAsync("Ninja/DeleteTask", ("id", id.ToString())).Wait();
+        public async void DeleteTask(Guid id) 
+            => await _client.DeleteAsArgsAsync("Ninja/DeleteTask", ("id", id.ToString()));
 
         public NinjaResourcesDto GetResources() 
             => _client.GetAsync<NinjaResourcesDto>("Ninja/GetResources").Result;
