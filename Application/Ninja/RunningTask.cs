@@ -149,6 +149,8 @@ namespace Application.Ninja
             _process.Kill();
             _process.WaitForExit();
             Status = TaskStatus.Cancel;
+
+            Exit();
         }
 
         public void Exit()
@@ -165,7 +167,7 @@ namespace Application.Ninja
                 _taskDto.EndTime = DateTime.UtcNow;
             }
             
-            PostMessage(MessageType.Exit, $"Exit with cose: {_process?.ExitCode}");
+            PostMessage(MessageType.Exit, $"Exit with code: {_process?.ExitCode}");
             Exited?.Invoke(this);
         }
 
