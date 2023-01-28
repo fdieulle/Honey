@@ -3,14 +3,14 @@
 @using System.Collections.ObjectModel
 @using AntDesign
 @using AntDesign.TableModels
-@using Application.Dojo.Repositories;
 @using Domain.Dtos
 @using Application
 @using Application.Dojo
 @using Domain.Dtos.Workflows
 @using Domain.ViewModels;
+@using Application.Honey;
 
-@inject Shogun Shogun
+@inject Colony Colony
 @inject WorkflowRepository WorkflowRepository
 @inject NavigationManager Navigation
 @inject ITimer Timer
@@ -69,19 +69,19 @@
     private void Cancel(Guid id)
     {
         _modalState.Purpose = "cancel";
-        _modalState.Show(() => Shogun.Cancel(id));
+        _modalState.Show(() => Colony.Cancel(id));
     }
 
     private void Recover(Guid id)
     {
         _modalState.Purpose = "recover";
-        _modalState.Show(() => Shogun.Recover(id));
+        _modalState.Show(() => Colony.Recover(id));
     }
 
     private void Delete(Guid id)
     {
         _modalState.Purpose = "delete";
-        _modalState.Show(() => Shogun.Delete(id));
+        _modalState.Show(() => Colony.Delete(id));
     }
 
     private void OnTimerTick() => InvokeAsync(StateHasChanged);

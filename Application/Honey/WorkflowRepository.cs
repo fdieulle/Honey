@@ -4,12 +4,13 @@ using Domain.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Application.Dojo;
 
-namespace Application.Dojo.Repositories
+namespace Application.Honey
 {
     public class WorkflowRepository : IDisposable
     {
-        private readonly Shogun _shogun;
+        private readonly Colony _colony;
         private readonly ITimer _timer;
         private readonly Repository<Guid, WorkflowViewModel, WorkflowDto> _workflows = new Repository<Guid, WorkflowViewModel, WorkflowDto>(
             p => p.Id, p => p.ToViewModel(), (dto, vm) => vm.Update(dto));
@@ -21,9 +22,9 @@ namespace Application.Dojo.Repositories
 
         public IRepository<WorkflowViewModel> Workflows => _workflows;
 
-        public WorkflowRepository(Shogun shogun, ITimer timer)
+        public WorkflowRepository(Colony colony, ITimer timer)
         {
-            _shogun = shogun;
+            _colony = colony;
             _timer = timer;
 
             Refresh();
@@ -47,9 +48,9 @@ namespace Application.Dojo.Repositories
         //private List<RemoteTaskDto> _mockT;
         public void Refresh()
         {
-            var workflows = _shogun.GetWorkflows();
-            var jobs = _shogun.GetJobs();
-            var tasks = _shogun.GetTasks();
+            var workflows = _colony.GetWorkflows();
+            var jobs = _colony.GetJobs();
+            var tasks = _colony.GetTasks();
 
             //if (_mockW == null)
             //    (_mockW, _mockJ, _mockT) = CreateWorkflows();
@@ -176,7 +177,7 @@ namespace Application.Dojo.Repositories
 
             var (reducerJob, reducerTask) = CreateTask("Reduce", "python");
             reducerJob.Status = JobStatus.Pending;
-            reducerTask.Status = Domain.Dtos.RemoteTaskStatus.Pending;
+            reducerTask.Status = RemoteTaskStatus.Pending;
             reducerTask.BeeState.StartTime = default;
             reducerTask.BeeState.ProgressPercent = 0;
             jobs.Add(reducerJob);
@@ -206,12 +207,12 @@ namespace Application.Dojo.Repositories
                 Id = Guid.NewGuid(),
                 Name = name,
                 BeeAddress = "Bee 1",
-                Status = Domain.Dtos.RemoteTaskStatus.Running,
+                Status = RemoteTaskStatus.Running,
                 BeeState = new TaskDto
                 {
                     StartTime = DateTime.Now,
                     ProgressPercent = 0.2,
-                    Status = Domain.Dtos.TaskStatus.Running
+                    Status = TaskStatus.Running
                 },
                 QueueName = "Queue 1"
             };

@@ -5,8 +5,9 @@ using Domain.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Application.Honey;
 
-namespace Application.Dojo.Repositories
+namespace Application.Honey
 {
     public static class Extensions
     {
@@ -43,7 +44,7 @@ namespace Application.Dojo.Repositories
 
             vm.Id = dto.Id;
             vm.Name = dto.Name;
-            vm.Status= dto.Status;
+            vm.Status = dto.Status;
 
             return vm;
         }
@@ -75,7 +76,7 @@ namespace Application.Dojo.Repositories
             vm.Type = dto.Parameters.Command;
             if (!tasks.TryGetValue(dto.TaskId, out var task))
                 return;
-            
+
             vm.Host = task.BeeAddress;
             var beeState = task.BeeState;
             if (beeState != null)

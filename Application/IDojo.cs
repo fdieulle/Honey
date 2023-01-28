@@ -25,7 +25,7 @@ namespace Application
         bool DeleteQueue(string name);
     }
 
-    public interface IShogun
+    public interface IColony
     {
         Guid Execute(WorkflowParameters parameters);
 

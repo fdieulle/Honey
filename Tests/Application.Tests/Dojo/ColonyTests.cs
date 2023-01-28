@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Application.Tests.Dojo
 {
-    public class ShogunTests
+    public class ColonyTests
     {
         [Fact]
         public void TestExecuteSimpleTask()
@@ -17,7 +17,7 @@ namespace Application.Tests.Dojo
             var dojo = new Application.Dojo.Dojo(container, database);
             var taskTracker = new TaskTracker();
             var queueProvider = new QueueProvider(dojo, database, taskTracker);
-            var shogun = new Shogun(queueProvider, taskTracker, database);
+            var colony = new Colony(queueProvider, taskTracker, database);
 
             // Setup a bee
             var bee = dojo.SetupBee("http://bee1:8080");
@@ -25,7 +25,7 @@ namespace Application.Tests.Dojo
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id = shogun.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -42,7 +42,7 @@ namespace Application.Tests.Dojo
             var dojo = new Application.Dojo.Dojo(container, database);
             var taskTracker = new TaskTracker();
             var queueProvider = new QueueProvider(dojo, database, taskTracker);
-            var shogun = new Shogun(queueProvider, taskTracker, database);
+            var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
@@ -51,7 +51,7 @@ namespace Application.Tests.Dojo
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id = shogun.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -60,7 +60,7 @@ namespace Application.Tests.Dojo
                 Arg.Is(1));
             Assert.NotEqual(id, beeTaskIds[0]);
 
-            shogun.Cancel(id);
+            colony.Cancel(id);
 
             bee.Received().CancelTask(Arg.Is(beeTaskIds[0]));
         }
@@ -73,7 +73,7 @@ namespace Application.Tests.Dojo
             var dojo = new Application.Dojo.Dojo(container, database);
             var taskTracker = new TaskTracker();
             var queueProvider = new QueueProvider(dojo, database, taskTracker);
-            var shogun = new Shogun(queueProvider, taskTracker, database);
+            var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
@@ -82,9 +82,9 @@ namespace Application.Tests.Dojo
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id1 = shogun.ExecuteTask("name1", "queue", T("powershell", "-version"));
-            var id2 = shogun.ExecuteTask("name2", "queue", T("powershell", "-version"));
-            var id3 = shogun.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id1 = colony.ExecuteTask("name1", "queue", T("powershell", "-version"));
+            var id2 = colony.ExecuteTask("name2", "queue", T("powershell", "-version"));
+            var id3 = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);
@@ -97,8 +97,8 @@ namespace Application.Tests.Dojo
                 Arg.Is("-version"),
                 Arg.Is(1));
 
-            shogun.Cancel(id2);
-            shogun.Cancel(id3);
+            colony.Cancel(id2);
+            colony.Cancel(id3);
 
             bee.DidNotReceive().CancelTask(Arg.Is(beeTaskIds[0]));
             bee.Received().CancelTask(Arg.Is(beeTaskIds[1]));
@@ -113,7 +113,7 @@ namespace Application.Tests.Dojo
             var dojo = new Application.Dojo.Dojo(container, database);
             var taskTracker = new TaskTracker();
             var queueProvider = new QueueProvider(dojo, database, taskTracker);
-            var shogun = new Shogun(queueProvider, taskTracker, database);
+            var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
@@ -125,7 +125,7 @@ namespace Application.Tests.Dojo
             // Turn bee too busy
             dojo.UpdateBeeState("http://bee1:8080", 0);
 
-            var id = shogun.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             // The task is create into shogun but no sent to a bee yet
             Assert.NotEqual(id, Guid.Empty);
@@ -147,7 +147,7 @@ namespace Application.Tests.Dojo
                 Arg.Is(1));
 
             Assert.NotEqual(id, beeTaskIds[0]);
-            shogun.Cancel(id);
+            colony.Cancel(id);
 
             bee.Received().CancelTask(Arg.Is(beeTaskIds[0]));
         }
@@ -160,7 +160,7 @@ namespace Application.Tests.Dojo
             var dojo = new Application.Dojo.Dojo(container, database);
             var taskTracker = new TaskTracker();
             var queueProvider = new QueueProvider(dojo, database, taskTracker);
-            var shogun = new Shogun(queueProvider, taskTracker, database);
+            var colony = new Colony(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
@@ -171,9 +171,9 @@ namespace Application.Tests.Dojo
             queueProvider.CreateQueue("queue1", bees: "http://bee1:8080");
             queueProvider.CreateQueue("queue2", bees: "http://bee2:8080");
 
-            var id1 = shogun.ExecuteTask("name", "queue1", T("powershell", "-version"));
-            var id2 = shogun.ExecuteTask("name", "queue2", T("powershell", "-version"));
-            var id3 = shogun.ExecuteTask("name", "queue1", T("powershell", "-version"));
+            var id1 = colony.ExecuteTask("name", "queue1", T("powershell", "-version"));
+            var id2 = colony.ExecuteTask("name", "queue2", T("powershell", "-version"));
+            var id3 = colony.ExecuteTask("name", "queue1", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);
@@ -190,8 +190,8 @@ namespace Application.Tests.Dojo
                 Arg.Is("-version"),
                 Arg.Is(1));
 
-            shogun.Cancel(id2);
-            shogun.Cancel(id3);
+            colony.Cancel(id2);
+            colony.Cancel(id3);
 
             bee1.DidNotReceive().CancelTask(Arg.Is(beeTaskIds[0]));
             bee2.Received().CancelTask(Arg.Is(beeTaskIds[1]));
@@ -206,7 +206,7 @@ namespace Application.Tests.Dojo
         };
     }
 
-    public static class ShogunTestsExtensions
+    public static class ColonyTestsExtensions
     {
         public static IBee SetupBee(this Application.Dojo.Dojo dojo, string address, List<Guid> beeIds = null)
         {

@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Application.Dojo
 {
-    public class Shogun : IShogun
+    public class Colony : IColony
     {
         private readonly QueueProvider _queueProvider;
         private readonly ITaskTracker _taskTracker;
@@ -15,7 +15,7 @@ namespace Application.Dojo
         private readonly Dictionary<string, IJobFactory> _factories = new Dictionary<string, IJobFactory>();
         private readonly Dictionary<Guid, Workflow> _workflows = new Dictionary<Guid, Workflow>();
 
-        public Shogun(QueueProvider queueProvider, ITaskTracker taskTracker, IDojoDb db)
+        public Colony(QueueProvider queueProvider, ITaskTracker taskTracker, IDojoDb db)
         {
             _queueProvider = queueProvider;
             _taskTracker = taskTracker;

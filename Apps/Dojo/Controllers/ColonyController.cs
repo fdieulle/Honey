@@ -10,59 +10,59 @@ namespace Dojo.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ShogunController : Controller, IShogun
+    public class ColonyController : Controller, IColony
     {
-        private readonly Shogun _shogun;
+        private readonly Colony _colony;
 
-        public ShogunController(Shogun shogun)
+        public ColonyController(Colony colony)
         {
-            _shogun = shogun;
+            _colony = colony;
         }
 
         [HttpPost("Execute")]
         public Guid Execute(WorkflowParameters parameters)
         {
-            return _shogun.Execute(parameters);
+            return _colony.Execute(parameters);
         }
 
         [HttpPost("ExecuteTask")]
         public Guid ExecuteTask(string name, string queue, TaskParameters task)
         {
-            return _shogun.ExecuteTask(name, queue, task);
+            return _colony.ExecuteTask(name, queue, task);
         }
 
         [HttpPost("Cancel")]
         public void Cancel(Guid id)
         {
-            _shogun.Cancel(id);
+            _colony.Cancel(id);
         }
 
         [HttpPost("Recover")]
         public void Recover(Guid id)
         {
-            _shogun.Recover(id);
+            _colony.Recover(id);
         }
 
         [HttpPost("Delete")]
         public void Delete(Guid id)
         {
-            _shogun.Delete(id);
+            _colony.Delete(id);
         }
 
         [HttpGet("GetTasks")]
         public List<RemoteTaskDto> GetTasks() 
         {
-            return _shogun.GetTasks();
+            return _colony.GetTasks();
         }
 
         [HttpGet("GetJobs")]
         public List<JobDto> GetJobs() {
-            return _shogun.GetJobs();
+            return _colony.GetJobs();
         }
 
         [HttpGet("GetWorkflows")]
         public List<WorkflowDto> GetWorkflows() {
-            return _shogun.GetWorkflows();
+            return _colony.GetWorkflows();
         }
     }
 }

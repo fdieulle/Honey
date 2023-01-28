@@ -31,7 +31,7 @@ namespace Dojo
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Shogun", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Beehive", Version = "v1" });
             });
         }
 
@@ -42,7 +42,7 @@ namespace Dojo
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Shogun v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Beehive v1"));
             }
             else
             {

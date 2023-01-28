@@ -4,16 +4,16 @@
 @using AntDesign.TableModels
 @using Application;
 @using Application.Dojo
-@using Application.Dojo.Repositories;
 @using Blazor.Diagrams.Core;
 @using Blazor.Diagrams.Components;
 @using Blazor.Diagrams.Core.Models.Base;
 @using Dojo.Components;
 @using Domain.Dtos.Workflows;
 @using Domain.ViewModels;
+@using Application.Honey;
 
 @inject WorkflowRepository WorkflowRepository
-@inject Shogun Shogun
+@inject Colony Colony
 @inject NavigationManager Navigation
 @inject ITimer Timer
 
@@ -214,21 +214,21 @@
     public Workflow()
     {
         var options = new DiagramOptions
+        {
+            DefaultNodeComponent = null, // Default component for nodes
+            AllowMultiSelection = true, // Whether to allow multi selection using CTRL
+                                        //EnableVirtualization = true,
+            Links = new DiagramLinkOptions
             {
-                DefaultNodeComponent = null, // Default component for nodes
-                AllowMultiSelection = true, // Whether to allow multi selection using CTRL
-                                            //EnableVirtualization = true,
-                Links = new DiagramLinkOptions
-                {
-                    // Options related to links
-                },
-                Zoom = new DiagramZoomOptions
-                {
-                    //Minimum = 0.5, // Minimum zoom value
-                    Inverse = false, // Whether to inverse the direction of the zoom when using the wheel
-                                     // Other
-                }
-            };
+                // Options related to links
+            },
+            Zoom = new DiagramZoomOptions
+            {
+                //Minimum = 0.5, // Minimum zoom value
+                Inverse = false, // Whether to inverse the direction of the zoom when using the wheel
+                                    // Other
+            }
+        };
 
         Diagram = new Diagram(options);
         Diagram.RegisterModelComponent<JobNodeModel, JobNodeComponent>();
@@ -257,13 +257,13 @@
     private void Cancel()
     {
         _modalState.Purpose = "cancel";
-        _modalState.Show(() => Shogun.Cancel(Id));
+        _modalState.Show(() => Colony.Cancel(Id));
     }
 
     private void Recover()
     {
         _modalState.Purpose = "recover";
-        _modalState.Show(() => Shogun.Recover(Id));
+        _modalState.Show(() => Colony.Recover(Id));
     }
 
     private void Delete()
@@ -271,7 +271,7 @@
         _modalState.Purpose = "delete";
         _modalState.Show(() =>
         {
-            Shogun.Delete(Id);
+            Colony.Delete(Id);
             Navigation.NavigateTo("dashboard");
         });
     }

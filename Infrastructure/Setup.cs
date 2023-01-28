@@ -7,7 +7,7 @@ using Application;
 using Application.Bee;
 using Infrastructure.Dojo;
 using Application.Dojo;
-using Application.Dojo.Repositories;
+using Application.Honey;
 
 namespace Infrastructure
 {
@@ -52,7 +52,7 @@ namespace Infrastructure
             services.AddSingleton(taskTracker);
             services.AddSingleton<Application.Dojo.Dojo>();
             services.AddSingleton<QueueProvider>();
-            services.AddSingleton<Shogun>();
+            services.AddSingleton<Colony>();
             services.AddSingleton<Poller>();
 
             services.AddSingleton<WorkflowRepository>();
