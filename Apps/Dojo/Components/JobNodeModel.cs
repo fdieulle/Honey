@@ -26,7 +26,8 @@ namespace Dojo.Components
         public static bool HasDetails(this JobNodeModel node) => node != null && node.Job.HasDetails();
         public static bool HasDetails(this JobViewModel job) => job is HostedJobViewModel;
 
-        public static HostedJobViewModel Details(this JobNodeModel node) => (node?.Job as HostedJobViewModel) ?? HostedJobViewModel.Empty;
+        public static HostedJobViewModel Details(this JobNodeModel node) => node?.Details() ?? HostedJobViewModel.Empty;
+        public static HostedJobViewModel Details(this JobViewModel job) => (job as HostedJobViewModel) ?? HostedJobViewModel.Empty;
 
         public static void BuildGraph(this Diagram diagram, JobViewModel root)
         {
