@@ -14,7 +14,7 @@ namespace Application.Dojo.Workflows
         public SingleTaskJob(SingleTaskJobParameters parameters, Queue queue, ITaskTracker tracker, IDojoDb db)
             : base(parameters, db)
         {
-            Dto.Parameters = parameters.StartTask ?? new TaskParameters();
+            Dto.Parameters = parameters.Task ?? new TaskParameters();
             _queue = queue;
             _tracker = tracker;
 
@@ -42,6 +42,12 @@ namespace Application.Dojo.Workflows
         {
             if (!Status.CanCancel()) return;
 
+            if (Status == JobStatus.Pending)
+            {
+                Update(JobStatus.Cancel);
+                return;
+            }
+
             Update(JobStatus.CancelRequested);
             _queue.CancelTask(Dto.TaskId);
         }
@@ -67,6 +73,8 @@ namespace Application.Dojo.Workflows
 
         private void StartTask()
         {
+            Update(JobStatus.Running);
+
             Dto.TaskId = _queue.StartTask(Dto.Name, Dto.Parameters);
             _subscription = _tracker.Subscribe(Dto.TaskId, OnTaskUpdated);
         }
