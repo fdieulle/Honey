@@ -73,9 +73,21 @@ namespace Application.Beehive.Workflows
 
         private void StartTask()
         {
+            if (_queue == null)
+            {
+                Update(JobStatus.Error); // TODO: Mention that the queue doesn't exist.
+                return;
+            }
+
             Update(JobStatus.Running);
 
             Dto.TaskId = _queue.StartTask(Dto.Name, Dto.Parameters);
+            if (Dto.TaskId == Guid.Empty)
+            {
+                Update(JobStatus.Error); // TODO: Mention that the task failed to start.
+                return;
+            }
+
             _subscription = _tracker.Subscribe(Dto.TaskId, OnTaskUpdated);
         }
 
