@@ -100,7 +100,6 @@ namespace Application.Bee
                 _processorAllocator.SetAffinity(task.Pid, nbCores);
             }
             
-
             return task.Id;
         }
 
