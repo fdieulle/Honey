@@ -17,7 +17,7 @@ namespace Application.Bee
 
         public Guid Id { get; } = Guid.NewGuid();
 
-        public int Pid => _process != null && _taskDto.StartTime != default ? _process.Id : -1;
+        public int Pid { get; private set; } = -1;
 
         public string Command { get; }
 
@@ -65,6 +65,7 @@ namespace Application.Bee
         {
             _baseUri = baseUri;
             Id = entity.Id;
+            Pid = entity.Pid;
             Command = entity.Command;
             Arguments = entity.Arguments;
             Status = entity.Status;
@@ -130,10 +131,12 @@ namespace Application.Bee
 
                 if (_process.Start())
                 {
-                    _taskDto.StartTime = DateTime.UtcNow;
+                    Pid = _process.Id;
+                    
                     _process.BeginOutputReadLine();
                     _process.BeginErrorReadLine();
 
+                    _taskDto.StartTime = DateTime.UtcNow;
                     Status = TaskStatus.Running;
                 }
                 else
