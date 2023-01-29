@@ -67,7 +67,5 @@ namespace Application.Beehive.Workflows
         }
 
         public override string ToString() => $"[{Name}] {Status} - {Id}";
-
-        
     }
 }
