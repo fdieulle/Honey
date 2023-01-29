@@ -83,7 +83,7 @@ namespace Application.Honey
             {
                 vm.HostId = beeState.Id;
                 vm.StartTime = beeState.StartTime;
-                vm.Progress = beeState.ProgressPercent;
+                vm.Progress = beeState.ProgressPercent * 100;
                 vm.Duration = (beeState.IsFinalStatus() ? beeState.EndTime : DateTime.Now) - beeState.StartTime;
             }
 
