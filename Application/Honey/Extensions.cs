@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Application.Honey;
+using Application.Beehive.Workflows;
 
 namespace Application.Honey
 {
@@ -99,18 +100,67 @@ namespace Application.Honey
         private static JobViewModel Get(this Dictionary<Guid, JobViewModel> jobs, Guid id)
             => jobs.TryGetValue(id, out var job) ? job : JobViewModel.Empty;
 
+        private static readonly string parallel = JobsBehavior.Parallel.ToString();
+        private static readonly string sequential = JobsBehavior.Sequential.ToString();
+
         public static void UpdateTree(this JobViewModel vm)
         {
-            var startedJobs = vm.Children.Where(p => p.StartTime.HasValue).ToList();
-            if (startedJobs.Any())
+            if (vm == null || vm.Children == null) return;
+
+            if (vm.Type == parallel)
+                vm.UpdateParallel();
+            else if (vm.Type == sequential)
+                vm.UpdateSequential();
+
+            if (vm.Status == JobStatus.Completed)
+                vm.Progress = 100;
+        }
+
+        private static void UpdateParallel(this JobViewModel vm)
+        {
+            vm.StartTime = null;
+            vm.Progress = 100.0;
+            vm.Duration = TimeSpan.Zero;
+            foreach (var job in vm.Children)
             {
-                foreach (var job in startedJobs)
-                    job.UpdateTree();
-                vm.StartTime = startedJobs.Min(p => p.StartTime);
-                vm.Progress = startedJobs.Min(p => p.Progress);
-                vm.Duration = startedJobs.Max(p => p.Duration);
+                job.UpdateTree();
+
+                vm.UpdateStartTime(job.StartTime);
+                vm.Progress = Math.Min(vm.Progress, job.Progress);
+                vm.Duration = Max(vm.Duration, job.Duration);
             }
         }
+
+        private static void UpdateSequential(this JobViewModel vm)
+        {
+            var count = (double)vm.Children.Count;
+
+            vm.StartTime = null;
+            vm.Progress = 0;
+            vm.Duration = TimeSpan.Zero;
+            foreach (var job in vm.Children)
+            {
+                job.UpdateTree();
+
+                vm.UpdateStartTime(job.StartTime);
+                vm.Progress += Math.Ceiling(job.Progress / count);
+                vm.Duration += job.Duration;
+            }
+            vm.Progress = Math.Min(100, vm.Progress);
+        }
+
+        private static void UpdateStartTime(this JobViewModel vm, DateTime? jobStartTime)
+        {
+            if (!jobStartTime.HasValue)
+                return;
+
+            vm.StartTime = vm.StartTime.HasValue
+                ? Min(vm.StartTime.Value, jobStartTime.Value)
+                : jobStartTime.Value;
+        }
+
+        private static DateTime Min(DateTime x, DateTime y) => x < y ? x : y;
+        private static TimeSpan Max(TimeSpan x, TimeSpan y) => x > y ? x : y;
 
         #endregion
     }
