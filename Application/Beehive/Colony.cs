@@ -21,19 +21,31 @@ namespace Application.Beehive
             _taskTracker = taskTracker;
             _db = db;
 
-            foreach(var workflow in _db.FetchWorkflows())
-                _workflows[workflow.Id] = new Workflow(workflow, GetJobFactory(workflow.QueueName), db);
+            foreach (var entity in _db.FetchWorkflows())
+            {
+                var workflow = new Workflow(entity, GetJobFactory(entity.QueueName), db);
+                _workflows[entity.Id] = workflow;
+                workflow.Deleted += OnWorkflowDeleted;
+            }
         }
 
         public Guid Execute(WorkflowParameters parameters)
         {
             var factory = GetJobFactory(parameters.QueueName);
             var workflow = new Workflow(parameters, factory, _db);
+            workflow.Deleted += OnWorkflowDeleted;
+            
             _workflows.Add(workflow.Id, workflow);
 
             workflow.Start();
 
             return workflow.Id;
+        }
+
+        private void OnWorkflowDeleted(Workflow workflow)
+        {
+            workflow.Deleted -= OnWorkflowDeleted;
+            _workflows.Remove(workflow.Id);
         }
 
         public Guid ExecuteTask(string name, string queueName, TaskParameters task) 

@@ -19,7 +19,7 @@
 
 <div>
     <h3>@_workflow.Name</h3>
-    <Tag class="@_workflow.ToCssClass()">@_workflow.Status</Tag>
+    <Tag class="@_workflow?.ToCssClass()">@_workflow.Status</Tag>
     <Text Type="secondary">@_workflow?.Id</Text>
     <Divider />
     <Space>
@@ -272,7 +272,7 @@
         _modalState.Show(() =>
         {
             Colony.Delete(Id);
-            Navigation.NavigateTo("dashboard");
+            Navigation.NavigateTo("workflows");
         });
     }
 
