@@ -123,15 +123,31 @@ namespace Application.Bee
             if (_process == null) return;
 
             PostMessage(MessageType.Info, $"Start job with id: {Id}");
-            WorkingFolder.CreateFolder();
 
-            _process.Start();
-            _taskDto.StartTime = DateTime.UtcNow;
+            try
+            {
+                WorkingFolder.CreateFolder();
 
-            _process.BeginOutputReadLine();
-            _process.BeginErrorReadLine();
+                if (_process.Start())
+                {
+                    _taskDto.StartTime = DateTime.UtcNow;
+                    _process.BeginOutputReadLine();
+                    _process.BeginErrorReadLine();
 
-            Status = TaskStatus.Running;
+                    Status = TaskStatus.Running;
+                }
+                else
+                {
+                    Status= TaskStatus.Error;
+                    // Todo: Send start failed reason
+                }
+            } 
+            catch (Exception e)
+            {
+                Status = TaskStatus.Error;
+                PostMessage(MessageType.Exit, $"An exception occured: {e.Message}");
+                // Todo: log the excepetion
+            }
         }
 
         public void Cancel()
