@@ -74,6 +74,7 @@ namespace Application.Bee
             _taskDto.Id = Id;
             _taskDto.StartTime = entity.StartTime;
             _taskDto.EndTime = entity.EndTime;
+            _taskDto.ProgressPercent = entity.ProgressPercent;
 
             switch (Status)
             {
