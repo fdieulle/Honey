@@ -36,10 +36,10 @@ namespace Application.Bee
             _workingDrive = Path.GetPathRoot(Path.GetFullPath(_workingFolder)).Replace("\\", "");
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
 
-            foreach(var job in _database.FetchTasks())
+            foreach(var task in _database.FetchTasks())
             {
-                job.Exited += OnTaskExited;
-                _runningTasks[job.Id] = job;
+                task.Exited += OnTaskExited;
+                _runningTasks[task.Id] = task;
             }
         }
 

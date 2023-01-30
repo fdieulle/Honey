@@ -27,7 +27,7 @@ namespace Infrastructure.Bee
         private void CreateTask(BeeDbContext context, RunningTask task)
         {
             var dto = task.ToDto();
-            var model = new TaskEntity
+            var entity = new TaskEntity
             {
                 Id = task.Id,
                 Command = task.Command,
@@ -41,7 +41,7 @@ namespace Infrastructure.Bee
                 ExpectedEndTime = dto.ExpectedEndTime,
                 Message = dto.Message,
             };
-            context.Add(model);
+            context.Add(entity);
             context.SaveChanges();
         }
 
@@ -49,18 +49,18 @@ namespace Infrastructure.Bee
         {
             using (var context = _factory.CreateDbContext())
             {
-                var model = context.Tasks.FirstOrDefault(p => p.Id == task.Id);
-                if (model == null) CreateTask(context, task);
+                var entity = context.Tasks.FirstOrDefault(p => p.Id == task.Id);
+                if (entity == null) CreateTask(context, task);
                 else
                 {
                     var dto = task.ToDto();
-                    model.Pid = task.Pid;
-                    model.StartTime = dto.StartTime;
-                    model.Status = task.Status;
-                    model.EndTime = dto.EndTime;
-                    model.ProgressPercent = dto.ProgressPercent;
-                    model.ExpectedEndTime = dto.ExpectedEndTime;
-                    model.Message = dto.Message;
+                    entity.Pid = task.Pid;
+                    entity.StartTime = dto.StartTime;
+                    entity.Status = task.Status;
+                    entity.EndTime = dto.EndTime;
+                    entity.ProgressPercent = dto.ProgressPercent;
+                    entity.ExpectedEndTime = dto.ExpectedEndTime;
+                    entity.Message = dto.Message;
                     context.SaveChanges();
                 }
             }
@@ -70,10 +70,10 @@ namespace Infrastructure.Bee
         {
             using (var context = _factory.CreateDbContext())
             {
-                var model = context.Tasks.FirstOrDefault(p => p.Id == taskId);
-                if (model == null) return;
+                var entity = context.Tasks.FirstOrDefault(p => p.Id == taskId);
+                if (entity == null) return;
 
-                context.Tasks.Remove(model);
+                context.Tasks.Remove(entity);
                 context.SaveChanges();
             }
         }
