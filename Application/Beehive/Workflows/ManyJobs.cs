@@ -44,7 +44,7 @@ namespace Application.Beehive.Workflows
                 return;
             }
 
-            if (Jobs.None(s => s.CanStart()))
+            if (!Jobs.Any(s => s.CanStart()))
                 return;
 
             Update(JobStatus.Running);
@@ -62,7 +62,7 @@ namespace Application.Beehive.Workflows
                 return;
             }
 
-            if (Jobs.None(s => s.CanCancel()))
+            if (!Jobs.Any(s => s.CanCancel()))
                 return;
 
             Update(JobStatus.CancelRequested);
@@ -76,7 +76,7 @@ namespace Application.Beehive.Workflows
             if (Jobs.Length == 0)
                 return;
 
-            if (Jobs.None(s => s.CanRecover()))
+            if (!Jobs.Any(s => s.CanRecover()))
                 return;
 
             foreach (var job in Jobs.Where(p => p.CanRecover()))
@@ -91,7 +91,7 @@ namespace Application.Beehive.Workflows
                 return;
             }
 
-            if (Jobs.None(s => s.CanDelete()))
+            if (!Jobs.Any(s => s.CanDelete()))
                 return;
 
             Update(JobStatus.DeleteRequested);
@@ -128,26 +128,22 @@ namespace Application.Beehive.Workflows
     {
         public static JobStatus GetStatus(this IJob[] jobs)
         {
-            if (jobs.Length == 0 || jobs.All(s => s == JobStatus.Completed))
+            if (jobs.Length == 0 || jobs.All(s => s.Status == JobStatus.Completed))
                 return JobStatus.Completed;
 
-            if (jobs.All(s => s == JobStatus.Pending))
+            if (jobs.All(s => s.Status == JobStatus.Pending))
                 return JobStatus.Pending;
 
-            if (jobs.All(s => s == JobStatus.Deleted))
+            if (jobs.All(s => s.Status == JobStatus.Deleted))
                 return JobStatus.Deleted;
 
-            if (jobs.Any(s => s == JobStatus.Error))
+            if (jobs.Any(s => s.Status == JobStatus.Error))
                 return JobStatus.Error;
 
-            if (jobs.All(s => s.IsFinal()) && jobs.Any(s => s == JobStatus.Cancel))
+            if (jobs.All(s => s.Status.IsFinal()) && jobs.Any(s => s.Status == JobStatus.Cancel))
                 return JobStatus.Cancel;
 
             return JobStatus.Running;
         }
-
-        public static bool All(this IJob[] jobs, Predicate<JobStatus> predicate) => jobs.All(p => predicate(p.Status));
-        public static bool Any(this IJob[] jobs, Predicate<JobStatus> predicate) => jobs.Any(p => predicate(p.Status));
-        public static bool None(this IJob[] jobs, Predicate<JobStatus> predicate) => !jobs.All(predicate);
     }
 }
