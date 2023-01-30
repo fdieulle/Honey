@@ -177,8 +177,16 @@ namespace Application.Bee
             {
                 if (_process != null)
                 {
-                    _process.WaitForExit();
-                    Status = _process.ExitCode == 0 ? TaskStatus.Done : TaskStatus.Error;
+                    try
+                    {
+                        _process.WaitForExit();
+                        Status = _process.ExitCode == 0 ? TaskStatus.Done : TaskStatus.Error;
+                    }
+                    catch(Exception e)
+                    {
+                        Status = TaskStatus.Error;
+                        // Todo: Send message: Unable to exit properly the process with PID={Pid}, Message={e.Message}
+                    }
                 }
                 else Status = TaskStatus.Error;
                 
