@@ -30,13 +30,13 @@
     <Column Title="Duration" @bind-Field="@context.Duration" Format="dd\.hh\:mm\:ss" Sortable />
 
     <ActionColumn Title="Cancel" Width="70">
-        <Button OnClickStopPropagation OnClick="()=>Cancel(context.Id)" Disabled="@(!context.CanCancel())">Cancel</Button>
+        <Button OnClickStopPropagation OnClick="()=>Cancel(context.Id)" Disabled="@(!context.CanCancel)">Cancel</Button>
     </ActionColumn>
     <ActionColumn Title="Recover" Width="70">
-        <Button OnClickStopPropagation OnClick="()=>Recover(context.Id)" Disabled="@(!context.CanRecover())">Recover</Button>
+        <Button OnClickStopPropagation OnClick="()=>Recover(context.Id)" Disabled="@(!context.CanRecover)">Recover</Button>
     </ActionColumn>
     <ActionColumn Title="Delete" Width="70">
-        <Button Danger OnClickStopPropagation OnClick="()=>Delete(context.Id)" Disabled="@(!context.CanDelete())">Delete</Button>
+        <Button Danger OnClickStopPropagation OnClick="()=>Delete(context.Id)" Disabled="@(!context.CanDelete)">Delete</Button>
     </ActionColumn>
 </AntDesign.Table>
 

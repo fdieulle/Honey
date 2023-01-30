@@ -24,13 +24,13 @@
     <Divider />
     <Space>
         <SpaceItem>
-            <Button OnClick="Cancel" Disabled="@(!_workflow.CanCancel())">Cancel</Button>
+            <Button OnClick="Cancel" Disabled="@(!_workflow.CanCancel)">Cancel</Button>
         </SpaceItem>
         <SpaceItem>
-            <Button OnClick="Recover" Disabled="@(!_workflow.CanRecover())">Recover</Button>
+            <Button OnClick="Recover" Disabled="@(!_workflow.CanRecover)">Recover</Button>
         </SpaceItem>
         <SpaceItem>
-            <Button Danger OnClick="Delete" Disabled="@(!_workflow.CanDelete())">Delete</Button>
+            <Button Danger OnClick="Delete" Disabled="@(!_workflow.CanDelete)">Delete</Button>
         </SpaceItem>
     </Space>
     <Divider />

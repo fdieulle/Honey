@@ -27,6 +27,9 @@ namespace Application.Honey
             workflow.Progress = rootJob.Progress;
             workflow.Duration = rootJob.Duration;
             workflow.StartTime = rootJob.StartTime;
+            workflow.CanCancel= rootJob.CanCancel;
+            workflow.CanRecover = rootJob.CanRecover;
+            workflow.CanDelete = rootJob.CanDelete;
         }
 
         public static void Update(this WorkflowViewModel vm, WorkflowDto dto)
@@ -41,7 +44,7 @@ namespace Application.Honey
 
         public static JobViewModel ToViewModel(this JobDto dto)
         {
-            var vm = dto is SingleTaskJobDto st ? new HostedJobViewModel() : new JobViewModel();
+            var vm = dto is SingleTaskJobDto ? new HostedJobViewModel() : new JobViewModel();
 
             vm.Id = dto.Id;
             vm.Name = dto.Name;
@@ -111,6 +114,19 @@ namespace Application.Honey
                 vm.UpdateParallel();
             else if (vm.Type == sequential)
                 vm.UpdateSequential();
+
+            if (vm.Children.Count > 0)
+            {
+                vm.CanCancel = vm.Children.Any(p => p.Status.CanCancel());
+                vm.CanRecover = vm.Children.Any(p => p.Status.CanRecover());
+                vm.CanDelete = vm.Children.Any(p => p.Status.CanDelete());
+            }
+            else
+            {
+                vm.CanCancel = vm.Status.CanCancel();
+                vm.CanRecover = vm.Status.CanRecover();
+                vm.CanDelete = vm.Status.CanDelete();
+            }
 
             if (vm.Status == JobStatus.Completed)
                 vm.Progress = 100;

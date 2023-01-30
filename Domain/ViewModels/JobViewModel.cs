@@ -15,6 +15,10 @@ namespace Domain.ViewModels
         public DateTime? StartTime { get; set; }
         public TimeSpan Duration { get; set; }
         public double Progress { get; set; }
+        
+        public bool CanCancel { get; set; }
+        public bool CanRecover { get; set; }
+        public bool CanDelete { get; set; }
         public List<JobViewModel> Children { get; set; } = new List<JobViewModel>();
     }
 

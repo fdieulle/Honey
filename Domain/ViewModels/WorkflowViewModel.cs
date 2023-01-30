@@ -14,8 +14,8 @@ namespace Domain.ViewModels
         public TimeSpan Duration { get; set; } = TimeSpan.Zero;
         public double Progress { get; set; }
 
-        public bool CanCancel() => Status.CanCancel();
-        public bool CanDelete() => Status.CanDelete();
-        public bool CanRecover() => Status.CanRecover();
+        public bool CanCancel { get; set; }
+        public bool CanRecover { get; set; }
+        public bool CanDelete { get; set; }
     }
 }
