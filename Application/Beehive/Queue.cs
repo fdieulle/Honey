@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Application.Bee;
+using Domain;
 using Domain.Dtos;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ namespace Application.Beehive
         private int _maxParallelTasks;
         private HashSet<string> _bees = new HashSet<string>();
         private ulong _orderIncrement;
+        private Queue<RemoteTaskDto> _tasksToSynchronize = new Queue<RemoteTaskDto>();
 
         public string Name => Dto.Name;
 
@@ -58,7 +60,10 @@ namespace Application.Beehive
                     case RemoteTaskStatus.CancelRequested:
                     case RemoteTaskStatus.CancelPending:
                         _runningTasks[task.Id] = task;
-                        break;   
+                        break;
+                    default:
+                        _tasksToSynchronize.Enqueue(task);
+                        break;
                 }
             }
 
@@ -201,54 +206,91 @@ namespace Application.Beehive
         {
             lock (_lock)
             {
-                var runningTasks = _runningTasks.Values.ToList();
-                foreach (var task in runningTasks)
-                {
-                    if (string.IsNullOrEmpty(task.BeeAddress)) // Skip pending tasks
-                        continue;
+                UpdateRunningTasks(_runningTasks.Values.ToList());
 
-                    var bee = _beehive.GetBee(task.BeeAddress);
-                    if (bee == null) continue; // TODO: Should we consider a state after a long run without bee up like a timeout and allow delete the task ?
-
-                    if (task.BeeState == null)
-                    {
-                        // TODO: Should we remove this task because it is not known by the Bee
-                        // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
-                        RecordTask(task, RemoteTaskStatus.Error);
-                        continue;
-                    }
-
-                    var state = bee.GetTaskState(task.BeeState.Id);
-                    if (state != null)
-                    {
-                        task.BeeState = state;
-                        if (state.IsFinalStatus())
-                        {
-                            _runningTasks.Remove(task.Id);
-
-                            var status = state.Status;
-                            if (status == TaskStatus.Done)
-                                RecordTask(task, RemoteTaskStatus.Completed);
-                            else if(status == TaskStatus.Cancel)
-                                RecordTask(task, RemoteTaskStatus.Cancel);
-                            else
-                                RecordTask(task, RemoteTaskStatus.Error);
-
-                            bee.DeleteTask(task.BeeState.Id);
-                        }
-                        else if (task.Status == RemoteTaskStatus.CancelPending)
-                        {
-                            bee.CancelTask(task.BeeState.Id);
-                            RecordTask(task, RemoteTaskStatus.CancelRequested);
-                        }
-                        else RecordTask(task, task.Status);
-                    }
-                }
+                if (_tasksToSynchronize.Count > 0)
+                    UpdateTasksToSynchronize();
 
                 var nbTasksToStart = _maxParallelTasks <= 0
                     ? _pendingTasks.Count
                     : _maxParallelTasks - _runningTasks.Count;
                 DequeueTasks(nbTasksToStart);
+            }
+        }
+
+        private void UpdateRunningTasks(List<RemoteTaskDto> tasks)
+        {
+            foreach (var task in tasks)
+            {
+                if (string.IsNullOrEmpty(task.BeeAddress)) // Skip pending tasks
+                    continue;
+
+                var bee = _beehive.GetBee(task.BeeAddress);
+                if (bee == null) continue; // TODO: Should we consider a state after a long run without bee up like a timeout and allow delete the task ?
+
+                if (task.BeeState == null)
+                {
+                    // TODO: Should we remove this task because it is not known by the Bee
+                    // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
+                    RecordTask(task, RemoteTaskStatus.Error);
+                    continue;
+                }
+
+                var state = bee.GetTaskState(task.BeeState.Id);
+                if (state != null)
+                {
+                    task.BeeState = state;
+                    if (state.IsFinalStatus())
+                    {
+                        _runningTasks.Remove(task.Id);
+
+                        var status = state.Status;
+                        if (status == TaskStatus.Done)
+                            RecordTask(task, RemoteTaskStatus.Completed);
+                        else if (status == TaskStatus.Cancel)
+                            RecordTask(task, RemoteTaskStatus.Cancel);
+                        else
+                            RecordTask(task, RemoteTaskStatus.Error);
+
+                        //bee.DeleteTask(task.BeeState.Id);
+                    }
+                    else if (task.Status == RemoteTaskStatus.CancelPending)
+                    {
+                        bee.CancelTask(task.BeeState.Id);
+                        RecordTask(task, RemoteTaskStatus.CancelRequested);
+                    }
+                    else RecordTask(task, task.Status);
+                }
+            }
+        }
+
+        private void UpdateTasksToSynchronize()
+        {
+            var count = _tasksToSynchronize.Count;
+            for(var i=0; i<count; i++)
+            {
+                var task = _tasksToSynchronize.Peek();
+
+                if (string.IsNullOrEmpty(task.BeeAddress)) // Skip pending tasks
+                    continue;
+
+                var bee = _beehive.GetBee(task.BeeAddress);
+                if (bee == null) continue; // TODO: Should we consider a state after a long run without bee up like a timeout and allow delete the task ?
+
+                if (task.BeeState == null)
+                {
+                    // TODO: Should we remove this task because it is not known by the Bee
+                    // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
+                    RecordTask(task, RemoteTaskStatus.Error);
+                    continue;
+                }
+
+                var state = bee.GetTaskState(task.BeeState.Id);
+                if (state != null)
+                {
+                    task.BeeState = state;
+                    _tasksToSynchronize.Dequeue();
+                }
             }
         }
 

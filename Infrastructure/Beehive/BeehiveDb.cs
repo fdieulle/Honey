@@ -251,8 +251,8 @@ namespace Infrastructure.Beehive
                 },
                 BeeState = new TaskDto
                 {
-                    Id = entity.Id,
-                    Status = Domain.Dtos.TaskStatus.Pending
+                    Id = entity.BeeTaskId,
+                    Status = TaskStatus.Pending
                 }
             };
         }
