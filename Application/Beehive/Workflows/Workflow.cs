@@ -1,5 +1,4 @@
-﻿using Domain.Dtos;
-using Domain.Dtos.Workflows;
+﻿using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 

@@ -1,5 +1,4 @@
-﻿using Domain;
-using Domain.Dtos.Workflows;
+﻿using Domain.Dtos.Workflows;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,10 +19,8 @@ namespace Application.Beehive.Workflows
             // Todo: Handle beehive down time and status changes during the down time
         }
 
-        protected override void Start(IEnumerable<IJob> jobs)
-        {
-            Start(Jobs.FirstOrDefault());
-        }
+        protected override void Start(IEnumerable<IJob> jobs) 
+            => Start(Jobs.FirstOrDefault());
 
         private void Start(IJob job)
         {
