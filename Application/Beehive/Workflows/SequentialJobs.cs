@@ -36,23 +36,20 @@ namespace Application.Beehive.Workflows
                 job.Updated -= OnJobUpdated;
 
             if (job.Status == JobStatus.Completed)
-                Start(GetNextJob(job));
+                Start(Jobs.FirstOrDefault(p => p.CanStart()));
         }
 
-        private IJob GetNextJob(IJob job)
+        public override void Recover()
         {
-            for(var i=0; i<Jobs.Length; i++)
-            {
-                if (job.Id != Jobs[i].Id)
-                    continue;
-                for (var j=i+1; j< Jobs.Length; j++)
-                {
-                    if (Jobs[j].CanStart())
-                        return Jobs[j];
-                }
-            }
+            Recover(Jobs.FirstOrDefault(p => p.CanRecover()));
+        }
 
-            return null;
+        private void Recover(IJob job)
+        {
+            if (job == null) return;
+
+            job.Updated += OnJobUpdated;
+            job.Recover();
         }
     }
 }
