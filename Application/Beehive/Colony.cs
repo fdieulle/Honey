@@ -4,7 +4,6 @@ using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Application.Beehive
 {
@@ -35,10 +34,13 @@ namespace Application.Beehive
             var factory = GetJobFactory(parameters.QueueName);
             var workflow = new Workflow(parameters, factory, _db);
             workflow.Deleted += OnWorkflowDeleted;
-            
-            _workflows.Add(workflow.Id, workflow);
 
-            workflow.Start();
+            lock (_workflows)
+            {
+                _workflows.Add(workflow.Id, workflow);
+
+                workflow.Start();
+            }
 
             return workflow.Id;
         }
@@ -46,7 +48,10 @@ namespace Application.Beehive
         private void OnWorkflowDeleted(Workflow workflow)
         {
             workflow.Deleted -= OnWorkflowDeleted;
-            _workflows.Remove(workflow.Id);
+            lock (_workflows)
+            {
+                _workflows.Remove(workflow.Id);
+            }
         }
 
         public Guid ExecuteTask(string name, string queueName, TaskParameters task) 
@@ -54,43 +59,54 @@ namespace Application.Beehive
 
         public bool Cancel(Guid id)
         {
-            if (!_workflows.TryGetValue(id, out var workflow))
-                return false;
+            lock (_workflows)
+            {
+                if (!_workflows.TryGetValue(id, out var workflow))
+                    return false;
 
-            workflow.Cancel();
-
-            return true;
+                workflow.Cancel();
+                return true;
+            }
         }
 
         public bool Recover(Guid id)
         {
-            if (!_workflows.TryGetValue(id, out var workflow))
-                return false;
+            lock (_workflows)
+            {
+                if (!_workflows.TryGetValue(id, out var workflow))
+                    return false;
 
-            workflow.Recover();
+                workflow.Recover();
 
-            return true;
+                return true;
+            }
         }
 
         public bool Delete(Guid id)
         {
-            if (!_workflows.TryGetValue(id, out var workflow))
-                return false;
+            lock (_workflows)
+            {
+                if (!_workflows.TryGetValue(id, out var workflow))
+                    return false;
 
-            workflow.Delete();
+                workflow.Delete();
 
-            return true;
+                return true;
+            }
         }
 
         private IJobFactory GetJobFactory(string queueName)
         {
-            if (!_factories.TryGetValue(queueName, out var factory))
+            lock (_factories)
             {
-                var queue = _queueProvider.GetQueue(queueName);
-                _factories.Add(queueName, factory = new JobFactory(queue, _taskTracker, _db));
-            }
+                if (!_factories.TryGetValue(queueName, out var factory))
+                {
+                    var queue = _queueProvider.GetQueue(queueName);
+                    _factories.Add(queueName, factory = new JobFactory(queue, _taskTracker, _db));
+                }
 
-            return factory;
+                return factory;
+            }
         }
 
         public List<RemoteTaskDto> GetTasks()
@@ -104,15 +120,21 @@ namespace Application.Beehive
 
         public List<JobDto> GetJobs()
         {
-            return _workflows.Values
-                .SelectMany(p => p.GetJobs())
-                .ToList();
+            lock(_workflows)
+            {
+                return _workflows.Values
+                    .SelectMany(p => p.GetJobs())
+                    .ToList();
+            }
         }
 
         public List<WorkflowDto> GetWorkflows()
         {
-            return _workflows.Values
-                .Select(p => p.Dto).ToList();
+            lock (_workflows)
+            {
+                return _workflows.Values
+                    .Select(p => p.Dto).ToList();
+            }
         }
     } 
 }
