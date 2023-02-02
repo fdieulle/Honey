@@ -4,14 +4,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Bee.Controllers
 {
+    // TODO: Rename to flower ?
     [ApiController]
     [Route("[controller]")]
-    public class BeeClientController
+    public class FlowerController
     {
         private readonly Application.Bee.Bee _bee;
-        private readonly ILogger<BeeClientController> _logger;
+        private readonly ILogger<FlowerController> _logger;
 
-        public BeeClientController(Application.Bee.Bee bee, ILogger<BeeClientController> logger)
+        public FlowerController(Application.Bee.Bee bee, ILogger<FlowerController> logger)
         {
             _bee = bee;
             _logger = logger;
