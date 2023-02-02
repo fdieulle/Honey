@@ -1,10 +1,10 @@
 # Honey
 
-Honey is a distributed platform which allows you to execute multiple 
+Honey is a distributed platform. It allows you to execute multiple 
 tasks (aka processes) through multiple Bees (aka machines).
 
-Honey allows you to parallel and sequence tasks around 
-jobs to create execution workflows on a fully distributed platform.
+Honey parallel and sequence tasks around jobs to create execution
+workflows on a fully distributed platform.
 
 Honey provides a web API to the end user as well as a web application 
 on which you can follow and monitor workflow progresses and 
@@ -12,7 +12,7 @@ the state of your distributed platform.
 
 Honey is a multi-users platform. To segregate the platform resources 
 between users, each task is attached to a queue. A queue can be 
-restricted to a subset of Bees.
+restricted to a subset of Bees and shared or not betzeen users.
 
 ## Bees
 
