@@ -79,6 +79,8 @@ namespace Application.Beehive.Workflows
             if (!Jobs.Any(s => s.CanRecover()))
                 return;
 
+            Update(JobStatus.Running);
+
             foreach (var job in Jobs.Where(p => p.CanRecover()))
                 job.Recover();
         }

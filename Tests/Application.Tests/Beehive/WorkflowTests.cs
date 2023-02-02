@@ -301,6 +301,67 @@ namespace Application.Tests.Beehive
             children.ReceivedRecover(0, 0, 0);
             children.ReceivedDelete(1, 1, 1);
         }
+
+        [Fact]
+        public void ParallelJobsWithOneInErrorThenCancelOthersThenREcoverTests()
+        {
+            var db = new BeehiveDbLogs();
+            var factory = Substitute.For<IJobFactory>();
+
+            var (jobParameters, children) = factory.SetupJobs("Child 1", "Child 2", "Child 3");
+
+            var parameters = new ManyJobsParameters { Behavior = JobsBehavior.Parallel, Name = "Parallel", Jobs = jobParameters };
+            var job = new ParallelJobs(parameters, factory, db);
+
+            job.Is(JobStatus.Pending);
+
+            job.Start();
+
+            children.ReceivedStart(1, 1, 1);
+
+            job.Is(JobStatus.Running);
+
+            children[0].Update(JobStatus.Running);
+            children[1].Update(JobStatus.Running);
+            children[2].Update(JobStatus.Running);
+            job.Is(JobStatus.Running);
+
+            children[1].Update(JobStatus.Error);
+            job.Is(JobStatus.Error);
+
+            children[2].Update(JobStatus.Completed);
+            job.Is(JobStatus.Error);
+
+            job.Cancel();
+            children.ReceivedCancel(1, 0, 0);
+            job.Is(JobStatus.CancelRequested);
+
+            children[0].Update(JobStatus.Cancel);
+            job.Is(JobStatus.Error);
+
+            job.Recover();
+            children.ReceivedRecover(1, 1, 0);
+
+            job.Is(JobStatus.Running);
+
+            children[0].Update(JobStatus.Running);
+            children[1].Update(JobStatus.Running);
+            job.Is(JobStatus.Running);
+
+            children[1].Update(JobStatus.Completed);
+            job.Is(JobStatus.Running);
+
+            children[0].Update(JobStatus.Completed);
+            job.Is(JobStatus.Completed);
+
+            children.ReceivedDelete(0, 0, 0);
+            job.Delete();
+
+            children.ReceivedStart(1, 1, 1);
+            children.ReceivedCancel(1, 0, 0);
+            children.ReceivedRecover(1, 1, 0);
+            children.ReceivedDelete(1, 1, 1);
+        }
     }
 
     public static class WorkflowTestsExtensions
