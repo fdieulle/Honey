@@ -51,7 +51,6 @@ namespace Application.Honey
             _jobs.Reload(jobs);
             _workflows.Reload(workflows);
 
-
             // Build job trees
             foreach (var dto in jobs)
             {
