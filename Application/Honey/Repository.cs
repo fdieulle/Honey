@@ -39,7 +39,7 @@ namespace Application.Honey
             {
                 var key = _getKey(source);
                 if (!TryGetValue(key, out var value))
-                    Add(key, value = Create(key, source));
+                    Add(key, Create(key, source));
                 else _update(source, value);
                 keys.Remove(key);
             }
@@ -61,7 +61,6 @@ namespace Application.Honey
 
         private void Delete(TKey key, TValue value)
         {
-
             foreach (var pair in _views)
                 pair.Value.Remove(key, value);
 
@@ -113,8 +112,6 @@ namespace Application.Honey
             foreach (var k in keys)
                 _indices[k]--;
         }
-
-
     }
 
     public class Disposable : IDisposable
