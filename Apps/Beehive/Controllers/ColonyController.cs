@@ -14,55 +14,39 @@ namespace Beehive.Controllers
     {
         private readonly Colony _colony;
 
-        public ColonyController(Colony colony)
-        {
-            _colony = colony;
-        }
+        public ColonyController(Colony colony) 
+            => _colony = colony;
 
         [HttpPost("Execute")]
-        public Guid Execute(WorkflowParameters parameters)
-        {
-            return _colony.Execute(parameters);
-        }
+        public Guid Execute(WorkflowParameters parameters) 
+            => _colony.Execute(parameters);
 
         [HttpPost("ExecuteTask")]
-        public Guid ExecuteTask(string name, string queue, TaskParameters task)
-        {
-            return _colony.ExecuteTask(name, queue, task);
-        }
+        public Guid ExecuteTask(string name, string queue, TaskParameters task) 
+            => _colony.ExecuteTask(name, queue, task);
 
         [HttpPost("Cancel")]
-        public void Cancel(Guid id)
-        {
-            _colony.Cancel(id);
-        }
+        public bool Cancel(Guid id) 
+            => _colony.Cancel(id);
 
         [HttpPost("Recover")]
-        public void Recover(Guid id)
-        {
-            _colony.Recover(id);
-        }
+        public bool Recover(Guid id)
+            => _colony.Recover(id);
 
         [HttpPost("Delete")]
-        public void Delete(Guid id)
-        {
-            _colony.Delete(id);
-        }
+        public bool Delete(Guid id)
+            => _colony.Delete(id);
 
         [HttpGet("GetTasks")]
         public List<RemoteTaskDto> GetTasks() 
-        {
-            return _colony.GetTasks();
-        }
+            => _colony.GetTasks();
 
         [HttpGet("GetJobs")]
-        public List<JobDto> GetJobs() {
-            return _colony.GetJobs();
-        }
+        public List<JobDto> GetJobs() 
+            => _colony.GetJobs();
 
         [HttpGet("GetWorkflows")]
-        public List<WorkflowDto> GetWorkflows() {
-            return _colony.GetWorkflows();
-        }
+        public List<WorkflowDto> GetWorkflows() 
+            => _colony.GetWorkflows();
     }
 }

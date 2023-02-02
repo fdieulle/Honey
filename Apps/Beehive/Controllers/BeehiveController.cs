@@ -17,21 +17,15 @@ namespace Beehive.Controllers
         }
 
         [HttpGet("Bees")]
-        public IEnumerable<BeeDto> GetBees()
-        {
-            return _beehive.GetBees();
-        }
+        public List<BeeDto> GetBees() 
+            => _beehive.GetBees();
 
         [HttpPost("EnrollBee")]
-        public void EnrollBee(string address)
-        {
-            _beehive.EnrollBee(address);
-        }
+        public bool EnrollBee(string address) 
+            => _beehive.EnrollBee(address);
 
         [HttpDelete("RevokeBee")]
-        public void RevokeBee(string address)
-        {
-            _beehive.RevokeBee(address);
-        }
+        public bool RevokeBee(string address)
+            => _beehive.RevokeBee(address);
     }
 }

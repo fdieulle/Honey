@@ -55,7 +55,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _subscription = WorkflowRepository.Workflows.Subscribe(_workflows);
+        _subscription = await WorkflowRepository.Workflows.SubscribeAsync(_workflows);
 
         Timer.Updated -= OnTimerTick;
         Timer.Updated += OnTimerTick;
@@ -69,19 +69,19 @@
     private void Cancel(Guid id)
     {
         _modalState.Purpose = "cancel";
-        _modalState.Show(() => Colony.Cancel(id));
+        _modalState.Show(async () => await Colony.CancelAsync(id));
     }
 
     private void Recover(Guid id)
     {
         _modalState.Purpose = "recover";
-        _modalState.Show(() => Colony.Recover(id));
+        _modalState.Show(async () => await Colony.RecoverAsync(id));
     }
 
     private void Delete(Guid id)
     {
         _modalState.Purpose = "delete";
-        _modalState.Show(() => Colony.Delete(id));
+        _modalState.Show(async () => await Colony.DeleteAsync(id));
     }
 
     private void OnTimerTick() => InvokeAsync(StateHasChanged);

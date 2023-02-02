@@ -31,10 +31,8 @@ namespace Application.Honey
             _timer.Updated += Refresh;
         }
 
-        public List<WorkflowViewModel> GetWorkflows()
-        {
-            return _workflows.Values.ToList();
-        }
+        public List<WorkflowViewModel> GetWorkflows() 
+            => _workflows.Values.ToList();
 
         public WorkflowViewModel GetWorkflow(Guid id)
             => _workflows.TryGetValue(id, out var workflow) ? workflow : null;
@@ -43,23 +41,11 @@ namespace Application.Honey
             => _wfTojobs.TryGetValue(id, out var jobId) && _jobs.TryGetValue(jobId, out var job)
                 ? job : JobViewModel.Empty;
 
-        //private List<WorkflowDto> _mockW;
-        //private List<JobDto> _mockJ;
-        //private List<RemoteTaskDto> _mockT;
         public void Refresh()
         {
             var workflows = _colony.GetWorkflows();
             var jobs = _colony.GetJobs();
             var tasks = _colony.GetTasks();
-
-            //if (_mockW == null)
-            //    (_mockW, _mockJ, _mockT) = CreateWorkflows();
-            //else
-            //{
-            //    foreach (var t in _mockT)
-            //        t.BeeState.ProgressPercent = Math.Min(1, t.BeeState.ProgressPercent + 0.1);
-            //}
-            //(workflows, jobs, tasks) = (_mockW, _mockJ, _mockT);
 
             _tasks.Reload(tasks);
             _jobs.Reload(jobs);
@@ -85,146 +71,6 @@ namespace Application.Honey
                         vm.Update(job);
                 }
             }
-        }
-
-        private (List<WorkflowDto>, List<JobDto>, List<RemoteTaskDto>) CreateWorkflows()
-        {
-            var workflows = new List<WorkflowDto>();
-            var jobs = new List<JobDto>();
-            var tasks = new List<RemoteTaskDto>();
-
-            var (wfJobs, wfTasks) = CreateMapReduce("Workflow 1", 3);
-            workflows.Add(new WorkflowDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Workflow 1",
-                QueueName = "Queue 1",
-                RootJobId = wfJobs.Last().Id
-            });
-            jobs.AddRange(wfJobs);
-            tasks.AddRange(wfTasks);
-
-            (wfJobs, wfTasks) = CreateMapReduce("Workflow 2", 3);
-            workflows.Add(new WorkflowDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Workflow 2",
-                QueueName = "Queue 1",
-                RootJobId = wfJobs.Last().Id
-            });
-            jobs.AddRange(wfJobs);
-            tasks.AddRange(wfTasks);
-
-            (wfJobs, wfTasks) = CreateMapReduce("Workflow 3", 3);
-            workflows.Add(new WorkflowDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Workflow 3",
-                QueueName = "Queue 1",
-                RootJobId = wfJobs.Last().Id
-            });
-            wfJobs.Last().Status = JobStatus.Cancel;
-            jobs.AddRange(wfJobs);
-
-            tasks.AddRange(wfTasks); (wfJobs, wfTasks) = CreateMapReduce("Workflow 4", 3);
-            workflows.Add(new WorkflowDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Workflow 4",
-                QueueName = "Queue 1",
-                RootJobId = wfJobs.Last().Id
-            });
-            wfJobs.Last().Status = JobStatus.Deleted;
-            jobs.AddRange(wfJobs);
-            tasks.AddRange(wfTasks);
-
-            (wfJobs, wfTasks) = CreateMapReduce("Workflow 5", 3);
-            workflows.Add(new WorkflowDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Workflow 5",
-                QueueName = "Queue 1",
-                RootJobId = wfJobs.Last().Id
-            });
-            wfJobs.Last().Status = JobStatus.Completed;
-            jobs.AddRange(wfJobs);
-            tasks.AddRange(wfTasks);
-
-            return (workflows, jobs, tasks);
-        }
-
-        private (List<JobDto>, List<RemoteTaskDto>) CreateMapReduce(string name, int nbParallels)
-        {
-            var jobs = new List<JobDto>();
-            var tasks = new List<RemoteTaskDto>();
-
-            for (var i = 0; i < nbParallels; i++)
-            {
-                var (job, task) = CreateTask($"Map {i + 1}", "python");
-                jobs.Add(job);
-                tasks.Add(task);
-            }
-
-            var mapperJob = new ManyJobsDto
-            {
-                Id = Guid.NewGuid(),
-                Name = $"Map",
-                Behavior = JobsBehavior.Parallel,
-                JobIds = jobs.Select(p => p.Id).ToArray(),
-                Status = JobStatus.Running,
-            };
-            jobs.Add(mapperJob);
-
-            var (reducerJob, reducerTask) = CreateTask("Reduce", "python");
-            reducerJob.Status = JobStatus.Pending;
-            reducerTask.Status = RemoteTaskStatus.Pending;
-            reducerTask.BeeState.StartTime = default;
-            reducerTask.BeeState.ProgressPercent = 0;
-            jobs.Add(reducerJob);
-            tasks.Add(reducerTask);
-
-            jobs.Add(new ManyJobsDto
-            {
-                Id = Guid.NewGuid(),
-                Name = name,
-                Behavior = JobsBehavior.Sequential,
-                JobIds = new[] { mapperJob.Id, reducerJob.Id },
-                Status = JobStatus.Running,
-            });
-
-            return (jobs, tasks);
-        }
-
-        private (SingleTaskJobDto, RemoteTaskDto) CreateTask(string name, string command)
-        {
-            var parameters = new TaskParameters
-            {
-                Command = command,
-                NbCores = 1
-            };
-            var task = new RemoteTaskDto
-            {
-                Id = Guid.NewGuid(),
-                Name = name,
-                BeeAddress = "Bee 1",
-                Status = RemoteTaskStatus.Running,
-                BeeState = new TaskDto
-                {
-                    StartTime = DateTime.Now,
-                    ProgressPercent = 0.2,
-                    Status = TaskStatus.Running
-                },
-                QueueName = "Queue 1"
-            };
-            var job = new SingleTaskJobDto
-            {
-                Id = Guid.NewGuid(),
-                Name = name,
-                Parameters = parameters,
-                Status = JobStatus.Running,
-                TaskId = task.Id
-            };
-            return (job, task);
         }
 
         public void Dispose()

@@ -234,14 +234,13 @@
         Diagram.RegisterModelComponent<JobNodeModel, JobNodeComponent>();
     }
 
-    protected override Task OnParametersSetAsync()
+    protected async override Task OnParametersSetAsync()
     {
         _workflow = WorkflowRepository.GetWorkflow(Id);
         if (_workflow == null)
             // Todo: Redicrect to Not found
             ;
         _jobs[0] = WorkflowRepository.GetWorkflowJobs(Id);
-
 
         Diagram.Batch(() => Diagram.BuildGraph(_jobs[0]));
 
@@ -251,27 +250,27 @@
         Timer.Updated -= OnTimerTick;
         Timer.Updated += OnTimerTick;
 
-        return base.OnParametersSetAsync();
+        await base.OnParametersSetAsync();
     }
 
     private void Cancel()
     {
         _modalState.Purpose = "cancel";
-        _modalState.Show(() => Colony.Cancel(Id));
+        _modalState.Show(async () => await Colony.CancelAsync(Id));
     }
 
     private void Recover()
     {
         _modalState.Purpose = "recover";
-        _modalState.Show(() => Colony.Recover(Id));
+        _modalState.Show(async () => await Colony.RecoverAsync(Id));
     }
 
     private void Delete()
     {
         _modalState.Purpose = "delete";
-        _modalState.Show(() =>
+        _modalState.Show(async () =>
         {
-            Colony.Delete(Id);
+            await Colony.DeleteAsync(Id);
             Navigation.NavigateTo("workflows");
         });
     }

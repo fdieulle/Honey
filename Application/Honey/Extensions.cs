@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Application.Honey;
 using Application.Beehive.Workflows;
+using System.Threading.Tasks;
 
 namespace Application.Honey
 {
@@ -177,6 +178,19 @@ namespace Application.Honey
 
         private static DateTime Min(DateTime x, DateTime y) => x < y ? x : y;
         private static TimeSpan Max(TimeSpan x, TimeSpan y) => x > y ? x : y;
+
+        #endregion
+
+        #region Async
+        
+        public static async Task<IDisposable> SubscribeAsync<TValue>(this IRepository<TValue> respository, IList<TValue> view)
+            => await Task.FromResult(respository.Subscribe(view));
+
+        public static async Task<List<WorkflowViewModel>> GetWorkflowsAsync(this WorkflowRepository repository)
+            => await Task.FromResult(repository.GetWorkflows());
+
+        public static async Task<WorkflowViewModel> GetWorkflowAsync(this WorkflowRepository repository, Guid id)
+            => await Task.FromResult(repository.GetWorkflow(id));
 
         #endregion
     }

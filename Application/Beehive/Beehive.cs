@@ -32,7 +32,7 @@ namespace Application.Beehive
                 EnrollBee(bee.Address, false);
         }
 
-        public IEnumerable<BeeDto> GetBees()
+        public List<BeeDto> GetBees()
         {
             lock (_bees)
             {
@@ -40,35 +40,38 @@ namespace Application.Beehive
             }
         }
 
-        public void EnrollBee(string address)
+        public bool EnrollBee(string address)
         {
             lock (_bees)
             {
-                EnrollBee(address, true);
+                return EnrollBee(address, true);
             }
         }
 
-        private void EnrollBee(string address, bool withDb)
+        private bool EnrollBee(string address, bool withDb)
         {
             if (_bees.ContainsKey(address))
-                return;
+                return false;
 
             var bee = new Bee(address, _factory.Create(address));
             _bees.Add(address, bee);
 
             if (withDb)
                 _database.CreateBee(bee.Dto);
+
+            return true;
         }
 
-        public void RevokeBee(string address)
+        public bool RevokeBee(string address)
         {
             lock (_bees)
             {
                 if (!_bees.TryGetValue(address, out var bee))
-                    return;
+                    return false;
 
                 _bees.Remove(address);
                 _database.DeleteBee(address);
+                return true;
             }
         }
 

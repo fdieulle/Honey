@@ -78,7 +78,7 @@
     protected override async Task OnInitializedAsync()
     {
         Timer.Updated += Updated;
-        _bees = Beehive.GetBees().ToList();
+        _bees = await Beehive.GetBeesAsync();
     }
 
     private void Updated()
@@ -86,12 +86,17 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void Enroll(EditContext editContext)
+    private async void Enroll(EditContext editContext)
     {
-        Beehive.EnrollBee(_newBee.Address);
+        if (!await Beehive.EnrollBeeAsync(_newBee.Address))
+        {
+            // Todo: Handle the error
+            return;
+        }
+
         _isVisible = false;
 
-        _bees = Beehive.GetBees().ToList();
+        _bees = await Beehive.GetBeesAsync();
         StateHasChanged();
     }
 
@@ -105,11 +110,11 @@
         _isVisible = false;
     }
 
-    private void Revoke(string name)
+    private async void Revoke(string name)
     {
-        Beehive.RevokeBee(name);
+        await Beehive.RevokeBeeAsync(name);
 
-        _bees = Beehive.GetBees().ToList();
+        _bees = await Beehive.GetBeesAsync();
         StateHasChanged();
     }
 

@@ -6,7 +6,7 @@ namespace Application.Honey
 {
     public interface IRepository<TValue>
     {
-        IDisposable Subscribe(IList<TValue> list);
+        IDisposable Subscribe(IList<TValue> view);
     }
 
     public class Repository<TKey, TValue> : Repository<TKey, TValue, TValue>
@@ -69,13 +69,13 @@ namespace Application.Honey
                 disposable.Dispose();
         }
 
-        public IDisposable Subscribe(IList<TValue> list)
+        public IDisposable Subscribe(IList<TValue> view)
         {
-            var view = new RepositoryView<TKey, TValue>(list);
-            _views.Add(view.Id, view);
+            var rv = new RepositoryView<TKey, TValue>(view);
+            _views.Add(rv.Id, rv);
             foreach (var pair in this)
-                view.Add(pair.Key, pair.Value);
-            return new Disposable(() => _views.Remove(view.Id));
+                rv.Add(pair.Key, pair.Value);
+            return new Disposable(() => _views.Remove(rv.Id));
         }
     }
 

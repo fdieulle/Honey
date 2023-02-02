@@ -4,6 +4,7 @@ using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Application.Beehive
 {
@@ -51,28 +52,34 @@ namespace Application.Beehive
         public Guid ExecuteTask(string name, string queueName, TaskParameters task) 
             => Execute(new WorkflowParameters { Name = name, QueueName = queueName, RootJob = new SingleTaskJobParameters { Name = name, Task = task } });
 
-        public void Cancel(Guid id)
+        public bool Cancel(Guid id)
         {
             if (!_workflows.TryGetValue(id, out var workflow))
-                return;
+                return false;
 
             workflow.Cancel();
+
+            return true;
         }
 
-        public void Recover(Guid id)
+        public bool Recover(Guid id)
         {
             if (!_workflows.TryGetValue(id, out var workflow))
-                return;
+                return false;
 
             workflow.Recover();
+
+            return true;
         }
 
-        public void Delete(Guid id)
+        public bool Delete(Guid id)
         {
             if (!_workflows.TryGetValue(id, out var workflow))
-                return;
+                return false;
 
             workflow.Delete();
+
+            return true;
         }
 
         private IJobFactory GetJobFactory(string queueName)

@@ -96,7 +96,7 @@
 
     protected async override Task OnInitializedAsync()
     {
-        _bees.AddRange(Beehive.GetBees());
+        _bees = await Beehive.GetBeesAsync();
         _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
     }
 
@@ -134,24 +134,20 @@
 
     private async Task OnRowExpand(RowData<QueueVM> rowData)
     {
-        var allBees = Beehive.GetBees().ToDictionary(p => p.Address, p => p);
-        var names = new List<string>(rowData.Data.Bees ?? Enumerable.Empty<string>());
-        if (names.Count == 0)
-        {
-            rowData.Data.BeesVM = allBees.Values.ToList();
-        }
-        else
-        {
-            var bees = new List<BeeDto>();
-            foreach (var name in names)
-            {
-                if (allBees.TryGetValue(name, out var bee))
-                    bees.Add(bee);
-            }
+        var bees = await Beehive.GetBeesAsync() ?? new List<BeeDto>();
 
-            rowData.Data.BeesVM = bees;
+        var addresses = rowData.Data.Bees ?? Enumerable.Empty<string>();
+        if (addresses.Any())
+        {
+            var map = bees.ToDictionary(p => p.Address, p => p);
+            bees.Clear();
+            bees.AddRange(addresses
+                .Where(p => map.ContainsKey(p))
+                .Select(p => map[p])
+            );
         }
 
+        rowData.Data.BeesVM = bees;
         StateHasChanged();
     }
 
