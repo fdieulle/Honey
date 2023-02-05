@@ -5,7 +5,7 @@
 @using Application
 @using Application.Beehive
 
-@inject Beehive Beehive
+@inject BeeKeeper BeeKeeper
 @inject ITimer Timer
 
 <h3>Bees</h3>
@@ -77,7 +77,7 @@
     protected override async Task OnInitializedAsync()
     {
         Timer.Updated += Updated;
-        _bees = await Beehive.GetBeesAsync();
+        _bees = await BeeKeeper.GetBeesAsync();
     }
 
     private void Updated()
@@ -87,7 +87,7 @@
 
     private async void Enroll(EditContext editContext)
     {
-        if (!await Beehive.EnrollBeeAsync(_newBee.Address))
+        if (!await BeeKeeper.EnrollBeeAsync(_newBee.Address))
         {
             // Todo: Handle the error
             return;
@@ -95,7 +95,7 @@
 
         _isVisible = false;
 
-        _bees = await Beehive.GetBeesAsync();
+        _bees = await BeeKeeper.GetBeesAsync();
         StateHasChanged();
     }
 
@@ -111,9 +111,9 @@
 
     private async void Revoke(string name)
     {
-        await Beehive.RevokeBeeAsync(name);
+        await BeeKeeper.RevokeBeeAsync(name);
 
-        _bees = await Beehive.GetBeesAsync();
+        _bees = await BeeKeeper.GetBeesAsync();
         StateHasChanged();
     }
 

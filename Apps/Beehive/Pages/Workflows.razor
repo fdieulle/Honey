@@ -10,7 +10,7 @@
 @using Domain.ViewModels;
 @using Application.Honey;
 
-@inject Colony Colony
+@inject Beehive Beehive
 @inject WorkflowRepository WorkflowRepository
 @inject NavigationManager Navigation
 @inject ITimer Timer
@@ -69,19 +69,19 @@
     private void Cancel(Guid id)
     {
         _modalState.Purpose = "cancel";
-        _modalState.Show(async () => await Colony.CancelAsync(id));
+        _modalState.Show(async () => await Beehive.CancelAsync(id));
     }
 
     private void Recover(Guid id)
     {
         _modalState.Purpose = "recover";
-        _modalState.Show(async () => await Colony.RecoverAsync(id));
+        _modalState.Show(async () => await Beehive.RecoverAsync(id));
     }
 
     private void Delete(Guid id)
     {
         _modalState.Purpose = "delete";
-        _modalState.Show(async () => await Colony.DeleteAsync(id));
+        _modalState.Show(async () => await Beehive.DeleteAsync(id));
     }
 
     private void OnTimerTick() => InvokeAsync(StateHasChanged);

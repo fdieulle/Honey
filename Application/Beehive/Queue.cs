@@ -11,7 +11,7 @@ namespace Application.Beehive
         private readonly Dictionary<Guid, RemoteTaskDto> _runningTasks = new Dictionary<Guid, RemoteTaskDto>();
         private readonly Dictionary<Guid, RemoteTaskDto> _tasks = new Dictionary<Guid, RemoteTaskDto>();
         private readonly object _lock = new object();
-        private readonly Beehive _beehive;
+        private readonly BeeKeeper _beeKeeper;
         private readonly IBeehiveDb _database;
         private readonly TaskTracker _tracker;
         private int _maxParallelTasks;
@@ -23,9 +23,9 @@ namespace Application.Beehive
 
         public QueueDto Dto { get; } = new QueueDto();
 
-        public Queue(QueueDto dto, Beehive beehive, IBeehiveDb database, TaskTracker tracker)
+        public Queue(QueueDto dto, BeeKeeper beeKeeper, IBeehiveDb database, TaskTracker tracker)
         {
-            _beehive = beehive;
+            _beeKeeper = beeKeeper;
             _database = database;
             _tracker = tracker;
             Dto.Name = dto.Name;
@@ -103,7 +103,7 @@ namespace Application.Beehive
 
             var bees = new HashSet<string>(_bees);
             Bee bee;
-            while ((bee = _beehive.GetNextBee(bees)) != null)
+            while ((bee = _beeKeeper.GetNextBee(bees)) != null)
             {
                 var beeId = bee.StartTask(task);
                 // If a task has been launched we record it
@@ -163,7 +163,7 @@ namespace Application.Beehive
                 // Try cancel running task
                 if (_runningTasks.TryGetValue(id, out var task))
                 {
-                    var bee = _beehive.GetBee(task.BeeAddress);
+                    var bee = _beeKeeper.GetBee(task.BeeAddress);
                     if (bee != null)
                     {
                         if (task.BeeState == null)
@@ -275,7 +275,7 @@ namespace Application.Beehive
             if (string.IsNullOrEmpty(task.BeeAddress)) // Skip pending tasks
                 return false;
 
-            bee = _beehive.GetBee(task.BeeAddress);
+            bee = _beeKeeper.GetBee(task.BeeAddress);
             if (bee == null) return false; // TODO: Should we consider a state after a long run without bee up like a timeout and allow delete the task ?
 
             if (task.BeeState == null)
@@ -302,7 +302,7 @@ namespace Application.Beehive
                 // Delete the task from the Bee
                 if (!string.IsNullOrEmpty(task.BeeAddress))
                 {
-                    var bee = _beehive.GetBee(task.BeeAddress);
+                    var bee = _beeKeeper.GetBee(task.BeeAddress);
                     if (bee == null || task.BeeState == null)
                         return false; // Todo: Should mark as deleted for a deletion later or enforce the delete if no Bee can remind it existency
 

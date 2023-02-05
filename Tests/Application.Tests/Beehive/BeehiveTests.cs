@@ -7,25 +7,25 @@ using Xunit;
 
 namespace Application.Tests.Beehive
 {
-    public class ColonyTests
+    public class BeehiveTests
     {
         [Fact]
         public void TestExecuteSimpleTask()
         {
             var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var beehive = new Application.Beehive.Beehive(container, database);
+            var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beehive, database, taskTracker);
-            var colony = new Colony(queueProvider, taskTracker, database);
+            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
 
             // Setup a bee
-            var bee = beehive.SetupBee("http://bee1:8080");
+            var bee = beeKeeper.SetupBee("http://bee1:8080");
 
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -39,19 +39,19 @@ namespace Application.Tests.Beehive
         {
             var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var beehive = new Application.Beehive.Beehive(container, database);
+            var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beehive, database, taskTracker);
-            var colony = new Colony(queueProvider, taskTracker, database);
+            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee = beehive.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -60,7 +60,7 @@ namespace Application.Tests.Beehive
                 Arg.Is(1));
             Assert.NotEqual(id, beeTaskIds[0]);
 
-            colony.Cancel(id);
+            beehive.Cancel(id);
 
             bee.Received().CancelTask(Arg.Is(beeTaskIds[0]));
         }
@@ -70,21 +70,21 @@ namespace Application.Tests.Beehive
         {
             var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var beehive = new Application.Beehive.Beehive(container, database);
+            var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beehive, database, taskTracker);
-            var colony = new Colony(queueProvider, taskTracker, database);
+            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee = beehive.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue");
 
-            var id1 = colony.ExecuteTask("name1", "queue", T("powershell", "-version"));
-            var id2 = colony.ExecuteTask("name2", "queue", T("powershell", "-version"));
-            var id3 = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id1 = beehive.ExecuteTask("name1", "queue", T("powershell", "-version"));
+            var id2 = beehive.ExecuteTask("name2", "queue", T("powershell", "-version"));
+            var id3 = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);
@@ -97,8 +97,8 @@ namespace Application.Tests.Beehive
                 Arg.Is("-version"),
                 Arg.Is(1));
 
-            colony.Cancel(id2);
-            colony.Cancel(id3);
+            beehive.Cancel(id2);
+            beehive.Cancel(id3);
 
             bee.DidNotReceive().CancelTask(Arg.Is(beeTaskIds[0]));
             bee.Received().CancelTask(Arg.Is(beeTaskIds[1]));
@@ -110,22 +110,22 @@ namespace Application.Tests.Beehive
         {
             var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var beehive = new Application.Beehive.Beehive(container, database);
+            var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beehive, database, taskTracker);
-            var colony = new Colony(queueProvider, taskTracker, database);
+            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee = beehive.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue");
 
             // Turn bee too busy
-            beehive.UpdateBeeState("http://bee1:8080", 0);
+            beeKeeper.UpdateBeeState("http://bee1:8080", 0);
 
-            var id = colony.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
 
             // The task is create into shogun but no sent to a bee yet
             Assert.NotEqual(id, Guid.Empty);
@@ -136,7 +136,7 @@ namespace Application.Tests.Beehive
                 Arg.Is(1));
 
             // Make some room on Bee to run the task
-            beehive.UpdateBeeState("http://bee1:8080", 2);
+            beeKeeper.UpdateBeeState("http://bee1:8080", 2);
 
             var queue = queueProvider.GetQueue("queue");
             queue.Refresh();
@@ -147,7 +147,7 @@ namespace Application.Tests.Beehive
                 Arg.Is(1));
 
             Assert.NotEqual(id, beeTaskIds[0]);
-            colony.Cancel(id);
+            beehive.Cancel(id);
 
             bee.Received().CancelTask(Arg.Is(beeTaskIds[0]));
         }
@@ -157,23 +157,23 @@ namespace Application.Tests.Beehive
         {
             var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
-            var beehive = new Application.Beehive.Beehive(container, database);
+            var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beehive, database, taskTracker);
-            var colony = new Colony(queueProvider, taskTracker, database);
+            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
-            var bee1 = beehive.SetupBee("http://bee1:8080", beeTaskIds);
-            var bee2 = beehive.SetupBee("http://bee2:8080", beeTaskIds);
+            var bee1 = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
+            var bee2 = beeKeeper.SetupBee("http://bee2:8080", beeTaskIds);
 
             // Create a queue
             queueProvider.CreateQueue("queue1", bees: "http://bee1:8080");
             queueProvider.CreateQueue("queue2", bees: "http://bee2:8080");
 
-            var id1 = colony.ExecuteTask("name", "queue1", T("powershell", "-version"));
-            var id2 = colony.ExecuteTask("name", "queue2", T("powershell", "-version"));
-            var id3 = colony.ExecuteTask("name", "queue1", T("powershell", "-version"));
+            var id1 = beehive.ExecuteTask("name", "queue1", T("powershell", "-version"));
+            var id2 = beehive.ExecuteTask("name", "queue2", T("powershell", "-version"));
+            var id3 = beehive.ExecuteTask("name", "queue1", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);
@@ -190,8 +190,8 @@ namespace Application.Tests.Beehive
                 Arg.Is("-version"),
                 Arg.Is(1));
 
-            colony.Cancel(id2);
-            colony.Cancel(id3);
+            beehive.Cancel(id2);
+            beehive.Cancel(id3);
 
             bee1.DidNotReceive().CancelTask(Arg.Is(beeTaskIds[0]));
             bee2.Received().CancelTask(Arg.Is(beeTaskIds[1]));
@@ -208,7 +208,7 @@ namespace Application.Tests.Beehive
 
     public static class ColonyTestsExtensions
     {
-        public static IBee SetupBee(this Application.Beehive.Beehive beehive, string address, List<Guid> beeIds = null)
+        public static IBee SetupBee(this BeeKeeper beehive, string address, List<Guid> beeIds = null)
         {
             var bee = Substitute.For<IBee>();
             beeIds ??= new List<Guid>();
@@ -239,7 +239,7 @@ namespace Application.Tests.Beehive
             return bee;
         }
 
-        public static void UpdateBeeState(this Application.Beehive.Beehive beehive, string address, int nbFreeCores)
+        public static void UpdateBeeState(this BeeKeeper beehive, string address, int nbFreeCores)
         {
             var proxy = beehive.Container.Create(address);
             proxy.GetResources().Returns(R(address, nbFreeCores));

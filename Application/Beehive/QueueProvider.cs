@@ -7,13 +7,13 @@ namespace Application.Beehive
     public class QueueProvider : IQueueProvider
     {
         private readonly Dictionary<string, Queue> _queues = new Dictionary<string, Queue>();
-        private readonly Beehive _beehive;
+        private readonly BeeKeeper _beeKeeper;
         private readonly IBeehiveDb _database;
         private readonly TaskTracker _tracker;
 
-        public QueueProvider(Beehive beehive, IBeehiveDb database, TaskTracker tracker)
+        public QueueProvider(BeeKeeper beeKeeper, IBeehiveDb database, TaskTracker tracker)
         {
-            _beehive = beehive;
+            _beeKeeper = beeKeeper;
             _database = database;
             _tracker = tracker;
             var queues = _database.FetchQueues() ?? Enumerable.Empty<QueueDto>();
@@ -41,7 +41,7 @@ namespace Application.Beehive
         {
             if (_queues.ContainsKey(dto.Name)) return false;
 
-            _queues.Add(dto.Name, new Queue(dto, _beehive, _database, _tracker));
+            _queues.Add(dto.Name, new Queue(dto, _beeKeeper, _database, _tracker));
             if (withDb)
                 _database.CreateQueue(dto);
             return true;

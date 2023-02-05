@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Application.Beehive;
 using Domain.Dtos;
 using Domain.Dtos.Workflows;
 
 namespace Application
 {
-    public interface IBeehive
+    public interface IBeeKeeper
     {
         List<BeeDto> GetBees();
         
@@ -27,7 +26,7 @@ namespace Application
         bool DeleteQueue(string name);
     }
 
-    public interface IColony
+    public interface IBeehive
     {
         Guid Execute(WorkflowParameters parameters);
 
@@ -48,42 +47,42 @@ namespace Application
     {
         #region Async for IColony
 
-        public async static ValueTask<Guid> ExecuteAsync(this IColony colony, WorkflowParameters parameters) 
-            => await ValueTask.FromResult(colony.Execute(parameters));
+        public async static ValueTask<Guid> ExecuteAsync(this IBeehive beehive, WorkflowParameters parameters) 
+            => await ValueTask.FromResult(beehive.Execute(parameters));
 
-        public async static ValueTask<Guid> ExecuteTaskAsync(this IColony colony, string queue, string name, TaskParameters task)
-            => await ValueTask.FromResult(colony.ExecuteTask(queue, name, task));
+        public async static ValueTask<Guid> ExecuteTaskAsync(this IBeehive beehive, string queue, string name, TaskParameters task)
+            => await ValueTask.FromResult(beehive.ExecuteTask(queue, name, task));
 
-        public async static ValueTask<bool> CancelAsync(this IColony colony, Guid id)
-            => await ValueTask.FromResult(colony.Cancel(id));
+        public async static ValueTask<bool> CancelAsync(this IBeehive beehive, Guid id)
+            => await ValueTask.FromResult(beehive.Cancel(id));
 
-        public async static ValueTask<bool> RecoverAsync(this IColony colony, Guid id)
-            => await ValueTask.FromResult(colony.Recover(id));
+        public async static ValueTask<bool> RecoverAsync(this IBeehive beehive, Guid id)
+            => await ValueTask.FromResult(beehive.Recover(id));
 
-        public async static ValueTask<bool> DeleteAsync(this IColony colony, Guid id)
-            => await ValueTask.FromResult(colony.Delete(id));
+        public async static ValueTask<bool> DeleteAsync(this IBeehive beehive, Guid id)
+            => await ValueTask.FromResult(beehive.Delete(id));
 
-        public async static Task<List<RemoteTaskDto>> GetTasksAsync(this IColony colony)
-            => await ValueTask.FromResult(colony.GetTasks());
+        public async static Task<List<RemoteTaskDto>> GetTasksAsync(this IBeehive beehive)
+            => await ValueTask.FromResult(beehive.GetTasks());
 
-        public async static Task<List<JobDto>> GetJobsAsync(this IColony colony)
-            => await ValueTask.FromResult(colony.GetJobs());
+        public async static Task<List<JobDto>> GetJobsAsync(this IBeehive beehive)
+            => await ValueTask.FromResult(beehive.GetJobs());
 
-        public async static Task<List<WorkflowDto>> GetWorkflowsAsync(this IColony colony)
-            => await ValueTask.FromResult(colony.GetWorkflows());
+        public async static Task<List<WorkflowDto>> GetWorkflowsAsync(this IBeehive beehive)
+            => await ValueTask.FromResult(beehive.GetWorkflows());
 
         #endregion
 
         #region Async for IBeehive
 
-        public async static Task<List<BeeDto>> GetBeesAsync(this IBeehive beehive)
-            => await Task.FromResult(beehive.GetBees());
+        public async static Task<List<BeeDto>> GetBeesAsync(this IBeeKeeper beeKeeper)
+            => await Task.FromResult(beeKeeper.GetBees());
 
-        public async static ValueTask<bool> EnrollBeeAsync(this IBeehive beehive, string address)
-            => await Task.FromResult(beehive.EnrollBee(address));
+        public async static ValueTask<bool> EnrollBeeAsync(this IBeeKeeper beeKeeper, string address)
+            => await Task.FromResult(beeKeeper.EnrollBee(address));
 
-        public async static ValueTask<bool> RevokeBeeAsync(this IBeehive beehive, string address)
-            => await Task.FromResult(beehive.RevokeBee(address));
+        public async static ValueTask<bool> RevokeBeeAsync(this IBeeKeeper beeKeeper, string address)
+            => await Task.FromResult(beeKeeper.RevokeBee(address));
 
         #endregion
     }

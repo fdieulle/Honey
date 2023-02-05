@@ -13,7 +13,7 @@
 @using Application.Honey;
 
 @inject WorkflowRepository WorkflowRepository
-@inject Colony Colony
+@inject Beehive Beehive
 @inject NavigationManager Navigation
 @inject ITimer Timer
 
@@ -256,13 +256,13 @@
     private void Cancel()
     {
         _modalState.Purpose = "cancel";
-        _modalState.Show(async () => await Colony.CancelAsync(Id));
+        _modalState.Show(async () => await Beehive.CancelAsync(Id));
     }
 
     private void Recover()
     {
         _modalState.Purpose = "recover";
-        _modalState.Show(async () => await Colony.RecoverAsync(Id));
+        _modalState.Show(async () => await Beehive.RecoverAsync(Id));
     }
 
     private void Delete()
@@ -270,7 +270,7 @@
         _modalState.Purpose = "delete";
         _modalState.Show(async () =>
         {
-            await Colony.DeleteAsync(Id);
+            await Beehive.DeleteAsync(Id);
             Navigation.NavigateTo("workflows");
         });
     }

@@ -1,6 +1,4 @@
 ﻿using Application.Beehive;
-using Application.Bee;
-using Domain;
 using Domain.Dtos;
 using NSubstitute;
 using System;
@@ -15,22 +13,22 @@ namespace Application.Tests.Beehive
         private readonly IBeeFactory _factory;
         private readonly BeehiveDbLogs _db;
         private readonly TaskTracker _tracker;
-        private readonly Application.Beehive.Beehive _beehive;
+        private readonly BeeKeeper _beeKeeper;
         private readonly Queue _queue;
 
         public QueueTests()
         {
             _factory = Substitute.For<IBeeFactory>();
             _db = new BeehiveDbLogs();
-            _beehive = new Application.Beehive.Beehive(_factory, _db);
+            _beeKeeper = new BeeKeeper(_factory, _db);
             _tracker = new TaskTracker();
 
-            _queue = new Queue(QueueDto("Queue 1"), _beehive, _db, _tracker);
+            _queue = new Queue(QueueDto("Queue 1"), _beeKeeper, _db, _tracker);
         }
 
         private void Refresh()
         {
-            _beehive.Refresh();
+            _beeKeeper.Refresh();
             _queue.Refresh();
             _tracker.Refresh();
         }
@@ -39,7 +37,7 @@ namespace Application.Tests.Beehive
         public void StartAndRunTask()
         {
             var bee = _factory.Setup("Bee 1");
-            _beehive.EnrollBee("Bee 1");
+            _beeKeeper.EnrollBee("Bee 1");
 
             Refresh();
 
@@ -78,7 +76,7 @@ namespace Application.Tests.Beehive
         public void StartAndRunMultipleTasksOn1Bee()
         {
             var bee = _factory.Setup("Bee 1");
-            _beehive.EnrollBee("Bee 1");
+            _beeKeeper.EnrollBee("Bee 1");
 
             Refresh();
 
@@ -133,8 +131,8 @@ namespace Application.Tests.Beehive
         {
             var bee1 = _factory.Setup("Bee 1");
             var bee2 = _factory.Setup("Bee 2");
-            _beehive.EnrollBee("Bee 1");
-            _beehive.EnrollBee("Bee 2");
+            _beeKeeper.EnrollBee("Bee 1");
+            _beeKeeper.EnrollBee("Bee 2");
 
             Refresh();
 
@@ -195,7 +193,7 @@ namespace Application.Tests.Beehive
         public void StartButHangTaskBecauseNoAvailableBee()
         {
             var bee = _factory.Setup("Bee 1");
-            _beehive.EnrollBee("Bee 1");
+            _beeKeeper.EnrollBee("Bee 1");
             Refresh();
 
             var taskId = Guid.NewGuid();
@@ -244,7 +242,7 @@ namespace Application.Tests.Beehive
         public void StartButHangTaskAndCancelWhenHanging()
         {
             var bee = _factory.Setup("Bee 1");
-            _beehive.EnrollBee("Bee 1");
+            _beeKeeper.EnrollBee("Bee 1");
             Refresh();
 
             bee.SetupStartTask("cmd 1", Guid.NewGuid());
@@ -332,7 +330,7 @@ namespace Application.Tests.Beehive
                 TaskDto(task12Id, TaskStatus.Running),
                 TaskDto(task11Id, TaskStatus.Done));
 
-            var beehive = new Application.Beehive.Beehive(_factory, _db);
+            var beehive = new Application.Beehive.BeeKeeper(_factory, _db);
             var queue = new Queue(QueueDto("Queue 2"), beehive, _db, _tracker);
 
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());

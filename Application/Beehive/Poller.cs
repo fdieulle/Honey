@@ -5,14 +5,14 @@ namespace Application.Beehive
     public class Poller : IDisposable
     {
         private readonly ITimer _timer;
-        private readonly Beehive _beehive;
+        private readonly BeeKeeper _beeKeeper;
         private readonly QueueProvider _queues;
         private readonly TaskTracker _tasksTracker;
 
-        public Poller(ITimer timer, Beehive beehive, QueueProvider queues, TaskTracker tasksTracker)
+        public Poller(ITimer timer, BeeKeeper beeKeeper, QueueProvider queues, TaskTracker tasksTracker)
         {
             _timer = timer;
-            _beehive = beehive;
+            _beeKeeper = beeKeeper;
             _queues = queues;
             _tasksTracker = tasksTracker;
         }
@@ -20,7 +20,7 @@ namespace Application.Beehive
 
         private void Refresh()
         {
-            _beehive.Refresh();
+            _beeKeeper.Refresh();
             _queues.Refresh();
             _tasksTracker.Refresh();
         }

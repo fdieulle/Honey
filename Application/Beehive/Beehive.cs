@@ -1,4 +1,7 @@
-﻿using Domain.Dtos;
+﻿using Application.Beehive.Workflows;
+using Domain.Dtos;
+using Domain.Dtos.Workflows;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,108 +9,132 @@ namespace Application.Beehive
 {
     public class Beehive : IBeehive
     {
-        private static readonly Comparer<BeeDto> heuristic = Comparer<BeeDto>.Create((x, y) =>
+        private readonly QueueProvider _queueProvider;
+        private readonly ITaskTracker _taskTracker;
+        private readonly IBeehiveDb _db;
+        private readonly Dictionary<string, IJobFactory> _factories = new Dictionary<string, IJobFactory>();
+        private readonly Dictionary<Guid, Workflow> _workflows = new Dictionary<Guid, Workflow>();
+
+        public Beehive(QueueProvider queueProvider, ITaskTracker taskTracker, IBeehiveDb db)
         {
-            var compare = x.PercentFreeCores.CompareTo(y.PercentFreeCores);
-            if (compare != 0) return compare;
+            _queueProvider = queueProvider;
+            _taskTracker = taskTracker;
+            _db = db;
 
-            return x.PercentFreeMemory.CompareTo(y.PercentFreeMemory);
-        });
-
-        private readonly IBeeFactory _factory;
-        private readonly IBeehiveDb _database;
-        private Dictionary<string, Bee> _bees = new Dictionary<string, Bee>();
-
-        public IBeeFactory Container => _factory;
-
-        public IEnumerable<Bee> Bees => _bees.Values;
-
-        public Beehive(IBeeFactory factory, IBeehiveDb database)
-        {
-            _factory = factory;
-            _database = database;
-
-            var bees = _database.FetchBees() ?? Enumerable.Empty<BeeDto>();
-            foreach (var bee in bees)
-                EnrollBee(bee.Address, false);
-        }
-
-        public List<BeeDto> GetBees()
-        {
-            lock (_bees)
+            foreach (var entity in _db.FetchWorkflows())
             {
-                return _bees.Values.Select(p => p.Dto).ToList();
+                var workflow = new Workflow(entity, GetJobFactory(entity.QueueName), db);
+                _workflows[entity.Id] = workflow;
+                workflow.Deleted += OnWorkflowDeleted;
             }
         }
 
-        public bool EnrollBee(string address)
+        public Guid Execute(WorkflowParameters parameters)
         {
-            lock (_bees)
+            var factory = GetJobFactory(parameters.QueueName);
+            var workflow = new Workflow(parameters, factory, _db);
+            workflow.Deleted += OnWorkflowDeleted;
+
+            lock (_workflows)
             {
-                return EnrollBee(address, true);
+                _workflows.Add(workflow.Id, workflow);
+
+                workflow.Start();
+            }
+
+            return workflow.Id;
+        }
+
+        private void OnWorkflowDeleted(Workflow workflow)
+        {
+            workflow.Deleted -= OnWorkflowDeleted;
+            lock (_workflows)
+            {
+                _workflows.Remove(workflow.Id);
             }
         }
 
-        private bool EnrollBee(string address, bool withDb)
+        public Guid ExecuteTask(string name, string queueName, TaskParameters task) 
+            => Execute(new WorkflowParameters { Name = name, QueueName = queueName, RootJob = new SingleTaskJobParameters { Name = name, Task = task } });
+
+        public bool Cancel(Guid id)
         {
-            if (_bees.ContainsKey(address))
-                return false;
-
-            var bee = new Bee(address, _factory.Create(address));
-            _bees.Add(address, bee);
-
-            if (withDb)
-                _database.CreateBee(bee.Dto);
-
-            return true;
-        }
-
-        public bool RevokeBee(string address)
-        {
-            lock (_bees)
+            lock (_workflows)
             {
-                if (!_bees.TryGetValue(address, out var bee))
+                if (!_workflows.TryGetValue(id, out var workflow))
                     return false;
 
-                _bees.Remove(address);
-                _database.DeleteBee(address);
+                workflow.Cancel();
                 return true;
             }
         }
 
-        public void Refresh()
+        public bool Recover(Guid id)
         {
-            List<Bee> bees;
-            lock (_bees)
+            lock (_workflows)
             {
-                bees = _bees.Values.ToList();
-            }
-            
-            foreach (var bee in bees)
-                bee.Refresh();
-        }
+                if (!_workflows.TryGetValue(id, out var workflow))
+                    return false;
 
-        public Bee GetNextBee(HashSet<string> bees = null)
-        {
-            lock (_bees)
-            {
-                var selectedBees = _bees.Values.Where(p => p.Dto.IsUp);
-                if (bees != null && bees.Count > 0)
-                    selectedBees = selectedBees.Where(p => bees.Contains(p.Address));
+                workflow.Recover();
 
-                return selectedBees
-                    .OrderByDescending(p => p.Dto, heuristic)
-                    .Where(p => p.Dto.PercentFreeCores > 0)
-                    .FirstOrDefault();
+                return true;
             }
         }
 
-        public Bee GetBee(string address)
+        public bool Delete(Guid id)
         {
-            lock (_bees)
+            lock (_workflows)
             {
-                return _bees.TryGetValue(address, out var bee) ? bee : null;
+                if (!_workflows.TryGetValue(id, out var workflow))
+                    return false;
+
+                workflow.Delete();
+
+                return true;
             }
         }
-    }
+
+        private IJobFactory GetJobFactory(string queueName)
+        {
+            lock (_factories)
+            {
+                if (!_factories.TryGetValue(queueName, out var factory))
+                {
+                    var queue = _queueProvider.GetQueue(queueName);
+                    _factories.Add(queueName, factory = new JobFactory(queue, _taskTracker, _db));
+                }
+
+                return factory;
+            }
+        }
+
+        public List<RemoteTaskDto> GetTasks()
+        {
+            return _queueProvider.GetQueues()
+                .Select(p => _queueProvider.GetQueue(p.Name))
+                .Where(q => q != null)
+                .SelectMany(p => p.GetAllTasks())
+                .ToList();
+        }
+
+        public List<JobDto> GetJobs()
+        {
+            lock(_workflows)
+            {
+                return _workflows.Values
+                    .SelectMany(p => p.GetJobs())
+                    .ToList();
+            }
+        }
+
+        public List<WorkflowDto> GetWorkflows()
+        {
+            lock (_workflows)
+            {
+                return _workflows.Values
+                    .Select(p => p.Dto).ToList();
+            }
+        }
+    } 
 }

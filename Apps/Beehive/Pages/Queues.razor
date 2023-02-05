@@ -7,7 +7,7 @@
 @using Domain.Dtos
 
 @inject QueueProvider QueueProvider
-@inject Beehive Beehive
+@inject BeeKeeper BeeKeeper
 
 <h3>Queues</h3>
 
@@ -96,7 +96,7 @@
 
     protected async override Task OnInitializedAsync()
     {
-        _bees = await Beehive.GetBeesAsync();
+        _bees = await BeeKeeper.GetBeesAsync();
         _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
     }
 
@@ -134,7 +134,7 @@
 
     private async Task OnRowExpand(RowData<QueueVM> rowData)
     {
-        var bees = await Beehive.GetBeesAsync() ?? new List<BeeDto>();
+        var bees = await BeeKeeper.GetBeesAsync() ?? new List<BeeDto>();
 
         var addresses = rowData.Data.Bees ?? Enumerable.Empty<string>();
         if (addresses.Any())
