@@ -10,12 +10,12 @@ Honey provides a web API to the end user as well as a web application
 on which you can follow and monitor workflow progresses and 
 the state of your distributed platform.
 
-Honey is a multi-users platform. To segregate the platform resources 
-between users, each workflow is attached to a Bees Colony.
+oney is a multi-users platform. To segregate the platform resources 
+between users, each workflow is attached to a Colony.
 
 ## Beehive
 
-Beehive hosts Bees, Colonies and manage their workflows.
+Beehive hosts Colonies of Bees and manage their workflows.
 
 ### Colony
 
@@ -29,7 +29,7 @@ A workflow cannot be executed on a Bee which is not part of that Colony.
 
 ### Workflow
 
-A workflow combines multiple jobs. It exists couple of different job 
+A workflow combines multiple jobs. It exists different job 
 types. The simpliest type is a task. Then to glue tasks together there 
 is parallel and sequence jobs.
 
@@ -37,28 +37,28 @@ You can take the following actions on a workflow:
 
 * **Execute**: Start a workflow execution.
 * **Cancel**: Cancel a workflow and all dependend tasks.
-* **Recover**: Recover a workflow after it has been cancel or fall in 
+* **Recover**: Recover a workflow after it has been cancel or feld in 
 error. The recover won't re-run completed jobs but only the non completed.
-* **Delete**: Delete a workflow remove all jobs fro, the history and 
+* **Delete**: Delete a workflow and jobs from the history and delete 
 stored data from the disk all over Bees
 
 #### Simple task job
 
-Simlpe task job run a task, aka process. The job takes for parmaters a
+Simple task job runs a task, aka process. The job takes for parmaters a
 command with arguments and optionally how many CPUs it will consume.
 The job is considered completed when the process exits with a 0 code. 
 Otherwise it ends in error.
 
 #### Parallel jobs
 
-Parallel job run children jobs in parallel. The job is considered 
+Parallel job runs children jobs in parallel. The job is considered 
 completed when all children are completed. If there is any child 
 in error, the job fall in error, but other chlidren jobs continue 
 running unless the user ask for cancel.
 
 #### Sequential jobs
 
-Sequence job run children jobs in sequence. A child job cannot start 
+Sequence job runs children jobs in sequence. A child job cannot start 
 until the previous chlid is not completed. The job is considered 
 completed when all children are completed. If there is any child in 
 error, the job stops in error. I it remains non started children jobs,
