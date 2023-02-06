@@ -6,14 +6,14 @@ namespace Application.Beehive
     {
         private readonly ITimer _timer;
         private readonly BeeKeeper _beeKeeper;
-        private readonly QueueProvider _queues;
+        private readonly ColonyProvider _colonies;
         private readonly TaskTracker _tasksTracker;
 
-        public Poller(ITimer timer, BeeKeeper beeKeeper, QueueProvider queues, TaskTracker tasksTracker)
+        public Poller(ITimer timer, BeeKeeper beeKeeper, ColonyProvider colonies, TaskTracker tasksTracker)
         {
             _timer = timer;
             _beeKeeper = beeKeeper;
-            _queues = queues;
+            _colonies = colonies;
             _tasksTracker = tasksTracker;
         }
         public void Start() => _timer.Updated += Refresh;
@@ -21,7 +21,7 @@ namespace Application.Beehive
         private void Refresh()
         {
             _beeKeeper.Refresh();
-            _queues.Refresh();
+            _colonies.Refresh();
             _tasksTracker.Refresh();
         }
 

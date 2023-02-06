@@ -10,29 +10,29 @@ namespace Application.Tests.Beehive
     public class BeehiveDbLogs : IBeehiveDb
     {
         private readonly Table<string, BeeDto> _beeTable = new Table<string, BeeDto>(p => p.Address);
-        private readonly Table<string, QueueDto> _queueTable = new Table<string, QueueDto>(p => p.Name);
+        private readonly Table<string, ColonyDto> _colonyTable = new Table<string, ColonyDto>(p => p.Name);
         private readonly Table<Guid, RemoteTaskDto> _taskTable = new Table<Guid, RemoteTaskDto>(p => p.Id);
         private readonly Table<Guid, JobDto> _jobTable = new Table<Guid, JobDto>(p => p.Id);
         private readonly Table<Guid, WorkflowDto> _workflowTable = new Table<Guid, WorkflowDto>(p => p.Id);
         public void CreateBee(BeeDto bee) => _beeTable.Create(bee);
 
-        public void CreateQueue(QueueDto queue) => _queueTable.Create(queue);
+        public void CreateColony(ColonyDto colony) => _colonyTable.Create(colony);
 
         public void CreateTask(RemoteTaskDto task) => _taskTable.Create(task);
 
         public void DeleteBee(string address) => _beeTable.Delete(address);
 
-        public void DeleteQueue(string name) => _queueTable.Delete(name);
+        public void DeleteColony(string name) => _colonyTable.Delete(name);
 
         public void DeleteTask(Guid id) => _taskTable.Delete(id);
 
         public IEnumerable<BeeDto> FetchBees() => _beeTable.FetchAll();
 
-        public IEnumerable<QueueDto> FetchQueues() => _queueTable.FetchAll();
+        public IEnumerable<ColonyDto> FetchColonies() => _colonyTable.FetchAll();
 
         public IEnumerable<RemoteTaskDto> FetchTasks() => _taskTable.FetchAll();
 
-        public void UpdateQueue(QueueDto queue) => _queueTable.Update(queue);
+        public void UpdateColony(ColonyDto colony) => _colonyTable.Update(colony);
 
         public void UpdateTask(RemoteTaskDto task) => _taskTable.Update(task);
 
@@ -57,7 +57,7 @@ namespace Application.Tests.Beehive
         public void DeleteWorkflow(Guid id) => _workflowTable.Delete(id);
 
         public ITableChecker<string, BeeDto> BeeTable => _beeTable;
-        public ITableChecker<string, QueueDto> QueueTable => _queueTable;
+        public ITableChecker<string, ColonyDto> ColonyTable => _colonyTable;
         public ITableChecker<Guid, RemoteTaskDto> TaskTable => _taskTable;
         public ITableChecker<Guid, JobDto> JobTable => _jobTable;
         public ITableChecker<Guid, WorkflowDto> WorkflowTable => _workflowTable;
@@ -65,7 +65,7 @@ namespace Application.Tests.Beehive
         public void ClearLogs()
         {
             _beeTable.ClearLogs();
-            _queueTable.ClearLogs();
+            _colonyTable.ClearLogs();
             _taskTable.ClearLogs();
             _jobTable.ClearLogs();
             _workflowTable.ClearLogs();

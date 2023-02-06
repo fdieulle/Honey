@@ -20,7 +20,7 @@ namespace Application.Beehive.Workflows
             {
                 Id = Guid.NewGuid(),
                 Name = parameters.Name,
-                QueueName = parameters.QueueName,
+                Colony = parameters.Colony,
             };
 
             _rootJob = factory.CreateJob(parameters.RootJob);

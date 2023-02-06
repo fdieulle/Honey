@@ -19,7 +19,7 @@ namespace Application.Honey
         {
             Id = dto.Id,
             Name = dto.Name,
-            Queue = dto.QueueName,
+            Colony = dto.Colony,
         };
 
         public static void Update(this WorkflowViewModel workflow, JobViewModel rootJob)
@@ -36,7 +36,7 @@ namespace Application.Honey
         public static void Update(this WorkflowViewModel vm, WorkflowDto dto)
         {
             vm.Name = dto.Name;
-            vm.Queue = dto.QueueName;
+            vm.Colony = dto.Colony;
         }
 
         #endregion

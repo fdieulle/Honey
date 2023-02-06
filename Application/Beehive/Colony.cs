@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Application.Beehive
 {
-    public class Queue
+    public class Colony
     {
         private readonly Queue<RemoteTaskDto> _pendingTasks = new Queue<RemoteTaskDto>();
         private readonly Dictionary<Guid, RemoteTaskDto> _runningTasks = new Dictionary<Guid, RemoteTaskDto>();
@@ -21,9 +21,9 @@ namespace Application.Beehive
 
         public string Name => Dto.Name;
 
-        public QueueDto Dto { get; } = new QueueDto();
+        public ColonyDto Dto { get; } = new ColonyDto();
 
-        public Queue(QueueDto dto, BeeKeeper beeKeeper, IBeehiveDb database, TaskTracker tracker)
+        public Colony(ColonyDto dto, BeeKeeper beeKeeper, IBeehiveDb database, TaskTracker tracker)
         {
             _beeKeeper = beeKeeper;
             _database = database;
@@ -32,7 +32,7 @@ namespace Application.Beehive
             Update(dto);
 
             var tasks = _database.FetchTasks() ?? Enumerable.Empty<RemoteTaskDto>();
-            RestoreTasks(tasks.Where(p => p.QueueName == Name));
+            RestoreTasks(tasks.Where(p => p.Colony == Name));
         }
 
         public IEnumerable<RemoteTaskDto> GetAllTasks()
@@ -68,7 +68,7 @@ namespace Application.Beehive
                 _pendingTasks.Enqueue(task);
         }
 
-        public void Update(QueueDto dto)
+        public void Update(ColonyDto dto)
         {
             lock (_lock)
             {

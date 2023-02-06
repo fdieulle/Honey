@@ -13,7 +13,7 @@ namespace Infrastructure.Beehive
     internal class BeehiveDb : IBeehiveDb
     {
         private readonly CrudDbTable<BeehiveDbContext, BeeEntity, string, BeeDto> _crudBees;
-        private readonly CrudDbTable<BeehiveDbContext, QueueEntity, string, QueueDto> _crudQueues;
+        private readonly CrudDbTable<BeehiveDbContext, ColonyEntity, string, ColonyDto> _crudColonies;
         private readonly CrudDbTable<BeehiveDbContext, RemoteTaskEntity, Guid, RemoteTaskDto> _crudTasks;
         private readonly CrudDbTable<BeehiveDbContext, JobEntity, Guid, JobDto> _crudJobs;
         private readonly CrudDbTable<BeehiveDbContext, WorkflowEntity, Guid, WorkflowDto> _crudWorkflows;
@@ -21,8 +21,8 @@ namespace Infrastructure.Beehive
         {
             _crudBees = new CrudDbTable<BeehiveDbContext, BeeEntity, string, BeeDto>(
                 factory, c => c.Bees, p => p.Address, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Address, e => e.ToDto());
-            _crudQueues = new CrudDbTable<BeehiveDbContext, QueueEntity, string, QueueDto>(
-                factory, c => c.Queues, p => p.Name, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Name, e => e.ToDto());
+            _crudColonies = new CrudDbTable<BeehiveDbContext, ColonyEntity, string, ColonyDto>(
+                factory, c => c.Colonies, p => p.Name, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Name, e => e.ToDto());
             _crudTasks = new CrudDbTable<BeehiveDbContext, RemoteTaskEntity, Guid, RemoteTaskDto>(
                 factory, c => c.Tasks, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
             _crudJobs = new CrudDbTable<BeehiveDbContext, JobEntity, Guid, JobDto>(
@@ -41,15 +41,15 @@ namespace Infrastructure.Beehive
 
         #endregion
 
-        #region Queues
+        #region Colonies
 
-        public IEnumerable<QueueDto> FetchQueues() => _crudQueues.Fetch();
+        public IEnumerable<ColonyDto> FetchColonies() => _crudColonies.Fetch();
 
-        public void CreateQueue(QueueDto queue) => _crudQueues.Create(queue);
+        public void CreateColony(ColonyDto colony) => _crudColonies.Create(colony);
 
-        public void UpdateQueue(QueueDto queue) => _crudQueues.Update(queue);
+        public void UpdateColony(ColonyDto colony) => _crudColonies.Update(colony);
 
-        public void DeleteQueue(string name) => _crudQueues.Delete(name);
+        public void DeleteColony(string name) => _crudColonies.Delete(name);
 
         #endregion
 
@@ -141,9 +141,9 @@ namespace Infrastructure.Beehive
                 Create(context, dto);
         }
 
-        private void Create(TContext context, TDto queue)
+        private void Create(TContext context, TDto colony)
         {
-            context.Add(_toEntity(queue));
+            context.Add(_toEntity(colony));
             context.SaveChanges();
         }
 
@@ -187,23 +187,23 @@ namespace Infrastructure.Beehive
 
         #endregion
 
-        #region Queues
+        #region Colonies
         
         private const char SEP = ';';
-        public static QueueEntity ToEntity(this QueueDto dto)
+        public static ColonyEntity ToEntity(this ColonyDto dto)
         {
-            var entity = new QueueEntity { Name = dto.Name };
+            var entity = new ColonyEntity { Name = dto.Name };
             entity.Update(dto);
             return entity;
         }
-        public static void Update(this QueueEntity entity, QueueDto dto)
+        public static void Update(this ColonyEntity entity, ColonyDto dto)
         {
             entity.MaxParallelTasks = dto.MaxParallelTasks;
             entity.Bees = dto.Bees != null ? string.Join(SEP, dto.Bees) : null;
         }
-        public static QueueDto ToDto(this QueueEntity entity)
+        public static ColonyDto ToDto(this ColonyEntity entity)
         {
-            return new QueueDto
+            return new ColonyDto
             {
                 Name = entity.Name,
                 MaxParallelTasks = entity.MaxParallelTasks,
@@ -225,7 +225,7 @@ namespace Infrastructure.Beehive
         {
             entity.Name = dto.Name;
             entity.Status = dto.Status;
-            entity.QueueName = dto.QueueName;
+            entity.Colony = dto.Colony;
             entity.BeeAddress = dto.BeeAddress;
             entity.Order = dto.Order;
             entity.Command = dto.Parameters.Command;
@@ -240,7 +240,7 @@ namespace Infrastructure.Beehive
                 Id = entity.Id,
                 Name = entity.Name,
                 Status = entity.Status,
-                QueueName = entity.QueueName,
+                Colony = entity.Colony,
                 BeeAddress = entity.BeeAddress,
                 Order = entity.Order,
                 Parameters = new TaskParameters
@@ -368,7 +368,7 @@ namespace Infrastructure.Beehive
         public static void Update(this WorkflowEntity entity, WorkflowDto dto)
         {
             entity.Name = dto.Name;
-            entity.QueueName = dto.QueueName;
+            entity.Colony = dto.Colony;
             entity.RootJobId = dto.RootJobId;
         }
         public static WorkflowDto ToDto(this WorkflowEntity entity)
@@ -377,7 +377,7 @@ namespace Infrastructure.Beehive
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                QueueName = entity.QueueName,
+                Colony = entity.Colony,
                 RootJobId = entity.RootJobId,
             };
         }

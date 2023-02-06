@@ -1,4 +1,4 @@
-﻿@page "/queues"
+﻿@page "/colonies"
 
 @using AntDesign
 @using AntDesign.TableModels
@@ -6,21 +6,21 @@
 @using Application.Beehive
 @using Domain.Dtos
 
-@inject QueueProvider QueueProvider
+@inject ColonyProvider ColonyProvider
 @inject BeeKeeper BeeKeeper
 
-<h3>Queues</h3>
+<h3>Colonies</h3>
 
 <Space>
-    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@NewQueue">New</Button></SpaceItem>
+    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@NewColony">New</Button></SpaceItem>
 </Space>
-<Modal Title="New Queue"
+<Modal Title="New Colony"
        Visible="@_isVisible"
        Closable="false"
        Footer="@null">
     <Form Model="@_model"
-          OnFinish="@AddQueue"
-          OnFinishFailed="@AddQueueFailed"
+          OnFinish="@AddColony"
+          OnFinishFailed="@AddColonyFailed"
           Layout="Vertical">
         <FormItem Label="Name">
             <Input @bind-Value="@context.Name" />
@@ -28,7 +28,7 @@
         <FormItem Label="Max number of parallel tasks" Help="A value <= 0 means no restrictions.">
             <AntDesign.InputNumber @bind-Value="@context.MaxParallelTasks" />
         </FormItem>
-        <FormItem Label="Bees" Help="No selection means allowing the queue to run on all bees.">
+        <FormItem Label="Bees" Help="No selection means allowing the colony to run on all bees.">
             <Select Mode="multiple"
                     DataSource="@_bees"
                     @bind-Values="@context.Bees"
@@ -54,14 +54,14 @@
         </Row>
     </Form>
 </Modal>
-<AntDesign.Table TItem="QueueVM" DataSource="@_queues" OnExpand="OnRowExpand">
+<AntDesign.Table TItem="ColonyVM" DataSource="@_colonies" OnExpand="OnRowExpand">
     <RowTemplate>
         <Column Title="Name" Field="@context.Name" />
         <Column Title="Max Parallel" Field="@context.MaxParallelTasks" />
         <Column Title="Nb Bees" Field="@Count(context.Bees)" />
         <ActionColumn>
             <Space>
-                <SpaceItem><Button Danger OnClick="()=>RemoveQueue(context.Name)">Delete</Button></SpaceItem>
+                <SpaceItem><Button Danger OnClick="()=>RemoveColony(context.Name)">Delete</Button></SpaceItem>
             </Space>
         </ActionColumn>
     </RowTemplate>
@@ -90,17 +90,17 @@
 
 @code {
     bool _isVisible;
-    QueueDto _model = new QueueDto();
-    List<QueueVM> _queues = new List<QueueVM>();
+    ColonyDto _model = new ColonyDto();
+    List<ColonyVM> _colonies = new List<ColonyVM>();
     List<BeeDto> _bees = new List<BeeDto>();
 
     protected async override Task OnInitializedAsync()
     {
         _bees = await BeeKeeper.GetBeesAsync();
-        _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
+        _colonies = ColonyProvider.GetColonies().Select(p => new ColonyVM(p)).ToList();
     }
 
-    private void NewQueue()
+    private void NewColony()
     {
         _isVisible = true;
     }
@@ -110,29 +110,29 @@
         _isVisible = false;
     }
 
-    public void AddQueue(EditContext context)
+    public void AddColony(EditContext context)
     {
-        QueueProvider.CreateQueue(_model);
+        ColonyProvider.CreateColony(_model);
         _isVisible = false;
 
-        _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
+        _colonies = ColonyProvider.GetColonies().Select(p => new ColonyVM(p)).ToList();
         StateHasChanged();
     }
 
-    public void AddQueueFailed(EditContext context)
+    public void AddColonyFailed(EditContext context)
     {
 
     }
 
-    private void RemoveQueue(string name)
+    private void RemoveColony(string name)
     {
-        QueueProvider.DeleteQueue(name);
+        ColonyProvider.DeleteColony(name);
 
-        _queues = QueueProvider.GetQueues().Select(p => new QueueVM(p)).ToList();
+        _colonies = ColonyProvider.GetColonies().Select(p => new ColonyVM(p)).ToList();
         StateHasChanged();
     }
 
-    private async Task OnRowExpand(RowData<QueueVM> rowData)
+    private async Task OnRowExpand(RowData<ColonyVM> rowData)
     {
         var bees = await BeeKeeper.GetBeesAsync() ?? new List<BeeDto>();
 
@@ -189,9 +189,9 @@
         }
     }
 
-    public class QueueVM : QueueDto
+    public class ColonyVM : ColonyDto
     {
-        public QueueVM(QueueDto dto)
+        public ColonyVM(ColonyDto dto)
         {
             Name = dto.Name;
             MaxParallelTasks = dto.MaxParallelTasks;

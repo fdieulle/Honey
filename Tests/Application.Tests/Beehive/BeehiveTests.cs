@@ -16,16 +16,16 @@ namespace Application.Tests.Beehive
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
-            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
+            var colonyProvider = new ColonyProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(colonyProvider, taskTracker, database);
 
             // Setup a bee
             var bee = beeKeeper.SetupBee("http://bee1:8080");
 
-            // Create a queue
-            queueProvider.CreateQueue("queue");
+            // Create a colony
+            colonyProvider.CreateColony("colony");
 
-            var id = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = beehive.ExecuteTask("name", "colony", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -41,17 +41,17 @@ namespace Application.Tests.Beehive
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
-            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
+            var colonyProvider = new ColonyProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(colonyProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
             var bee = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
 
-            // Create a queue
-            queueProvider.CreateQueue("queue");
+            // Create a colony
+            colonyProvider.CreateColony("colony");
 
-            var id = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = beehive.ExecuteTask("name", "colony", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -72,19 +72,19 @@ namespace Application.Tests.Beehive
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
-            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
+            var colonyProvider = new ColonyProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(colonyProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
             var bee = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
 
-            // Create a queue
-            queueProvider.CreateQueue("queue");
+            // Create a colony
+            colonyProvider.CreateColony("colony");
 
-            var id1 = beehive.ExecuteTask("name1", "queue", T("powershell", "-version"));
-            var id2 = beehive.ExecuteTask("name2", "queue", T("powershell", "-version"));
-            var id3 = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id1 = beehive.ExecuteTask("name1", "colony", T("powershell", "-version"));
+            var id2 = beehive.ExecuteTask("name2", "colony", T("powershell", "-version"));
+            var id3 = beehive.ExecuteTask("name", "colony", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);
@@ -112,20 +112,20 @@ namespace Application.Tests.Beehive
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
-            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
+            var colonyProvider = new ColonyProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(colonyProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
             var bee = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
 
-            // Create a queue
-            queueProvider.CreateQueue("queue");
+            // Create a colony
+            colonyProvider.CreateColony("colony");
 
             // Turn bee too busy
             beeKeeper.UpdateBeeState("http://bee1:8080", 0);
 
-            var id = beehive.ExecuteTask("name", "queue", T("powershell", "-version"));
+            var id = beehive.ExecuteTask("name", "colony", T("powershell", "-version"));
 
             // The task is create into shogun but no sent to a bee yet
             Assert.NotEqual(id, Guid.Empty);
@@ -138,8 +138,8 @@ namespace Application.Tests.Beehive
             // Make some room on Bee to run the task
             beeKeeper.UpdateBeeState("http://bee1:8080", 2);
 
-            var queue = queueProvider.GetQueue("queue");
-            queue.Refresh();
+            var colony = colonyProvider.GetColony("colony");
+            colony.Refresh();
 
             bee.Received().StartTask(
                 Arg.Is("powershell"),
@@ -153,27 +153,27 @@ namespace Application.Tests.Beehive
         }
 
         [Fact]
-        public void TestExecuteTasksInMultipleQueues()
+        public void TestExecuteTasksInMultipleColonies()
         {
             var database = Substitute.For<IBeehiveDb>();
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
             var taskTracker = new TaskTracker();
-            var queueProvider = new QueueProvider(beeKeeper, database, taskTracker);
-            var beehive = new Application.Beehive.Beehive(queueProvider, taskTracker, database);
+            var colonyProvider = new ColonyProvider(beeKeeper, database, taskTracker);
+            var beehive = new Application.Beehive.Beehive(colonyProvider, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
             var bee1 = beeKeeper.SetupBee("http://bee1:8080", beeTaskIds);
             var bee2 = beeKeeper.SetupBee("http://bee2:8080", beeTaskIds);
 
-            // Create a queue
-            queueProvider.CreateQueue("queue1", bees: "http://bee1:8080");
-            queueProvider.CreateQueue("queue2", bees: "http://bee2:8080");
+            // Create a colony
+            colonyProvider.CreateColony("colony1", bees: "http://bee1:8080");
+            colonyProvider.CreateColony("colony2", bees: "http://bee2:8080");
 
-            var id1 = beehive.ExecuteTask("name", "queue1", T("powershell", "-version"));
-            var id2 = beehive.ExecuteTask("name", "queue2", T("powershell", "-version"));
-            var id3 = beehive.ExecuteTask("name", "queue1", T("powershell", "-version"));
+            var id1 = beehive.ExecuteTask("name", "colony1", T("powershell", "-version"));
+            var id2 = beehive.ExecuteTask("name", "colony2", T("powershell", "-version"));
+            var id3 = beehive.ExecuteTask("name", "colony1", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);
@@ -260,9 +260,9 @@ namespace Application.Tests.Beehive
             DiskFreeSpace = (ulong)198e9,
         };
 
-        public static bool CreateQueue(this IQueueProvider provider, string name, int maxParallelTask = -1, params string[] bees)
+        public static bool CreateColony(this IColonyProvider provider, string name, int maxParallelTask = -1, params string[] bees)
         {
-            return provider.CreateQueue(new QueueDto
+            return provider.CreateColony(new ColonyDto
             {
                 Name = name,
                 MaxParallelTasks = maxParallelTask,

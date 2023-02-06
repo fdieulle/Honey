@@ -16,10 +16,10 @@ namespace Application.Beehive
         void CreateBee(BeeDto bee);
         void DeleteBee(string address);
 
-        IEnumerable<QueueDto> FetchQueues();
-        void CreateQueue(QueueDto queue);
-        void UpdateQueue(QueueDto queue);
-        void DeleteQueue(string name);
+        IEnumerable<ColonyDto> FetchColonies();
+        void CreateColony(ColonyDto colony);
+        void UpdateColony(ColonyDto colony);
+        void DeleteColony(string name);
 
         IEnumerable<JobDto> FetchJobs();
         JobDto FetchJob(Guid id);

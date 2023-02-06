@@ -22,7 +22,7 @@
     OnRowClick="OnRowClick" RowClassName="@(x => x.Data.ToCssClass())">
     
     <Column Title="Name" @bind-Field="@context.Name" Sortable Filterable />
-    <Column Title="Queue" @bind-Field="@context.Queue" Sortable Filterable />
+    <Column Title="Colony" @bind-Field="@context.Colony" Sortable Filterable />
     <Column Title="Progress" @bind-Field="@context.Progress" Sortable>
         <Progress Percent="@context.Progress" Status="@context.ToProgressStatus()" Format="_progressFormat" />
     </Column>

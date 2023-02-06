@@ -50,9 +50,9 @@ namespace Infrastructure
             var taskTracker = new TaskTracker();
             services.AddSingleton<ITaskTracker>(taskTracker);
             services.AddSingleton(taskTracker);
-            services.AddSingleton<Application.Beehive.BeeKeeper>();
-            services.AddSingleton<QueueProvider>();
-            services.AddSingleton<Beehive>();
+            services.AddSingleton<BeeKeeper>();
+            services.AddSingleton<ColonyProvider>();
+            services.AddSingleton<Application.Beehive.Beehive>();
             services.AddSingleton<Poller>();
 
             services.AddSingleton<WorkflowRepository>();

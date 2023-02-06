@@ -8,7 +8,7 @@ namespace Infrastructure.Beehive
     {
         public DbSet<BeeEntity> Bees { get; set; }
 
-        public DbSet<QueueEntity> Queues { get; set; }
+        public DbSet<ColonyEntity> Colonies { get; set; }
 
         public DbSet<RemoteTaskEntity> Tasks { get; set; }
 
@@ -27,7 +27,7 @@ namespace Infrastructure.Beehive
 
             mb.Entity<BeeEntity>()
                 .HasKey(p => p.Address);
-            mb.Entity<QueueEntity>()
+            mb.Entity<ColonyEntity>()
                 .HasKey(p => p.Name);
             mb.Entity<RemoteTaskEntity>()
                 .HasKey(p => p.Id);

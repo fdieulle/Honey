@@ -15,22 +15,22 @@ namespace Application
         bool RevokeBee(string address);
     }
 
-    public interface IQueueProvider
+    public interface IColonyProvider
     {
-        IEnumerable<QueueDto> GetQueues();
+        IEnumerable<ColonyDto> GetColonies();
 
-        bool CreateQueue(QueueDto queue);
+        bool CreateColony(ColonyDto colony);
 
-        bool UpdateQueue(QueueDto queue);
+        bool UpdateColony(ColonyDto colony);
 
-        bool DeleteQueue(string name);
+        bool DeleteColony(string name);
     }
 
     public interface IBeehive
     {
         Guid Execute(WorkflowParameters parameters);
 
-        Guid ExecuteTask(string queue, string name, TaskParameters task);
+        Guid ExecuteTask(string colony, string name, TaskParameters task);
         
         bool Cancel(Guid id);
 
@@ -50,8 +50,8 @@ namespace Application
         public async static ValueTask<Guid> ExecuteAsync(this IBeehive beehive, WorkflowParameters parameters) 
             => await ValueTask.FromResult(beehive.Execute(parameters));
 
-        public async static ValueTask<Guid> ExecuteTaskAsync(this IBeehive beehive, string queue, string name, TaskParameters task)
-            => await ValueTask.FromResult(beehive.ExecuteTask(queue, name, task));
+        public async static ValueTask<Guid> ExecuteTaskAsync(this IBeehive beehive, string colony, string name, TaskParameters task)
+            => await ValueTask.FromResult(beehive.ExecuteTask(colony, name, task));
 
         public async static ValueTask<bool> CancelAsync(this IBeehive beehive, Guid id)
             => await ValueTask.FromResult(beehive.Cancel(id));

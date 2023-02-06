@@ -22,7 +22,7 @@ namespace Domain.Dtos
 
         public string BeeAddress { get; set; }
 
-        public string QueueName { get; set; }
+        public string Colony { get; set; }
 
         public TaskParameters Parameters { get; set; }
 
@@ -34,11 +34,11 @@ namespace Domain.Dtos
 
         public RemoteTaskDto() { Id = Guid.NewGuid(); }
 
-        public RemoteTaskDto(string queue, string name, TaskParameters task, ulong order)
+        public RemoteTaskDto(string colony, string name, TaskParameters task, ulong order)
         {
             Id = Guid.NewGuid();
             Name = name ?? Id.ToString();
-            QueueName = queue;
+            Colony = colony;
             Parameters = task;
             Order = order;
         }

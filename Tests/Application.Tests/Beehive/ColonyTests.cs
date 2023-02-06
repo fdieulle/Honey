@@ -8,28 +8,28 @@ using Xunit;
 
 namespace Application.Tests.Beehive
 {
-    public class QueueTests
+    public class ColonyTests
     {
         private readonly IBeeFactory _factory;
         private readonly BeehiveDbLogs _db;
         private readonly TaskTracker _tracker;
         private readonly BeeKeeper _beeKeeper;
-        private readonly Queue _queue;
+        private readonly Colony _colony;
 
-        public QueueTests()
+        public ColonyTests()
         {
             _factory = Substitute.For<IBeeFactory>();
             _db = new BeehiveDbLogs();
             _beeKeeper = new BeeKeeper(_factory, _db);
             _tracker = new TaskTracker();
 
-            _queue = new Queue(QueueDto("Queue 1"), _beeKeeper, _db, _tracker);
+            _colony = new Colony(ColonyDto("Colony 1"), _beeKeeper, _db, _tracker);
         }
 
         private void Refresh()
         {
             _beeKeeper.Refresh();
-            _queue.Refresh();
+            _colony.Refresh();
             _tracker.Refresh();
         }
 
@@ -44,28 +44,28 @@ namespace Application.Tests.Beehive
             var taskId = Guid.NewGuid();
             bee.StartTask(Arg.Is("App 1"), Arg.Is("Arg1, Arg2"), Arg.Is(1)).Returns(taskId);
 
-            _queue.StartTask("Task 1", StartTaskDto("App 1", "Arg1, Arg2", 1));
+            _colony.StartTask("Task 1", StartTaskDto("App 1", "Arg1, Arg2", 1));
 
             bee.Received(1).StartTask(Arg.Is("App 1"), Arg.Is("Arg1, Arg2"), Arg.Is(1));
-            _db.TaskTable.NextCreate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running);
+            _db.TaskTable.NextCreate().Check("Task 1", "Colony 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running);
             _db.TaskTable.EmptyLogs();
 
             bee.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Running, 0.1) });
 
             Refresh();
-            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.1);
+            _db.TaskTable.NextUpdate().Check("Task 1", "Colony 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.1);
             _db.TaskTable.EmptyLogs();
 
             bee.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Running, 0.5) });
 
             Refresh();
-            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
+            _db.TaskTable.NextUpdate().Check("Task 1", "Colony 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
             _db.TaskTable.EmptyLogs();
 
             bee.GetTasks().Returns(new[] { TaskDto(taskId, TaskStatus.Done, 1.0) });
 
             Refresh();
-            _db.TaskTable.NextUpdate().Check("Task 1", "Queue 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Completed, TaskStatus.Done, 1.0);
+            _db.TaskTable.NextUpdate().Check("Task 1", "Colony 1", "Bee 1", "App 1", taskId, RemoteTaskStatus.Completed, TaskStatus.Done, 1.0);
             _db.TaskTable.EmptyLogs();
 
             Refresh();
@@ -86,41 +86,41 @@ namespace Application.Tests.Beehive
             bee.SetupStartTask("cmd 1", task1Id);
             bee.SetupStartTask("cmd 2", task2Id);
 
-            _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
+            _colony.StartTask("Task 1", StartTaskDto("cmd 1"));
 
             bee.CheckStartTask("cmd 1");
-            _db.CheckCreateTask("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id);
+            _db.CheckCreateTask("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id);
 
             bee.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.1));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
 
-            _queue.StartTask("Task 2", StartTaskDto("cmd 2"));
+            _colony.StartTask("Task 2", StartTaskDto("cmd 2"));
 
             bee.CheckStartTask("cmd 2");
-            _db.CheckCreateTask("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id);
+            _db.CheckCreateTask("Task 2", "Colony 1", "Bee 1", "cmd 2", task2Id);
 
             bee.SetupTaskState(
                 TaskDto(task1Id, TaskStatus.Running, 0.5),
                 TaskDto(task2Id, TaskStatus.Running, 0.2));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Running, 0.2);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
+            _db.CheckTaskUpdate("Task 2", "Colony 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Running, 0.2);
 
             bee.SetupTaskState(
                 TaskDto(task1Id, TaskStatus.Done, 1.0),
                 TaskDto(task2Id, TaskStatus.Running, 0.8));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Running, 0.8);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 2", "Colony 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Running, 0.8);
 
             bee.SetupTaskState(TaskDto(task2Id, TaskStatus.Done, 1.0));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 2", "Colony 1", "Bee 1", "cmd 2", task2Id, TaskStatus.Done, 1.0);
 
             Refresh();
             _db.TaskTable.EmptyLogs();
@@ -143,44 +143,44 @@ namespace Application.Tests.Beehive
             bee1.SetupStartTask("cmd 1", task1Id);
             bee2.SetupStartTask("cmd 2", task2Id);
 
-            _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
+            _colony.StartTask("Task 1", StartTaskDto("cmd 1"));
 
             bee1.CheckStartTask("cmd 1");
-            _db.CheckCreateTask("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id);
+            _db.CheckCreateTask("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id);
 
             bee1.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.1));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
 
             bee1.SetupAsFull();
             bee2.SetupAsEmpty();
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.1);
 
-            _queue.StartTask("Task 2", StartTaskDto("cmd 2"));
+            _colony.StartTask("Task 2", StartTaskDto("cmd 2"));
 
             bee2.CheckStartTask("cmd 2");
-            _db.CheckCreateTask("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id);
+            _db.CheckCreateTask("Task 2", "Colony 1", "Bee 2", "cmd 2", task2Id);
 
             bee1.SetupTaskState(TaskDto(task1Id, TaskStatus.Running, 0.5));
             bee2.SetupTaskState(TaskDto(task2Id, TaskStatus.Running, 0.2));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Running, 0.2);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Running, 0.5);
+            _db.CheckTaskUpdate("Task 2", "Colony 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Running, 0.2);
 
             bee1.SetupTaskState(TaskDto(task1Id, TaskStatus.Done, 1.0));
             bee2.SetupTaskState(TaskDto(task2Id, TaskStatus.Running, 0.8));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Running, 0.8);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", task1Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 2", "Colony 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Running, 0.8);
 
             bee2.SetupTaskState(TaskDto(task2Id, TaskStatus.Done, 1.0));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 2", "Queue 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 2", "Colony 1", "Bee 2", "cmd 2", task2Id, TaskStatus.Done, 1.0);
 
             bee1.ClearReceivedCalls();
             bee2.ClearReceivedCalls();
@@ -202,39 +202,39 @@ namespace Application.Tests.Beehive
             bee.SetupAsFull();
             Refresh();
 
-            _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
+            _colony.StartTask("Task 1", StartTaskDto("cmd 1"));
 
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
-            _db.CheckCreateTask("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
+            _db.CheckCreateTask("Task 1", "Colony 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
             Refresh();
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
-            _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
             bee.SetupAsEmpty();
 
             Refresh();
             bee.CheckStartTask("cmd 1");
-            _db.CheckUpdateTask("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, RemoteTaskStatus.Running);
+            _db.CheckUpdateTask("Task 1", "Colony 1", "Bee 1", "cmd 1", taskId, RemoteTaskStatus.Running);
 
             bee.SetupTaskState(TaskDto(taskId, TaskStatus.Running, 0.1));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, TaskStatus.Running, 0.1);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", taskId, TaskStatus.Running, 0.1);
 
             bee.SetupTaskState(TaskDto(taskId, TaskStatus.Running, 0.5));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, TaskStatus.Running, 0.5);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", taskId, TaskStatus.Running, 0.5);
 
             bee.SetupTaskState(TaskDto(taskId, TaskStatus.Done, 1.0));
 
             Refresh();
-            _db.CheckTaskUpdate("Task 1", "Queue 1", "Bee 1", "cmd 1", taskId, TaskStatus.Done, 1.0);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", "Bee 1", "cmd 1", taskId, TaskStatus.Done, 1.0);
 
             bee.ClearReceivedCalls();
 
-            _queue.Refresh();
+            _colony.Refresh();
             _db.TaskTable.EmptyLogs();
         }
 
@@ -250,24 +250,24 @@ namespace Application.Tests.Beehive
             bee.SetupAsFull();
             Refresh();
 
-            var taskId = _queue.StartTask("Task 1", StartTaskDto("cmd 1"));
+            var taskId = _colony.StartTask("Task 1", StartTaskDto("cmd 1"));
 
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
-            _db.CheckCreateTask("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
+            _db.CheckCreateTask("Task 1", "Colony 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
             Refresh();
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
-            _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
 
-            _queue.CancelTask(taskId);
+            _colony.CancelTask(taskId);
 
             Refresh();
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
-            _db.CheckTaskUpdate("Task 1", "Queue 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Cancel);
+            _db.CheckTaskUpdate("Task 1", "Colony 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Cancel);
 
             bee.ClearReceivedCalls();
 
-            _queue.Refresh();
+            _colony.Refresh();
             _db.TaskTable.EmptyLogs();
         }
 
@@ -291,33 +291,33 @@ namespace Application.Tests.Beehive
             var task14Id = Guid.NewGuid();
 
             // Not in the queue task
-            _db.CreateTask(QueuedTaskDto("Task 1", "Queue 1", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 1"), TaskDto(task1Id, TaskStatus.Running)));
+            _db.CreateTask(RemoteTaskDto("Task 1", "Colony 1", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 1"), TaskDto(task1Id, TaskStatus.Running)));
             // Pending task
-            _db.CreateTask(QueuedTaskDto("Task 2", "Queue 2", "Bee 1", RemoteTaskStatus.Pending, StartTaskDto("cmd 2"), TaskDto(Guid.Empty, TaskStatus.Pending)));
+            _db.CreateTask(RemoteTaskDto("Task 2", "Colony 2", "Bee 1", RemoteTaskStatus.Pending, StartTaskDto("cmd 2"), TaskDto(Guid.Empty, TaskStatus.Pending)));
             // Running task
-            _db.CreateTask(QueuedTaskDto("Task 3", "Queue 2", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 3"), TaskDto(task3Id, TaskStatus.Running)));
+            _db.CreateTask(RemoteTaskDto("Task 3", "Colony 2", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 3"), TaskDto(task3Id, TaskStatus.Running)));
             // Running task no Bee feedback yet
-            _db.CreateTask(QueuedTaskDto("Task 4", "Queue 2", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 4"), null));
+            _db.CreateTask(RemoteTaskDto("Task 4", "Colony 2", "Bee 1", RemoteTaskStatus.Running, StartTaskDto("cmd 4"), null));
             // Completed task
-            _db.CreateTask(QueuedTaskDto("Task 5", "Queue 2", "Bee 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 5"), TaskDto(task5Id, TaskStatus.Done, 1.0)));
+            _db.CreateTask(RemoteTaskDto("Task 5", "Colony 2", "Bee 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 5"), TaskDto(task5Id, TaskStatus.Done, 1.0)));
             // Completed task no Bee feedback
-            _db.CreateTask(QueuedTaskDto("Task 6", "Queue 2", "Bee 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 6"), null));
+            _db.CreateTask(RemoteTaskDto("Task 6", "Colony 2", "Bee 1", RemoteTaskStatus.Completed, StartTaskDto("cmd 6"), null));
             // Error task
-            _db.CreateTask(QueuedTaskDto("Task 7", "Queue 2", "Bee 1", RemoteTaskStatus.Error, StartTaskDto("cmd 7"), TaskDto(task7Id, TaskStatus.Running, 0.5)));
+            _db.CreateTask(RemoteTaskDto("Task 7", "Colony 2", "Bee 1", RemoteTaskStatus.Error, StartTaskDto("cmd 7"), TaskDto(task7Id, TaskStatus.Running, 0.5)));
             // Error task no Bee feedback
-            _db.CreateTask(QueuedTaskDto("Task 8", "Queue 2", "Bee 1", RemoteTaskStatus.Error, StartTaskDto("cmd 8"), null));
+            _db.CreateTask(RemoteTaskDto("Task 8", "Colony 2", "Bee 1", RemoteTaskStatus.Error, StartTaskDto("cmd 8"), null));
             // Cancel requested task
-            _db.CreateTask(QueuedTaskDto("Task 9", "Queue 2", "Bee 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 9"), TaskDto(task9Id, TaskStatus.Running, 0.5)));
+            _db.CreateTask(RemoteTaskDto("Task 9", "Colony 2", "Bee 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 9"), TaskDto(task9Id, TaskStatus.Running, 0.5)));
             // Cancel requested task no Bee feedback
-            _db.CreateTask(QueuedTaskDto("Task 10", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 10"), null));
+            _db.CreateTask(RemoteTaskDto("Task 10", "Colony 2", "Bee 1",  RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 10"), null));
             // Running task but ended during beehive stop
-            _db.CreateTask(QueuedTaskDto("Task 11", "Queue 2", "Bee 1",  RemoteTaskStatus.Running, StartTaskDto("cmd 11"), TaskDto(task11Id, TaskStatus.Running)));
+            _db.CreateTask(RemoteTaskDto("Task 11", "Colony 2", "Bee 1",  RemoteTaskStatus.Running, StartTaskDto("cmd 11"), TaskDto(task11Id, TaskStatus.Running)));
             // Cancel pending task should be cancel by Bee
-            _db.CreateTask(QueuedTaskDto("Task 12", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 12"), TaskDto(task12Id, TaskStatus.Running, 0.5)));
+            _db.CreateTask(RemoteTaskDto("Task 12", "Colony 2", "Bee 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 12"), TaskDto(task12Id, TaskStatus.Running, 0.5)));
             // Cancel pending task no Bee feedback
-            _db.CreateTask(QueuedTaskDto("Task 13", "Queue 2", "Bee 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 13"), null));
+            _db.CreateTask(RemoteTaskDto("Task 13", "Colony 2", "Bee 1",  RemoteTaskStatus.CancelPending, StartTaskDto("cmd 13"), null));
             // Cancel requested task not canceled yet on Bee side
-            _db.CreateTask(QueuedTaskDto("Task 14", "Queue 2", "Bee 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 14"), TaskDto(task14Id, TaskStatus.Running, 0.5)));
+            _db.CreateTask(RemoteTaskDto("Task 14", "Colony 2", "Bee 1", RemoteTaskStatus.CancelRequested, StartTaskDto("cmd 14"), TaskDto(task14Id, TaskStatus.Running, 0.5)));
 
             _db.ClearLogs();
 
@@ -331,7 +331,7 @@ namespace Application.Tests.Beehive
                 TaskDto(task11Id, TaskStatus.Done));
 
             var beehive = new Application.Beehive.BeeKeeper(_factory, _db);
-            var queue = new Queue(QueueDto("Queue 2"), beehive, _db, _tracker);
+            var queue = new Colony(ColonyDto("Queue 2"), beehive, _db, _tracker);
 
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             bee.DidNotReceive().CancelTask(Arg.Any<Guid>());
@@ -354,13 +354,13 @@ namespace Application.Tests.Beehive
 
             // Check task 2
             bee.CheckStartTask("cmd 2");
-            taskUpdates.Check("Task 2", "Queue 2", "Bee 1", "cmd 2", task2Id, RemoteTaskStatus.Running);
+            taskUpdates.Check("Task 2", "Colony 2", "Bee 1", "cmd 2", task2Id, RemoteTaskStatus.Running);
 
             // Check task 3
-            taskUpdates.Check("Task 3", "Queue 2", "Bee 1", "cmd 3", task3Id, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
+            taskUpdates.Check("Task 3", "Colony 2", "Bee 1", "cmd 3", task3Id, RemoteTaskStatus.Running, TaskStatus.Running, 0.5);
 
             // Check task 4
-            taskUpdates.Check("Task 4", "Queue 2", "Bee 1", "cmd 4", Guid.Empty, RemoteTaskStatus.Error);
+            taskUpdates.Check("Task 4", "Colony 2", "Bee 1", "cmd 4", Guid.Empty, RemoteTaskStatus.Error);
 
             // Nothing to check for task 5
             // Nothing to check for task 6
@@ -369,40 +369,40 @@ namespace Application.Tests.Beehive
             // Nothing to check for task 8
 
             // Check task 9
-            taskUpdates.Check("Task 9", "Queue 2", "Bee 1", "cmd 9", task9Id, RemoteTaskStatus.Cancel, TaskStatus.Cancel, 0.5);
+            taskUpdates.Check("Task 9", "Colony 2", "Bee 1", "cmd 9", task9Id, RemoteTaskStatus.Cancel, TaskStatus.Cancel, 0.5);
             bee.Received(1).DeleteTask(Arg.Is(task9Id));
 
             // Check task 10
-            taskUpdates.Check("Task 10", "Queue 2", "Bee 1", "cmd 10", Guid.Empty, RemoteTaskStatus.Error);
+            taskUpdates.Check("Task 10", "Colony 2", "Bee 1", "cmd 10", Guid.Empty, RemoteTaskStatus.Error);
 
             // Check task 11
-            taskUpdates.Check("Task 11", "Queue 2", "Bee 1", "cmd 11", task11Id, RemoteTaskStatus.Completed, TaskStatus.Done, 0.5);
+            taskUpdates.Check("Task 11", "Colony 2", "Bee 1", "cmd 11", task11Id, RemoteTaskStatus.Completed, TaskStatus.Done, 0.5);
             bee.Received(1).DeleteTask(Arg.Is(task11Id));
 
             // Check task 12
-            taskUpdates.Check("Task 12", "Queue 2", "Bee 1", "cmd 12", task12Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
+            taskUpdates.Check("Task 12", "Colony 2", "Bee 1", "cmd 12", task12Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
             bee.Received(1).CancelTask(Arg.Is(task12Id));
 
             // Check task 13
-            taskUpdates.Check("Task 13", "Queue 2", "Bee 1", "cmd 13", Guid.Empty, RemoteTaskStatus.Error);
+            taskUpdates.Check("Task 13", "Colony 2", "Bee 1", "cmd 13", Guid.Empty, RemoteTaskStatus.Error);
 
             // Check task 14
-            taskUpdates.Check("Task 14", "Queue 2", "Bee 1", "cmd 14", task14Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
+            taskUpdates.Check("Task 14", "Colony 2", "Bee 1", "cmd 14", task14Id, RemoteTaskStatus.CancelRequested, TaskStatus.Running, 0.5);
         }
 
-        private static QueueDto QueueDto(string name) => new QueueDto { Name = name };
+        private static ColonyDto ColonyDto(string name) => new ColonyDto { Name = name };
         private static TaskParameters StartTaskDto(string command, string arguments = null, int nbCores = 1) 
             => new TaskParameters { Command = command, Arguments = arguments, NbCores = nbCores };
         private static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)
             => QueueTestExtensions.TaskDto(id, status, progress);
         private static ulong taskCounter = 0;
-        private static RemoteTaskDto QueuedTaskDto(string name, string queueName, string bee, RemoteTaskStatus status, TaskParameters start, TaskDto state)
+        private static RemoteTaskDto RemoteTaskDto(string name, string queueName, string bee, RemoteTaskStatus status, TaskParameters start, TaskDto state)
             => new RemoteTaskDto
             {
                 Id = Guid.NewGuid(),
                 Name = name,
                 BeeAddress = bee,
-                QueueName = queueName,
+                Colony = queueName,
                 BeeState = state,
                 Parameters = start,
                 Status = status,
@@ -431,25 +431,25 @@ namespace Application.Tests.Beehive
 
         public static bool Check(
             this List<RemoteTaskDto> list,
-            string name, string queueName, string beeAddress, string command,
+            string name, string colony, string beeAddress, string command,
             Guid taskId, RemoteTaskStatus status,
             TaskStatus? taskStatus = null, double? progress = null)
         {
             var update = list.FirstOrDefault(p => p.Name == name);
-            update.Check(name, queueName, beeAddress, command, taskId, status, taskStatus, progress);
+            update.Check(name, colony, beeAddress, command, taskId, status, taskStatus, progress);
             list.Remove(update);
             return true;
         }
 
         public static bool Check(
             this RemoteTaskDto expected, 
-            string name, string queueName, string beeAdress, string command,
+            string name, string colony, string beeAdress, string command,
             Guid taskId, RemoteTaskStatus status, 
             TaskStatus? taskStatus = null, double? progress = null)
         {
             var clone = expected.DeepCopy();
             clone.Name = name;
-            clone.QueueName = queueName;
+            clone.Colony = colony;
             clone.BeeAddress = beeAdress;
             clone.Parameters.Command = command;
             clone.Status = status;
@@ -473,7 +473,7 @@ namespace Application.Tests.Beehive
 
             Assert.Equal(expected.Id, actual.Id);
             Assert.Equal(expected.Name, actual.Name);
-            Assert.Equal(expected.QueueName, actual.QueueName);
+            Assert.Equal(expected.Colony, actual.Colony);
             Assert.Equal(expected.BeeAddress, actual.BeeAddress);
             Assert.Equal(expected.Status, actual.Status);
             expected.Parameters.Check(actual.Parameters);

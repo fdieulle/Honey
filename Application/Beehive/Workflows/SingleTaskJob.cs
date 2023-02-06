@@ -7,24 +7,24 @@ namespace Application.Beehive.Workflows
 {
     public class SingleTaskJob : Job<SingleTaskJobParameters, SingleTaskJobDto>
     {
-        private readonly Queue _queue;
+        private readonly Colony _colony;
         private readonly ITaskTracker _tracker;
         private IDisposable _subscription;
 
-        public SingleTaskJob(SingleTaskJobParameters parameters, Queue queue, ITaskTracker tracker, IBeehiveDb db)
+        public SingleTaskJob(SingleTaskJobParameters parameters, Colony colony, ITaskTracker tracker, IBeehiveDb db)
             : base(parameters, db)
         {
             Dto.Parameters = parameters.Task ?? new TaskParameters();
-            _queue = queue;
+            _colony = colony;
             _tracker = tracker;
 
             db.CreateJob(Dto);
         }
 
-        public SingleTaskJob(SingleTaskJobDto dto, Queue queue, ITaskTracker tracker, IBeehiveDb db)
+        public SingleTaskJob(SingleTaskJobDto dto, Colony colony, ITaskTracker tracker, IBeehiveDb db)
             : base(dto, db) 
         {
-            _queue = queue;
+            _colony = colony;
             _tracker = tracker;
 
             if (dto.TaskId != Guid.Empty)
@@ -49,7 +49,7 @@ namespace Application.Beehive.Workflows
             }
 
             Update(JobStatus.CancelRequested);
-            _queue.CancelTask(Dto.TaskId);
+            _colony.CancelTask(Dto.TaskId);
         }
 
         public override void Recover()
@@ -57,7 +57,7 @@ namespace Application.Beehive.Workflows
             if (!Status.CanRecover()) return;
 
             _subscription?.Dispose();
-            _queue.DeleteTask(Dto.TaskId);
+            _colony.DeleteTask(Dto.TaskId);
 
             StartTask();
         }
@@ -68,20 +68,20 @@ namespace Application.Beehive.Workflows
 
             Update(JobStatus.DeleteRequested);
 
-            _queue.DeleteTask(Dto.TaskId);
+            _colony.DeleteTask(Dto.TaskId);
         }
 
         private void StartTask()
         {
-            if (_queue == null)
+            if (_colony == null)
             {
-                Update(JobStatus.Error); // TODO: Mention that the queue doesn't exist.
+                Update(JobStatus.Error); // TODO: Mention that the colony doesn't exist.
                 return;
             }
 
             Update(JobStatus.Running);
 
-            Dto.TaskId = _queue.StartTask(Dto.Name, Dto.Parameters);
+            Dto.TaskId = _colony.StartTask(Dto.Name, Dto.Parameters);
             if (Dto.TaskId == Guid.Empty)
             {
                 Update(JobStatus.Error); // TODO: Mention that the task failed to start.

@@ -2,8 +2,8 @@
 
 namespace Domain.Entities
 {
-    // Todo: Add a technical id on the queue
-    public class QueueEntity
+    // Todo: Add a technical id on the colony
+    public class ColonyEntity
     {
         public string Name { get; set; }
 

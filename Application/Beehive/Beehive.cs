@@ -9,21 +9,21 @@ namespace Application.Beehive
 {
     public class Beehive : IBeehive
     {
-        private readonly QueueProvider _queueProvider;
+        private readonly ColonyProvider _colonyProvider;
         private readonly ITaskTracker _taskTracker;
         private readonly IBeehiveDb _db;
         private readonly Dictionary<string, IJobFactory> _factories = new Dictionary<string, IJobFactory>();
         private readonly Dictionary<Guid, Workflow> _workflows = new Dictionary<Guid, Workflow>();
 
-        public Beehive(QueueProvider queueProvider, ITaskTracker taskTracker, IBeehiveDb db)
+        public Beehive(ColonyProvider colonyProvider, ITaskTracker taskTracker, IBeehiveDb db)
         {
-            _queueProvider = queueProvider;
+            _colonyProvider = colonyProvider;
             _taskTracker = taskTracker;
             _db = db;
 
             foreach (var entity in _db.FetchWorkflows())
             {
-                var workflow = new Workflow(entity, GetJobFactory(entity.QueueName), db);
+                var workflow = new Workflow(entity, GetJobFactory(entity.Colony), db);
                 _workflows[entity.Id] = workflow;
                 workflow.Deleted += OnWorkflowDeleted;
             }
@@ -31,7 +31,7 @@ namespace Application.Beehive
 
         public Guid Execute(WorkflowParameters parameters)
         {
-            var factory = GetJobFactory(parameters.QueueName);
+            var factory = GetJobFactory(parameters.Colony);
             var workflow = new Workflow(parameters, factory, _db);
             workflow.Deleted += OnWorkflowDeleted;
 
@@ -54,8 +54,8 @@ namespace Application.Beehive
             }
         }
 
-        public Guid ExecuteTask(string name, string queueName, TaskParameters task) 
-            => Execute(new WorkflowParameters { Name = name, QueueName = queueName, RootJob = new SingleTaskJobParameters { Name = name, Task = task } });
+        public Guid ExecuteTask(string name, string colony, TaskParameters task) 
+            => Execute(new WorkflowParameters { Name = name, Colony = colony, RootJob = new SingleTaskJobParameters { Name = name, Task = task } });
 
         public bool Cancel(Guid id)
         {
@@ -95,14 +95,14 @@ namespace Application.Beehive
             }
         }
 
-        private IJobFactory GetJobFactory(string queueName)
+        private IJobFactory GetJobFactory(string colonyName)
         {
             lock (_factories)
             {
-                if (!_factories.TryGetValue(queueName, out var factory))
+                if (!_factories.TryGetValue(colonyName, out var factory))
                 {
-                    var queue = _queueProvider.GetQueue(queueName);
-                    _factories.Add(queueName, factory = new JobFactory(queue, _taskTracker, _db));
+                    var colony = _colonyProvider.GetColony(colonyName);
+                    _factories.Add(colonyName, factory = new JobFactory(colony, _taskTracker, _db));
                 }
 
                 return factory;
@@ -111,8 +111,8 @@ namespace Application.Beehive
 
         public List<RemoteTaskDto> GetTasks()
         {
-            return _queueProvider.GetQueues()
-                .Select(p => _queueProvider.GetQueue(p.Name))
+            return _colonyProvider.GetColonies()
+                .Select(p => _colonyProvider.GetColony(p.Name))
                 .Where(q => q != null)
                 .SelectMany(p => p.GetAllTasks())
                 .ToList();

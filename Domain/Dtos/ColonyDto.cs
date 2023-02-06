@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Dtos
 {
-    public class QueueDto
+    public class ColonyDto
     {
         [Required]
         public string Name { get; set; }
@@ -12,9 +12,9 @@ namespace Domain.Dtos
 
         public IEnumerable<string> Bees { get; set; }
 
-        public QueueDto Clone()
+        public ColonyDto Clone()
         {
-            var clone = (QueueDto)MemberwiseClone();
+            var clone = (ColonyDto)MemberwiseClone();
             if (Bees != null)
                 clone.Bees = new List<string>(Bees);
             return clone;

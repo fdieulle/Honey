@@ -21,8 +21,8 @@ namespace Beehive.Controllers
             => _beehive.Execute(parameters);
 
         [HttpPost("ExecuteTask")]
-        public Guid ExecuteTask(string name, string queue, TaskParameters task)
-            => _beehive.ExecuteTask(name, queue, task);
+        public Guid ExecuteTask(string name, string colony, TaskParameters task)
+            => _beehive.ExecuteTask(name, colony, task);
 
         [HttpPost("Cancel")]
         public bool Cancel(Guid id)
