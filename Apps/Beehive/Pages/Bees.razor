@@ -51,7 +51,9 @@
     <Column Title="Active" Field="@context.IsUp">
         <Switch Value="@context.IsUp" Disabled />
     </Column>
-    <Column Title="Name" @bind-Field="@context.Address" Sortable />
+    <Column Title="Name" Field="@context.Address" Sortable>
+        <a href="@($"{context.Address}/swagger/index.html")" target="_blank">@context.Address</a>
+    </Column>
     <Column Title="Cores %" @bind-Field="@context.PercentFreeCores" Sortable>
         <Progress Percent="@(Math.Round(100.0 - context.PercentFreeCores))" Type=ProgressType.Line StrokeColor=@GetColor(context.PercentFreeCores) />
     </Column>
