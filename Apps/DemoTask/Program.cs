@@ -29,7 +29,7 @@ if (beeStr == null && taskIdStr == null)
     Environment.Exit(-1);
 }
 
-var bee = new BeeClient(beeStr);
+var bee = new Flower(beeStr);
 var taskId = Guid.Parse(taskIdStr ?? "");
 
 Log($"Parsed task Id: {taskId}");

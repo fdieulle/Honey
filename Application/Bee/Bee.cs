@@ -9,7 +9,7 @@ using Domain.Dtos;
 
 namespace Application.Bee
 {
-    public class Bee : IBee, IBeeClient, IDisposable
+    public class Bee : IBee, IFlower, IDisposable
     {
         private const int WATCH_DOG_PERIOD = 5000;
 

@@ -1,4 +1,5 @@
-﻿using Domain.Dtos;
+﻿using Application;
+using Domain.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -7,7 +8,7 @@ namespace Bee.Controllers
     // TODO: Rename to flower ?
     [ApiController]
     [Route("[controller]")]
-    public class FlowerController
+    public class FlowerController : IFlower
     {
         private readonly Application.Bee.Bee _bee;
         private readonly ILogger<FlowerController> _logger;

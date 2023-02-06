@@ -7,10 +7,10 @@ using Application;
 
 namespace Infrastructure
 {
-    public class BeeClient : IBeeClient
+    public class Flower : IFlower
     {
         private readonly HttpClient _client = new HttpClient();
-        public BeeClient(string address)
+        public Flower(string address)
         {
             _client.BaseAddress = new Uri(address);
             _client.DefaultRequestHeaders.Accept.Clear();
@@ -20,7 +20,7 @@ namespace Infrastructure
 
         public void UpdateTask(TaskStateDto dto)
         {
-            _client.PostAsJsonAsync("BeeClient/UpdateTask", dto).Wait();
+            _client.PostAsJsonAsync("Flower/UpdateTask", dto).Wait();
         }
 
         public void UpdateTask(Guid taskId, double progressPercent, DateTime expectedEndTime = default, string message = null)

@@ -44,9 +44,9 @@ namespace Application
 
         #endregion
 
-        public static void UpdateTask(this IBeeClient bee, Guid taskId, double progressPercent, DateTime expectedEndTime, string message = null)
+        public static void UpdateTask(this IFlower flower, Guid taskId, double progressPercent, DateTime expectedEndTime, string message = null)
         {
-            bee.UpdateTask(new TaskStateDto
+            flower.UpdateTask(new TaskStateDto
             {
                 TaskId = taskId,
                 ProgressPercent = progressPercent,

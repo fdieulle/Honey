@@ -19,7 +19,7 @@ namespace Application
         BeeResourcesDto GetResources();
     }
 
-    public interface IBeeClient
+    public interface IFlower
     {
         void UpdateTask(TaskStateDto state);
     }
