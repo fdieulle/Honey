@@ -24,6 +24,6 @@
             => status.IsFinal() && status != JobStatus.Completed && status != JobStatus.Deleted;
 
         public static bool CanDelete(this JobStatus status)
-                    => status.IsFinal() && status != JobStatus.Deleted;
+            => status.IsFinal() && status != JobStatus.Deleted;
     }
 }
