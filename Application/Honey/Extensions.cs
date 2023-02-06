@@ -8,6 +8,7 @@ using System.Linq;
 using Application.Honey;
 using Application.Beehive.Workflows;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Application.Honey
 {
@@ -79,6 +80,9 @@ namespace Application.Honey
         private static void Update(this HostedJobViewModel vm, SingleTaskJobDto dto, Dictionary<Guid, RemoteTaskDto> tasks)
         {
             vm.Type = dto.Parameters.Command;
+            if (!string.IsNullOrEmpty(vm.Type))
+                vm.Type = Path.GetFileName(vm.Type);
+
             if (!tasks.TryGetValue(dto.TaskId, out var task))
                 return;
 
