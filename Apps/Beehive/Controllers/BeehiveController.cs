@@ -5,7 +5,7 @@ using Application;
 using Domain.Dtos.Workflows;
 using System;
 
-namespace Beehive.Controllers
+namespace Honey.Controllers
 {
     [ApiController]
     [Route("[controller]")]

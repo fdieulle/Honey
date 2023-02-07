@@ -3,7 +3,7 @@ using Domain.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 
-namespace Beehive.Controllers
+namespace Honey.Controllers
 {
     [ApiController]
     [Route("[controller]")]

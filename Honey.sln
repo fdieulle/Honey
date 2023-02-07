@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{87E144A0-C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bee", "Apps\Bee\Bee.csproj", "{50AEEA54-95F6-4433-A045-A494B624AF6A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Beehive", "Apps\Beehive\Beehive.csproj", "{C4037084-2234-4B1F-8FAF-51C87EC7582E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Honey", "Apps\Beehive\Honey.csproj", "{C4037084-2234-4B1F-8FAF-51C87EC7582E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application.Tests", "Tests\Application.Tests\Application.Tests.csproj", "{90EF94E3-B6D7-434B-831B-0E857304D54E}"
 EndProject

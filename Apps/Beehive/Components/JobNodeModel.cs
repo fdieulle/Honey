@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System;
 using System.Linq;
 
-namespace Beehive.Components
+namespace Honey.Components
 {
     public class JobNodeModel : NodeModel
     {

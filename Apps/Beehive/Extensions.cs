@@ -2,7 +2,7 @@
 using Domain.Dtos.Workflows;
 using Domain.ViewModels;
 
-namespace Beehive
+namespace Honey
 {
     public static class Extensions
     {
