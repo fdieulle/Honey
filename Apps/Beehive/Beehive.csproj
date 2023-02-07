@@ -8,6 +8,8 @@
     <PackageReference Include="AntDesign" Version="0.10.5" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
     <PackageReference Include="Z.Blazor.Diagrams" Version="2.1.6" />
+	<PackageReference Include="Microsoft.AspNetCore.Hosting.WindowsServices" Version="7.0.2" />
+	<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>

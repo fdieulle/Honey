@@ -12,9 +12,11 @@ namespace Bee
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseWindowsService(options => options.ServiceName = "Bee")
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseStartup<Startup>()
+                        .UseUrls("http://*:5000;https://*:5001");
                 });
     }
 }
