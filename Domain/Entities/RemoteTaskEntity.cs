@@ -10,7 +10,7 @@ namespace Domain.Entities
         public string Name { get; set; }
         public string BeeAddress { get; set; }
 
-        public string Colony { get; set; }
+        public string Beehive { get; set; }
 
         public string Command { get; set; }
         public string Arguments { get; set; }

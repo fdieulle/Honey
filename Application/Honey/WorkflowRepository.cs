@@ -9,7 +9,7 @@ namespace Application.Honey
 {
     public class WorkflowRepository : IDisposable
     {
-        private readonly Beehive.Beehive _beehive;
+        private readonly Colony.Colony _colony;
         private readonly ITimer _timer;
         private readonly Repository<Guid, WorkflowViewModel, WorkflowDto> _workflows = new Repository<Guid, WorkflowViewModel, WorkflowDto>(
             p => p.Id, p => p.ToViewModel(), (dto, vm) => vm.Update(dto));
@@ -21,9 +21,9 @@ namespace Application.Honey
 
         public IRepository<WorkflowViewModel> Workflows => _workflows;
 
-        public WorkflowRepository(Beehive.Beehive behive, ITimer timer)
+        public WorkflowRepository(Colony.Colony colony, ITimer timer)
         {
-            _beehive = behive;
+            _colony = colony;
             _timer = timer;
 
             Refresh();
@@ -42,9 +42,9 @@ namespace Application.Honey
 
         public void Refresh()
         {
-            var workflows = _beehive.GetWorkflows();
-            var jobs = _beehive.GetJobs();
-            var tasks = _beehive.GetTasks();
+            var workflows = _colony.GetWorkflows();
+            var jobs = _colony.GetJobs();
+            var tasks = _colony.GetTasks();
 
             _tasks.Reload(tasks);
             _jobs.Reload(jobs);

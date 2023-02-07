@@ -5,12 +5,12 @@
 @using AntDesign.TableModels
 @using Domain.Dtos
 @using Application
-@using Application.Beehive
+@using Application.Colony
 @using Domain.Dtos.Workflows
 @using Domain.ViewModels;
 @using Application.Honey;
 
-@inject Beehive Beehive
+@inject Colony Colony
 @inject WorkflowRepository WorkflowRepository
 @inject NavigationManager Navigation
 @inject ITimer Timer
@@ -22,7 +22,7 @@
     OnRowClick="OnRowClick" RowClassName="@(x => x.Data.ToCssClass())">
     
     <Column Title="Name" @bind-Field="@context.Name" Sortable Filterable />
-    <Column Title="Colony" @bind-Field="@context.Colony" Sortable Filterable />
+    <Column Title="Beehive" @bind-Field="@context.Beehive" Sortable Filterable />
     <Column Title="Progress" @bind-Field="@context.Progress" Sortable>
         <Progress Percent="@context.Progress" Status="@context.ToProgressStatus()" Format="_progressFormat" />
     </Column>
@@ -69,19 +69,19 @@
     private void Cancel(Guid id)
     {
         _modalState.Purpose = "cancel";
-        _modalState.Show(async () => await Beehive.CancelAsync(id));
+        _modalState.Show(async () => await Colony.CancelAsync(id));
     }
 
     private void Recover(Guid id)
     {
         _modalState.Purpose = "recover";
-        _modalState.Show(async () => await Beehive.RecoverAsync(id));
+        _modalState.Show(async () => await Colony.RecoverAsync(id));
     }
 
     private void Delete(Guid id)
     {
         _modalState.Purpose = "delete";
-        _modalState.Show(async () => await Beehive.DeleteAsync(id));
+        _modalState.Show(async () => await Colony.DeleteAsync(id));
     }
 
     private void OnTimerTick() => InvokeAsync(StateHasChanged);

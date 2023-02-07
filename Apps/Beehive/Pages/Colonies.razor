@@ -3,24 +3,24 @@
 @using AntDesign
 @using AntDesign.TableModels
 @using Application
-@using Application.Beehive
+@using Application.Colony
 @using Domain.Dtos
 
-@inject ColonyProvider ColonyProvider
+@inject BeehiveProvider BeehiveProvider
 @inject BeeKeeper BeeKeeper
 
 <h3>Colonies</h3>
 
 <Space>
-    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@NewColony">New</Button></SpaceItem>
+    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@NewBeehive">New</Button></SpaceItem>
 </Space>
-<Modal Title="New Colony"
+<Modal Title="New Beehive"
        Visible="@_isVisible"
        Closable="false"
        Footer="@null">
     <Form Model="@_model"
-          OnFinish="@AddColony"
-          OnFinishFailed="@AddColonyFailed"
+          OnFinish="@AddBeehive"
+          OnFinishFailed="@AddBeehiveFailed"
           Layout="Vertical">
         <FormItem Label="Name">
             <Input @bind-Value="@context.Name" />
@@ -28,7 +28,7 @@
         <FormItem Label="Max number of parallel tasks" Help="A value <= 0 means no restrictions.">
             <AntDesign.InputNumber @bind-Value="@context.MaxParallelTasks" />
         </FormItem>
-        <FormItem Label="Bees" Help="No selection means allowing the colony to run on all bees.">
+        <FormItem Label="Bees" Help="No selection means allowing the beehive to run on all bees.">
             <Select Mode="multiple"
                     DataSource="@_bees"
                     @bind-Values="@context.Bees"
@@ -54,14 +54,14 @@
         </Row>
     </Form>
 </Modal>
-<AntDesign.Table TItem="ColonyVM" DataSource="@_colonies" OnExpand="OnRowExpand">
+<AntDesign.Table TItem="BeehiveVM" DataSource="@_beehives" OnExpand="OnRowExpand">
     <RowTemplate>
         <Column Title="Name" Field="@context.Name" />
         <Column Title="Max Parallel" Field="@context.MaxParallelTasks" />
         <Column Title="Nb Bees" Field="@Count(context.Bees)" />
         <ActionColumn>
             <Space>
-                <SpaceItem><Button Danger OnClick="()=>RemoveColony(context.Name)">Delete</Button></SpaceItem>
+                <SpaceItem><Button Danger OnClick="()=>RemoveBeehive(context.Name)">Delete</Button></SpaceItem>
             </Space>
         </ActionColumn>
     </RowTemplate>
@@ -92,17 +92,17 @@
 
 @code {
     bool _isVisible;
-    ColonyDto _model = new ColonyDto();
-    List<ColonyVM> _colonies = new List<ColonyVM>();
+    BeehiveDto _model = new BeehiveDto();
+    List<BeehiveVM> _beehives = new List<BeehiveVM>();
     List<BeeDto> _bees = new List<BeeDto>();
 
     protected async override Task OnInitializedAsync()
     {
         _bees = await BeeKeeper.GetBeesAsync();
-        _colonies = ColonyProvider.GetColonies().Select(p => new ColonyVM(p)).ToList();
+        _beehives = BeehiveProvider.GetBeehives().Select(p => new BeehiveVM(p)).ToList();
     }
 
-    private void NewColony()
+    private void NewBeehive()
     {
         _isVisible = true;
     }
@@ -112,29 +112,29 @@
         _isVisible = false;
     }
 
-    public void AddColony(EditContext context)
+    public void AddBeehive(EditContext context)
     {
-        ColonyProvider.CreateColony(_model);
+        BeehiveProvider.CreateBeehive(_model);
         _isVisible = false;
 
-        _colonies = ColonyProvider.GetColonies().Select(p => new ColonyVM(p)).ToList();
+        _beehives = BeehiveProvider.GetBeehives().Select(p => new BeehiveVM(p)).ToList();
         StateHasChanged();
     }
 
-    public void AddColonyFailed(EditContext context)
+    public void AddBeehiveFailed(EditContext context)
     {
 
     }
 
-    private void RemoveColony(string name)
+    private void RemoveBeehive(string name)
     {
-        ColonyProvider.DeleteColony(name);
+        BeehiveProvider.DeleteBeehive(name);
 
-        _colonies = ColonyProvider.GetColonies().Select(p => new ColonyVM(p)).ToList();
+        _beehives = BeehiveProvider.GetBeehives().Select(p => new BeehiveVM(p)).ToList();
         StateHasChanged();
     }
 
-    private async Task OnRowExpand(RowData<ColonyVM> rowData)
+    private async Task OnRowExpand(RowData<BeehiveVM> rowData)
     {
         var bees = await BeeKeeper.GetBeesAsync() ?? new List<BeeDto>();
 
@@ -191,9 +191,9 @@
         }
     }
 
-    public class ColonyVM : ColonyDto
+    public class BeehiveVM : BeehiveDto
     {
-        public ColonyVM(ColonyDto dto)
+        public BeehiveVM(BeehiveDto dto)
         {
             Name = dto.Name;
             MaxParallelTasks = dto.MaxParallelTasks;

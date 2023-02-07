@@ -8,7 +8,7 @@ namespace Domain.Entities.Workflows
 
         public string Name { get; set; }
 
-        public string Colony { get; set; }
+        public string Beehive { get; set; }
 
         public Guid RootJobId { get; set; }
     }

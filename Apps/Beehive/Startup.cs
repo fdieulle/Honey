@@ -1,4 +1,4 @@
-using Application.Beehive;
+using Application.Colony;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,12 +26,12 @@ namespace Honey
             services.AddServerSideBlazor();
             services.AddAntDesign();
 
-            services.ConfigureBeehive(Configuration);
+            services.ConfigureColony(Configuration);
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Beehive", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Colony", Version = "v1" });
             });
         }
 
@@ -42,7 +42,7 @@ namespace Honey
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Beehive v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Colony v1"));
             }
             else
             {

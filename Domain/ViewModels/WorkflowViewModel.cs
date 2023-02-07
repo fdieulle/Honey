@@ -7,7 +7,7 @@ namespace Domain.ViewModels
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public string Colony { get; set; }
+        public string Beehive { get; set; }
 
         public JobStatus Status { get; set; }
         public DateTime? StartTime { get; set; }

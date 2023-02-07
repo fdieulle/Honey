@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using System.IO;
 using Application;
 using Application.Bee;
-using Infrastructure.Beehive;
-using Application.Beehive;
+using Infrastructure.Colony;
+using Application.Colony;
 using Application.Honey;
 
 namespace Infrastructure
@@ -31,17 +31,17 @@ namespace Infrastructure
             services.AddSingleton<Application.Bee.Bee>();
         }
 
-        public static void ConfigureBeehive(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureColony(this IServiceCollection services, IConfiguration configuration)
         {
             #region Database
 
             var workingFolder = configuration["WorkingFolder"] ?? ".";
             var dataFolder = Path.Combine(workingFolder, "data").CreateFolder();
-            var dbPath = Path.Combine(dataFolder, "Beehive.db");
+            var dbPath = Path.Combine(dataFolder, "Colony.db");
 
             services.AddEntityFrameworkSqlite()
-                .AddDbContextFactory<BeehiveDbContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
-            services.AddSingleton<IBeehiveDb, BeehiveDb>();
+                .AddDbContextFactory<ColonyDbContext>(options => options.UseSqlite($"Data Source=\"{dbPath}\""));
+            services.AddSingleton<IColonyDb, ColonyDb>();
 
             #endregion
 
@@ -51,8 +51,8 @@ namespace Infrastructure
             services.AddSingleton<ITaskTracker>(taskTracker);
             services.AddSingleton(taskTracker);
             services.AddSingleton<BeeKeeper>();
-            services.AddSingleton<ColonyProvider>();
-            services.AddSingleton<Application.Beehive.Beehive>();
+            services.AddSingleton<BeehiveProvider>();
+            services.AddSingleton<Application.Colony.Colony>();
             services.AddSingleton<Poller>();
 
             services.AddSingleton<WorkflowRepository>();

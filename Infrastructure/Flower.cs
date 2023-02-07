@@ -2,7 +2,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http;
 using Domain.Dtos;
-using Infrastructure.Beehive;
+using Infrastructure.Colony;
 using Application;
 
 namespace Infrastructure

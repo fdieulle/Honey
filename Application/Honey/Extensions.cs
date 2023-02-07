@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Application.Honey;
-using Application.Beehive.Workflows;
+using Application.Colony.Workflows;
 using System.Threading.Tasks;
 using System.IO;
 
@@ -20,7 +20,7 @@ namespace Application.Honey
         {
             Id = dto.Id,
             Name = dto.Name,
-            Colony = dto.Colony,
+            Beehive = dto.Beehive,
         };
 
         public static void Update(this WorkflowViewModel workflow, JobViewModel rootJob)
@@ -37,7 +37,7 @@ namespace Application.Honey
         public static void Update(this WorkflowViewModel vm, WorkflowDto dto)
         {
             vm.Name = dto.Name;
-            vm.Colony = dto.Colony;
+            vm.Beehive = dto.Beehive;
         }
 
         #endregion

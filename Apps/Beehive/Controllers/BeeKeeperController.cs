@@ -1,4 +1,4 @@
-﻿using Application.Beehive;
+﻿using Application.Colony;
 using Domain.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;

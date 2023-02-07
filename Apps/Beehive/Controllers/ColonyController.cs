@@ -1,44 +1,51 @@
-﻿using Application;
-using Application.Beehive;
-using Domain.Dtos;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using Domain.Dtos;
+using Application;
+using Domain.Dtos.Workflows;
+using System;
 
 namespace Honey.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ColonyController : Controller, IColonyProvider
+    public class ColonyController : Controller, IColony
     {
-        private readonly ColonyProvider _colonyProvider;
+        private readonly Application.Colony.Colony _colony;
 
-        public ColonyController(ColonyProvider colonyProvider)
-        {
-            _colonyProvider = colonyProvider;
-        }
+        public ColonyController(Application.Colony.Colony colony)
+            => _colony = colony;
 
-        [HttpGet("GetColonies")]
-        public IEnumerable<ColonyDto> GetColonies()
-        {
-            return _colonyProvider.GetColonies();
-        }
+        [HttpPost("Execute")]
+        public Guid Execute(WorkflowParameters parameters)
+            => _colony.Execute(parameters);
 
-        [HttpPost("CreateColony")]
-        public bool CreateColony(ColonyDto colony)
-        {
-            return _colonyProvider.CreateColony(colony);
-        }
+        [HttpPost("ExecuteTask")]
+        public Guid ExecuteTask(string name, string beehive, TaskParameters task)
+            => _colony.ExecuteTask(name, beehive, task);
 
-        [HttpPut("UpdateColony")]
-        public bool UpdateColony(ColonyDto colony)
-        {
-            return _colonyProvider.UpdateColony(colony);
-        }
+        [HttpPost("Cancel")]
+        public bool Cancel(Guid id)
+            => _colony.Cancel(id);
 
-        [HttpDelete("DeleteColony")]
-        public bool DeleteColony(string name)
-        {
-            return _colonyProvider.DeleteColony(name);
-        }
+        [HttpPost("Recover")]
+        public bool Recover(Guid id)
+            => _colony.Recover(id);
+
+        [HttpPost("Delete")]
+        public bool Delete(Guid id)
+            => _colony.Delete(id);
+
+        [HttpGet("GetTasks")]
+        public List<RemoteTaskDto> GetTasks()
+            => _colony.GetTasks();
+
+        [HttpGet("GetJobs")]
+        public List<JobDto> GetJobs()
+            => _colony.GetJobs();
+
+        [HttpGet("GetWorkflows")]
+        public List<WorkflowDto> GetWorkflows()
+            => _colony.GetWorkflows();
     }
 }

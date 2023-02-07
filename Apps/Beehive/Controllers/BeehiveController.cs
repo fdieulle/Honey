@@ -1,51 +1,44 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+﻿using Application;
+using Application.Colony;
 using Domain.Dtos;
-using Application;
-using Domain.Dtos.Workflows;
-using System;
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace Honey.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class BeehiveController : Controller, IBeehive
+    public class BeehiveController : Controller, IBeehiveProvider
     {
-        private readonly Application.Beehive.Beehive _beehive;
+        private readonly BeehiveProvider _beehiveProvider;
 
-        public BeehiveController(Application.Beehive.Beehive beehive)
-            => _beehive = beehive;
+        public BeehiveController(BeehiveProvider beehiveProvider)
+        {
+            _beehiveProvider = beehiveProvider;
+        }
 
-        [HttpPost("Execute")]
-        public Guid Execute(WorkflowParameters parameters)
-            => _beehive.Execute(parameters);
+        [HttpGet("GetBeehives")]
+        public IEnumerable<BeehiveDto> GetBeehives()
+        {
+            return _beehiveProvider.GetBeehives();
+        }
 
-        [HttpPost("ExecuteTask")]
-        public Guid ExecuteTask(string name, string colony, TaskParameters task)
-            => _beehive.ExecuteTask(name, colony, task);
+        [HttpPost("CreateBeehive")]
+        public bool CreateBeehive(BeehiveDto beehive)
+        {
+            return _beehiveProvider.CreateBeehive(beehive);
+        }
 
-        [HttpPost("Cancel")]
-        public bool Cancel(Guid id)
-            => _beehive.Cancel(id);
+        [HttpPut("UpdateBeehive")]
+        public bool UpdateBeehive(BeehiveDto beehive)
+        {
+            return _beehiveProvider.UpdateBeehive(beehive);
+        }
 
-        [HttpPost("Recover")]
-        public bool Recover(Guid id)
-            => _beehive.Recover(id);
-
-        [HttpPost("Delete")]
-        public bool Delete(Guid id)
-            => _beehive.Delete(id);
-
-        [HttpGet("GetTasks")]
-        public List<RemoteTaskDto> GetTasks()
-            => _beehive.GetTasks();
-
-        [HttpGet("GetJobs")]
-        public List<JobDto> GetJobs()
-            => _beehive.GetJobs();
-
-        [HttpGet("GetWorkflows")]
-        public List<WorkflowDto> GetWorkflows()
-            => _beehive.GetWorkflows();
+        [HttpDelete("DeleteBeehive")]
+        public bool DeleteBeehive(string name)
+        {
+            return _beehiveProvider.DeleteBeehive(name);
+        }
     }
 }
