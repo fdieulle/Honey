@@ -13,7 +13,7 @@ namespace Honey.Controllers
 
         public BeeKeeperController(BeeKeeper beeKeeper) => _beeKeeper = beeKeeper;
 
-        [HttpGet("Bees")]
+        [HttpGet("GetBees")]
         public List<BeeDto> GetBees()
             => _beeKeeper.GetBees();
 

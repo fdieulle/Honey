@@ -37,9 +37,9 @@ namespace Application.Colony.Workflows
 
             if (job.Status == JobStatus.Completed)
                 Start(Jobs.FirstOrDefault(p => p.CanStart()));
-            else if (job.Status == JobStatus.Error)
-                foreach (var next in Jobs.Where(p => p.CanStart()))
-                    next.Cancel();
+            //else if (job.Status == JobStatus.Error)
+            //    foreach (var next in Jobs.Where(p => p.CanStart()))
+            //        next.Cancel();
 
         }
 
