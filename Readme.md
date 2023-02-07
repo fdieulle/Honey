@@ -10,22 +10,22 @@ Honey provides a web API to the end user as well as a web application
 on which you can follow and monitor workflow progresses and 
 the state of your distributed platform.
 
-oney is a multi-users platform. To segregate the platform resources 
-between users, each workflow is attached to a Colony.
+Honey is a multi-users platform. To segregate the platform resources 
+between users, each workflow is attached to a Beehive.
 
-## Beehive
+## Colony
 
-Beehive hosts Colonies of Bees and manage their workflows.
+A Colony hosts Bees and split them between Beehives to manage their workflows.
 
-### Colony
+### Beehive
 
-Colonies segregate Bees resources. For a multi users experience it is 
+Beehives segregate Bees resources. For a multi users experience it is 
 important to not compete on the same resources and prevent an user to 
 consume all resources while others get their jobs pending.
 
-Bees are organized in colonies. A Bee can be part of multiple Colonies. 
-A workflow have to be attached to a single Colony.
-A workflow cannot be executed on a Bee which is not part of that Colony.
+Bees are organized in Beehives. A Bee can be part of multiple Beehives. 
+A workflow have to be attached to a single Beehive.
+A workflow cannot be executed on a Bee which is not part of that Beehive.
 
 ### Workflow
 
@@ -67,11 +67,11 @@ they won't start.
 ## Bees
 
 A Bee is a services or a daemon deployed on a machine. Once it is
-enrolled into a Beehive, the machine's resources are scanned and 
-made available for that Beehive.
+enrolled into a Colony, the machine's resources are scanned and 
+made available for that Colony.
 
 The main resource scanned is the number of CPUs. It will condition
-the Bee capacity for its Beehive. The disk space and the memory are
+the Bee capacity for its Colony. The disk space and the memory are
 also monitored. Those last two metrics help the user to choose or not 
 a Bee for a given task, which could consumes too much memory or disk 
 than available.
@@ -86,7 +86,7 @@ variable `BEE_TASK_FOLDER`.
 A Bee provides a Web API to report the state and progress of a 
 running task. The end point is named Flower ([more details here](#flower)).
 The API provides as well others endpoints about the Bee state and resources.
-But those endpoints are mostly used by the Beehive on which the Bee
+But those endpoints are mostly used by the Colony on which the Bee
 works for.
 
 ## Flower
