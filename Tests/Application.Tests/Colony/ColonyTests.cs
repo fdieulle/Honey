@@ -153,7 +153,7 @@ namespace Application.Tests.Colony
         }
 
         [Fact]
-        public void TestExecuteTasksInMultipleColonies()
+        public void TestExecuteTasksInMultipleBeehives()
         {
             var database = Substitute.For<IColonyDb>();
             var container = Substitute.For<IBeeFactory>();
