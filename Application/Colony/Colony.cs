@@ -102,6 +102,8 @@ namespace Application.Colony
                 if (!_factories.TryGetValue(beehiveName, out var factory))
                 {
                     var beehive = _beehiveProvider.GetBeehive(beehiveName);
+                    if (beehive == null)
+                        beehiveName = "__NULL__";
                     _factories.Add(beehiveName, factory = new JobFactory(beehive, _taskTracker, _db));
                 }
 
