@@ -21,9 +21,12 @@
             => !status.IsFinal() && status != JobStatus.CancelRequested;
 
         public static bool CanRecover(this JobStatus status)
-            => status.IsFinal() && status != JobStatus.Completed && status != JobStatus.Deleted;
+            => status.IsFinal() && status != JobStatus.Completed && !status.IsOrWillBeDeleted();
 
         public static bool CanDelete(this JobStatus status)
-            => status.IsFinal() && status != JobStatus.Deleted;
+            => status.IsFinal() && !status.IsOrWillBeDeleted();
+
+        private static bool IsOrWillBeDeleted(this JobStatus status) 
+            => status == JobStatus.DeleteRequested || status == JobStatus.Deleted;
     }
 }

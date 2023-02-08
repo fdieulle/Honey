@@ -109,8 +109,6 @@ namespace Application.Colony.Workflows
             {
                 if (Dto.Status == JobStatus.CancelRequested)
                     return;
-                if (Dto.Status == JobStatus.DeleteRequested)
-                    return;
             }
 
             Update(status);
@@ -144,6 +142,9 @@ namespace Application.Colony.Workflows
 
             if (jobs.All(s => s.Status.IsFinal()) && jobs.Any(s => s.Status == JobStatus.Cancel))
                 return JobStatus.Cancel;
+
+            if (jobs.Any(s => s.Status == JobStatus.DeleteRequested))
+                return JobStatus.DeleteRequested;
 
             return JobStatus.Running;
         }
