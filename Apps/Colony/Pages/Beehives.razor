@@ -56,9 +56,9 @@
 </Modal>
 <AntDesign.Table TItem="BeehiveVM" DataSource="@_beehives" OnExpand="OnRowExpand">
     <RowTemplate>
-        <Column Title="Name" Field="@context.Name" />
-        <Column Title="Max Parallel" Field="@context.MaxParallelTasks" />
-        <Column Title="Nb Bees" Field="@Count(context.Bees)" />
+        <Column Title="Name" @bind-Field="@context.Name" Sortable />
+        <Column Title="Max Parallel" @bind-Field="@context.MaxParallelTasks" Sortable />
+        <Column Title="Nb Bees" Field="@Count(context.Bees)" Sortable />
         <ActionColumn>
             <Space>
                 <SpaceItem><Button Danger OnClick="()=>RemoveBeehive(context.Name)">Delete</Button></SpaceItem>
@@ -70,10 +70,10 @@
             <Column Title="OS" Field="@context.OS">
                 <Image Preview=false Width="25px" Src="@GetOSImage(context.OS)" />
             </Column>
-            <Column Title="Active" Field="@context.IsUp">
+            <Column Title="Active" @bind-Field="@context.IsUp" Sortable>
                 <Switch Value="@context.IsUp" Disabled />
             </Column>
-            <Column Title="Name" Field="@context.Address" Sortable>
+            <Column Title="Name" @bind-Field="@context.Address" Sortable>
                 <a href="@($"{context.Address}/swagger/index.html")" target="_blank">@context.Address</a>
             </Column>
             <Column Title="Cores %" @bind-Field="@context.PercentFreeCores" Sortable>

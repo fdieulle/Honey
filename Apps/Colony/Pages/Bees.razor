@@ -48,10 +48,10 @@
     <Column Title="OS" Field="@context.OS">
         <Image Preview=false Width="25px" Src="@GetOSImage(context.OS)" />
     </Column>
-    <Column Title="Active" Field="@context.IsUp">
+    <Column Title="Active" @bind-Field="@context.IsUp" Sortable>
         <Switch Value="@context.IsUp" Disabled />
     </Column>
-    <Column Title="Name" Field="@context.Address" Sortable>
+    <Column Title="Name" @bind-Field="@context.Address" Sortable>
         <a href="@($"{context.Address}/swagger/index.html")" target="_blank">@context.Address</a>
     </Column>
     <Column Title="Cores %" @bind-Field="@context.PercentFreeCores" Sortable>
