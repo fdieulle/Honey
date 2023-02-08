@@ -24,7 +24,7 @@
             => status.IsFinal() && status != JobStatus.Completed && !status.IsOrWillBeDeleted();
 
         public static bool CanDelete(this JobStatus status)
-            => status.IsFinal() && !status.IsOrWillBeDeleted();
+            => (status == JobStatus.Pending || status.IsFinal()) && !status.IsOrWillBeDeleted();
 
         private static bool IsOrWillBeDeleted(this JobStatus status) 
             => status == JobStatus.DeleteRequested || status == JobStatus.Deleted;
