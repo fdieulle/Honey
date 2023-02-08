@@ -112,6 +112,7 @@ namespace Application.Bee
 
             startInfo.EnvironmentVariables.Add("BEE_TASK_ID", Id.ToString());
             startInfo.EnvironmentVariables.Add("BEE_BASE_URI", _baseUri);
+            startInfo.EnvironmentVariables.Add("BEE_TASK_FOLDER", workingFolder);
 
             return new Process
             {
