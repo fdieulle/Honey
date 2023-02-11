@@ -24,5 +24,7 @@ namespace Domain.Dtos
             Type = type;
             Message = message;
         }
+
+        public override string ToString() => $"{Timestamp:yyyy-MM-dd HH:mm:ss} [{Type}] {Message}";
     }
 }

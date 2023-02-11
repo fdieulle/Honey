@@ -53,19 +53,16 @@ namespace Application.Bee
             }
         }
 
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length)
+        public IEnumerable<TaskMessageDto> FetchMessages(Guid id)
         {
             if (!_runningTasks.TryGetValueLocked(id, out var task))
             {
                 _logger.LogError("[{0}] Cannot find the task to fetch messages.", id);
-                return Enumerable.Empty<TaskMessageDto>();
+                yield break;
             }
 
-            if (start >= task.Messages.Count)
-                return Enumerable.Empty<TaskMessageDto>();
-
-            length = Math.Min(task.Messages.Count - start, length);
-            return task.Messages.Skip(start).Take(length);
+            while (task.Messages.TryDequeue(out var message))
+                yield return message;
         }
 
         public Guid StartTask(string command, string arguments, int nbCores = -1)

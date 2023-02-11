@@ -8,7 +8,7 @@ namespace Application
     {
         IEnumerable<TaskDto> GetTasks();
 
-        IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length);
+        IEnumerable<TaskMessageDto> FetchMessages(Guid id);
 
         Guid StartTask(string command, string arguments, int nbCores = 1);
 

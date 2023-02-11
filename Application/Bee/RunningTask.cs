@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using Domain.Dtos;
 using Domain.Entities;
 
@@ -12,8 +14,9 @@ namespace Application.Bee
     {
         private readonly Process _process;
         private readonly TaskDto _taskDto = new TaskDto();
-        private readonly List<TaskMessageDto> _messages = new List<TaskMessageDto>();
+        private readonly ConcurrentQueue<TaskMessageDto> _messages = new ConcurrentQueue<TaskMessageDto>();
         private readonly string _baseUri;
+        private readonly StreamWriter _logFile;
 
         public Guid Id { get; } = Guid.NewGuid();
 
@@ -23,7 +26,7 @@ namespace Application.Bee
 
         public string Arguments { get; }
 
-        public List<TaskMessageDto> Messages => _messages;
+        public ConcurrentQueue<TaskMessageDto> Messages => _messages;
 
         public TaskStatus Status 
         {
@@ -43,6 +46,8 @@ namespace Application.Bee
             Command = command;
             Arguments = arguments;
             WorkingFolder = Path.Combine(workingFolder, Id.ToString("N"));
+
+            _logFile = CreateLogFile(workingFolder, Id);
 
             _taskDto.Id = Id;
             if (!string.IsNullOrEmpty(command))
@@ -70,6 +75,8 @@ namespace Application.Bee
             Arguments = entity.Arguments;
             Status = entity.Status;
             WorkingFolder = entity.WorkingFolder;
+
+            _logFile = CreateLogFile(WorkingFolder, Id);
 
             _taskDto.Id = Id;
             _taskDto.StartTime = entity.StartTime;
@@ -125,7 +132,10 @@ namespace Application.Bee
         {
             if (_process == null) return;
 
-            PostMessage(MessageType.Info, $"Start job with id: {Id}");
+            PostMessage(MessageType.Info, $"Starting job ...");
+            PostMessage(MessageType.Info, $"[Id] {Id}");
+            PostMessage(MessageType.Info, $"[Command] {Command} {Arguments}");
+            PostMessage(MessageType.Info, $"[Working Forlder] {WorkingFolder}");
 
             try
             {
@@ -134,7 +144,9 @@ namespace Application.Bee
                 if (_process.Start())
                 {
                     Pid = _process.Id;
-                    
+
+                    PostMessage(MessageType.Info, $"[PID] {Pid}");
+
                     _process.BeginOutputReadLine();
                     _process.BeginErrorReadLine();
 
@@ -144,14 +156,14 @@ namespace Application.Bee
                 else
                 {
                     Status= TaskStatus.Error;
+                    PostMessage(MessageType.Exit, "Start Failed");
                     // Todo: Send start failed reason
                 }
             } 
             catch (Exception e)
             {
                 Status = TaskStatus.Error;
-                PostMessage(MessageType.Exit, $"An exception occured: {e.Message}");
-                // Todo: log the excepetion
+                PostMessage(MessageType.Exit, Format(e));
             }
         }
 
@@ -187,7 +199,7 @@ namespace Application.Bee
                     catch(Exception e)
                     {
                         Status = TaskStatus.Error;
-                        // Todo: Send message: Unable to exit properly the process with PID={Pid}, Message={e.Message}
+                        PostMessage(MessageType.Error, Format(e));
                     }
                 }
                 else Status = TaskStatus.Error;
@@ -222,14 +234,51 @@ namespace Application.Bee
 
         private void OnExited(object sender, EventArgs e) => Exit();
 
-        public void PostMessage(MessageType type, string message) 
-            => _messages.Add(new TaskMessageDto(Id, DateTime.UtcNow, type, message));
+        public void PostMessage(MessageType type, string message)
+        {
+            _messages.Enqueue(new TaskMessageDto(Id, DateTime.UtcNow, type, message));
+            
+            try {
+                _logFile.Write($"[{type}] ");
+                _logFile.Write(message);
+                _logFile.WriteLine();
+            } catch(Exception) { }
+        }
 
         public void Dispose()
         {
             Cancel();
             try { _process?.Dispose(); } catch(Exception) { }
             try { WorkingFolder.DeleteFolder(); } catch (Exception) { }
+            try { _logFile.Dispose(); } catch (Exception) { }
+        }
+
+        private static StreamWriter CreateLogFile(string workingFolder, Guid id)
+        {
+            var logFolder = Path.Combine(workingFolder, "logs").CreateFolder();
+            return new StreamWriter(new FileStream(Path.Combine(logFolder, $"{id:N}.log"), FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite));
+        }
+
+        private static string Format(Exception e)
+        {
+            var sb = new StringBuilder();
+            while(e != null)
+            {
+                sb.Append("[Message] ");
+                sb.Append(e.Message);
+                sb.AppendLine();
+                sb.Append("[Source] ");
+                sb.Append(e.Source);
+                sb.AppendLine();
+                sb.Append("[StackTrace] ");
+                sb.Append(e.StackTrace);
+                sb.AppendLine();
+                
+                sb.AppendLine();
+                e = e.InnerException;
+            }
+
+            return sb.ToString();
         }
     }
 }

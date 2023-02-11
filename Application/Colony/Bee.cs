@@ -49,7 +49,7 @@ namespace Application.Colony
 
         public IEnumerable<TaskDto> GetTasks() => _tasks.Values;
 
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length) => _proxy.FetchMessages(id, start, length);
+        public IEnumerable<TaskMessageDto> FetchMessages(Guid id) => _proxy.FetchMessages(id);
 
         public Guid StartTask(string command, string arguments, int nbCores = 1)
         {

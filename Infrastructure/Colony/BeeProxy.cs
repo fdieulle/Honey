@@ -22,12 +22,9 @@ namespace Infrastructure.Colony
         public IEnumerable<TaskDto> GetTasks() 
             => _client.GetAsync<List<TaskDto>>("Bee/GetTasks").Result;
 
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length) 
+        public IEnumerable<TaskMessageDto> FetchMessages(Guid id) 
             => _client.GetAsync<List<TaskMessageDto>>(
-                "Bee/FetchMessages", 
-                ("id", id.ToString()), 
-                ("start", start.ToString()), 
-                ("length", length.ToString())).Result;
+                "Bee/FetchMessages", ("id", id.ToString())).Result;
 
         public Guid StartTask(string command, string arguments, int nbCores = 1) 
             => _client.PostAsArgsAsync<Guid>(

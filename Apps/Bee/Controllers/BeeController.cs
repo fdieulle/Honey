@@ -27,9 +27,9 @@ namespace Bee.Controllers
         }
 
         [HttpGet("FetchMessages")]
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id, int start, int length)
+        public IEnumerable<TaskMessageDto> FetchMessages(Guid id)
         {
-            return _bee.FetchMessages(id, start, length);
+            return _bee.FetchMessages(id);
         }
 
         [HttpPost("StartTask")]
