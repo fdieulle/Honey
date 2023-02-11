@@ -45,5 +45,7 @@ namespace Domain.Dtos
             Parameters = task;
             Order = order;
         }
+
+        public override string ToString() => $"[{Id}] {Name} - {Status}";
     }
 }

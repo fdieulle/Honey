@@ -1,4 +1,5 @@
 ﻿using Domain.Dtos;
+using log4net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,8 @@ namespace Application.Colony
 {
     public class Bee : IBee
     {
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private readonly IBee _proxy;
         private Dictionary<Guid, TaskDto> _tasks = new Dictionary<Guid, TaskDto>();
         private BeeResourcesDto _resources;
@@ -53,10 +56,14 @@ namespace Application.Colony
 
         public Guid StartTask(string command, string arguments, int nbCores = 1)
         {
+            Logger.InfoFormat("[{0}] Starting task. Command: {1}, Arguments: {2}, NbCores: {3}", Address, command, arguments, nbCores);
+
             // Provision untill the real state is asked
             var previousFreeCores = 0;
             if (_resources != null)
             {
+                Logger.InfoFormat("[{0}] NbFreeCores: {1} (before)", Address, _resources.NbFreeCores);
+
                 if (nbCores > 0)
                     _resources.NbFreeCores -= nbCores;
                 else
@@ -64,6 +71,8 @@ namespace Application.Colony
                     previousFreeCores = _resources.NbFreeCores;
                     _resources.NbFreeCores = 0;
                 }
+
+                Logger.InfoFormat("[{0}] NbFreeCores: {1} (predict)", Address, _resources.NbFreeCores);
             }
 
             var id = _proxy.StartTask(command, arguments, nbCores);
@@ -74,6 +83,8 @@ namespace Application.Colony
                 if (nbCores > 0)
                     _resources.NbFreeCores += nbCores;
                 else _resources.NbFreeCores = previousFreeCores;
+
+                Logger.InfoFormat("[{0}] NbFreeCores: {1} (rollback)", Address, _resources.NbFreeCores);
             }
 
             return id;
@@ -84,5 +95,7 @@ namespace Application.Colony
         public void DeleteTask(Guid id) => _proxy.DeleteTask(id);
 
         public BeeResourcesDto GetResources() => _resources;
+
+        public override string ToString() => Dto.ToString();
     }
 }

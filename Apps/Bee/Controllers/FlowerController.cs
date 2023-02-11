@@ -1,5 +1,6 @@
 ﻿using Application;
 using Domain.Dtos;
+using log4net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -10,19 +11,19 @@ namespace Bee.Controllers
     [Route("[controller]")]
     public class FlowerController : IFlower
     {
-        private readonly Application.Bee.Bee _bee;
-        private readonly ILogger<FlowerController> _logger;
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public FlowerController(Application.Bee.Bee bee, ILogger<FlowerController> logger)
+        private readonly Application.Bee.Bee _bee;
+
+        public FlowerController(Application.Bee.Bee bee)
         {
             _bee = bee;
-            _logger = logger;
         }
 
         [HttpPost("UpdateTask")]
         public void UpdateTask(TaskStateDto dto)
         {
-            _logger.LogInformation("Update task: id={0}, progress={1}, message={2}", dto.TaskId, dto.ProgressPercent, dto.Message);
+            Logger.InfoFormat("Update task: id={0}, progress={1}, message={2}", dto.TaskId, dto.ProgressPercent, dto.Message);
 
             _bee.UpdateTask(dto);
         }

@@ -8,6 +8,7 @@ using Application.Bee;
 using Infrastructure.Colony;
 using Application.Colony;
 using Application.Honey;
+using log4net.Config;
 
 namespace Infrastructure
 {
@@ -15,6 +16,8 @@ namespace Infrastructure
     {
         public static void ConfigureBee(this IServiceCollection services, IConfiguration configuration)
         {
+            XmlConfigurator.Configure(new FileInfo(configuration["Log4netConfiguration"]));
+
             #region Database
 
             var workingFolder = configuration["WorkingFolder"] ?? ".";
@@ -33,6 +36,8 @@ namespace Infrastructure
 
         public static void ConfigureColony(this IServiceCollection services, IConfiguration configuration)
         {
+            XmlConfigurator.Configure(new FileInfo(configuration["Log4netConfiguration"]));
+
             #region Database
 
             var workingFolder = configuration["WorkingFolder"] ?? ".";

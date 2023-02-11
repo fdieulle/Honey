@@ -1,4 +1,5 @@
 ﻿using Domain.Dtos;
+using log4net;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -7,6 +8,8 @@ namespace Application
 {
     public static class Extensions
     {
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         #region Folder tools
 
         public static string CreateFolder(this string path, ILogger logger = null)
@@ -18,10 +21,7 @@ namespace Application
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
             }
-            catch (Exception e)
-            {
-                logger?.LogError(e, "Can't create the folder: {0}", path);
-            }
+            catch (Exception e) { Logger.Error($"Can't create the folder: {path}", e); }
 
             return path;
         }
@@ -33,10 +33,7 @@ namespace Application
                 if (path.FolderExists())
                     Directory.Delete(path, true);
             }
-            catch (Exception e)
-            {
-                logger.LogError(e, "Can't delete the folder: {0}", path);
-            }
+            catch (Exception e) { Logger.Error($"Can't delete the folder: {path}", e); }
         }
 
         public static bool FolderExists(this string path)

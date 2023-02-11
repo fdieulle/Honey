@@ -17,5 +17,11 @@ namespace Domain.Dtos
         public double PercentFreeMemory { get; set; }
 
         public double PercentFreeDiskSpace { get; set; }
+
+        public override string ToString()
+        {
+            var state = IsUp ? "Up" : "Down";
+            return $"{Address} - {state}"; ;
+        }
     }
 }

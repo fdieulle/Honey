@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Domain.Dtos;
+using log4net;
 
 namespace Application.Bee
 {
@@ -13,8 +14,9 @@ namespace Application.Bee
     {
         private const int WATCH_DOG_PERIOD = 5000;
 
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private readonly Dictionary<Guid, RunningTask> _runningTasks = new Dictionary<Guid, RunningTask>();
-        private readonly ILogger<Bee> _logger;
         private readonly IBeeDb _database;
         private readonly IBeeResourcesProvider _beeResourcesProvider;
         private readonly string _workingFolder;
@@ -24,15 +26,13 @@ namespace Application.Bee
         private bool _isDisposed;
 
         public Bee(
-            ILogger<Bee> logger, 
             IConfiguration config,
             IBeeDb database,
             IBeeResourcesProvider beeResourcesProvider)
         {
-            _logger = logger;
             _database = database;
             _beeResourcesProvider = beeResourcesProvider;
-            _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "tasks").CreateFolder(logger);
+            _workingFolder = Path.Combine(config["WorkingFolder"] ?? ".", "tasks").CreateFolder();
             _workingDrive = Path.GetPathRoot(Path.GetFullPath(_workingFolder)).Replace("\\", "");
             _timer = new Timer(OnWatchDogWalk, null, WATCH_DOG_PERIOD, Timeout.Infinite);
 
@@ -57,7 +57,7 @@ namespace Application.Bee
         {
             if (!_runningTasks.TryGetValueLocked(id, out var task))
             {
-                _logger.LogError("[{0}] Cannot find the task to fetch messages.", id);
+                Logger.ErrorFormat("[{0}] Cannot find the task to fetch messages.", id);
                 return Array.Empty<TaskMessageDto>();
             }
 
@@ -77,8 +77,8 @@ namespace Application.Bee
                 _beeResourcesProvider.GetBaseUri(), 
                 command, arguments, _workingFolder);
 
-            _logger.LogInformation("Start a new task with Id={0}", task.Id);
-            _logger.LogInformation("[{0}] Command line: {1} {2}", task.Id, command, arguments);
+            Logger.InfoFormat("Start a new task with Id={0}", task.Id);
+            Logger.InfoFormat("[{0}] Command line: {1} {2}", task.Id, command, arguments);
 
             task.Exited += OnTaskExited;
             lock (_runningTasks)
@@ -93,7 +93,7 @@ namespace Application.Bee
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "[{0}] Cannot start the task", task.Id);
+                Logger.Error($"[{task.Id}] Cannot start the task", e);
                 task.PostMessage(MessageType.Error, e.Message);
             }
 
@@ -110,7 +110,7 @@ namespace Application.Bee
         {
             if (!_runningTasks.TryGetValueLocked(id, out var task))
             {
-                _logger.LogError("[{0}] Cannot find the task to cancel.", id);
+                Logger.ErrorFormat("[{0}] Cannot find the task to cancel.", id);
                 return;
             }
             
@@ -121,7 +121,7 @@ namespace Application.Bee
         {
             if (!_runningTasks.TryGetValueLocked(id, out var task))
             {
-                _logger.LogError("[{0}] Cannot find the task to delete.", id);
+                Logger.ErrorFormat("[{0}] Cannot find the task to delete.", id);
                 return;
             }
 

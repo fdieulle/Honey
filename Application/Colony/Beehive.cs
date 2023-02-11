@@ -1,4 +1,5 @@
 ﻿using Domain.Dtos;
+using log4net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,8 @@ namespace Application.Colony
 {
     public class Beehive
     {
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private readonly Queue<RemoteTaskDto> _pendingTasks = new Queue<RemoteTaskDto>();
         private readonly Dictionary<Guid, RemoteTaskDto> _runningTasks = new Dictionary<Guid, RemoteTaskDto>();
         private readonly Dictionary<Guid, RemoteTaskDto> _tasks = new Dictionary<Guid, RemoteTaskDto>();
@@ -97,18 +100,27 @@ namespace Application.Colony
 
         private Guid StartTask(RemoteTaskDto task)
         {
+            Logger.InfoFormat("[{0}] Starting task: {1}", Name, task);
+
             // Make sure we didn't exceed the max number of parallel tasks
             if (_maxParallelTasks > 0 && _runningTasks.Count >= _maxParallelTasks)
+            {
+                Logger.InfoFormat("[{0}] Max parallel tasks exceeded.", Name);
                 return Hang(task);
+            }
 
             var bees = new HashSet<string>(_bees);
             Bee bee;
             while ((bee = _beeKeeper.GetNextBee(bees)) != null)
             {
+                Logger.InfoFormat("[{0}] Starting task {1} on Bee {2}", Name, task, bee);
+
                 var beeId = bee.StartTask(task);
                 // If a task has been launched we record it
                 if (beeId != Guid.Empty)
                     return RunTask(task, bee, beeId);
+
+                Logger.InfoFormat("[{0}] Cannot start task {1} on bee {2}. Trying another.", Name, task, bee);
 
                 // Otherwise retry with another bee by banning the faulted one
                 bees.Remove(bee.Address);
@@ -118,12 +130,16 @@ namespace Application.Colony
                     break;
             }
 
+            Logger.InfoFormat("[{0}] No Bee available to start task {1}.", Name, task, bee);
+
             // The task is enqueued with a pending state
             return Hang(task);
         }
         
         private Guid RunTask(RemoteTaskDto task, Bee bee, Guid beeTaskId)
         {
+            Logger.InfoFormat("[{0}] Task {1} is running on Bee {2} with BeeTaskId: {3}", Name, task, bee, beeTaskId);
+
             task.BeeState.Id = beeTaskId;
             task.BeeAddress = bee.Address;
 
@@ -134,6 +150,8 @@ namespace Application.Colony
 
         private Guid Hang(RemoteTaskDto task)
         {
+            Logger.InfoFormat("[{0}] Hang task: {1}", Name, task);
+
             if (!_tasks.ContainsKey(task.Id))
                 _pendingTasks.Enqueue(task);
 
@@ -143,13 +161,18 @@ namespace Application.Colony
 
         private void RecordTask(RemoteTaskDto task, RemoteTaskStatus status)
         {
-            task.Status = status;
+            var statusChanged = task.Status != status;
+            if (statusChanged) 
+            {
+                task.Status = status;
+                Logger.InfoFormat("[{0}] Task updated: {1}", Name, task);
+            }
 
             if (!_tasks.ContainsKey(task.Id))
                 _database.CreateTask(task);
             else if (status == RemoteTaskStatus.Deleted)
                 _database.DeleteTask(task.Id);
-            else
+            else if(statusChanged)
                 _database.UpdateTask(task);
 
             _tasks[task.Id] = task;
@@ -160,14 +183,19 @@ namespace Application.Colony
         {
             lock (_lock)
             {
+                Logger.InfoFormat("[{0}] Cancelling task with Id: {1}", Name, id);
+
                 // Try cancel running task
                 if (_runningTasks.TryGetValue(id, out var task))
                 {
+                    Logger.InfoFormat("[{0}] Cancelling running task {1}", Name, task);
+
                     var bee = _beeKeeper.GetBee(task.BeeAddress);
                     if (bee != null)
                     {
                         if (task.BeeState == null)
                         {
+                            Logger.WarnFormat("[{0}] The Bee didn't give any status yet, We can only remove task {1}", Name, task);
                             // Todo: The Bee didn't give any status yet, We can only remove it
                             // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
                             RecordTask(task, RemoteTaskStatus.Error);
@@ -179,11 +207,15 @@ namespace Application.Colony
                     }
                     else
                     {
+                        Logger.InfoFormat("[{0}] The bee {1} cannot be reach out to cancel task {2}, we wait a bit that the Bee shows up", Name, task.BeeAddress, task);
+
                         RecordTask(task, RemoteTaskStatus.CancelPending);
                     }
                 }
                 else // The task is pending
                 {
+                    Logger.InfoFormat("[{0}] Cancelling pending task with Id: {1}", Name, id);
+
                     var count = _pendingTasks.Count;
                     for (var i = 0; i < count; i++)
                     {

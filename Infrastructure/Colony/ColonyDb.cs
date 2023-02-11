@@ -3,6 +3,7 @@ using Domain.Dtos;
 using Domain.Dtos.Workflows;
 using Domain.Entities;
 using Domain.Entities.Workflows;
+using log4net;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,15 +20,15 @@ namespace Infrastructure.Colony
         private readonly CrudDbTable<ColonyDbContext, WorkflowEntity, Guid, WorkflowDto> _crudWorkflows;
         public ColonyDb(IDbContextFactory<ColonyDbContext> factory)
         {
-            _crudBees = new CrudDbTable<ColonyDbContext, BeeEntity, string, BeeDto>(
+            _crudBees = new CrudDbTable<ColonyDbContext, BeeEntity, string, BeeDto>("Bees",
                 factory, c => c.Bees, p => p.Address, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Address, e => e.ToDto());
-            _crudBeehives = new CrudDbTable<ColonyDbContext, BeehiveEntity, string, BeehiveDto>(
+            _crudBeehives = new CrudDbTable<ColonyDbContext, BeehiveEntity, string, BeehiveDto>("Beehives",
                 factory, c => c.Beehives, p => p.Name, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Name, e => e.ToDto());
-            _crudTasks = new CrudDbTable<ColonyDbContext, RemoteTaskEntity, Guid, RemoteTaskDto>(
+            _crudTasks = new CrudDbTable<ColonyDbContext, RemoteTaskEntity, Guid, RemoteTaskDto>("Tasks",
                 factory, c => c.Tasks, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
-            _crudJobs = new CrudDbTable<ColonyDbContext, JobEntity, Guid, JobDto>(
+            _crudJobs = new CrudDbTable<ColonyDbContext, JobEntity, Guid, JobDto>("Jobs",
                 factory, c => c.Jobs, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
-            _crudWorkflows = new CrudDbTable<ColonyDbContext, WorkflowEntity, Guid, WorkflowDto>(
+            _crudWorkflows = new CrudDbTable<ColonyDbContext, WorkflowEntity, Guid, WorkflowDto>("Workflow",
                 factory, c => c.Workflows, p => p.Id, d => d.ToEntity(), (d, e) => e.Update(d), p => p.Id, e => e.ToDto());
         }
 
@@ -100,6 +101,9 @@ namespace Infrastructure.Colony
         where TEntity : class
         where TKey : IComparable<TKey>
     {
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        private readonly string _name;
         private readonly IDbContextFactory<TContext> _factory;
         private readonly Func<TContext, DbSet<TEntity>> _getTable;
         private readonly Func<TEntity, TKey> _getKey;
@@ -109,6 +113,7 @@ namespace Infrastructure.Colony
         private readonly Func<TEntity, TDto> _toDto;
 
         public CrudDbTable(
+            string name,
             IDbContextFactory<TContext> factory,
             Func<TContext, DbSet<TEntity>> getTable,
             Func<TEntity, TKey> getKey,
@@ -117,6 +122,7 @@ namespace Infrastructure.Colony
             Func<TDto, TKey> getKeyFromDto,
             Func<TEntity, TDto> toDto)
         {
+            _name = name;
             _factory = factory;
             _getTable = getTable;
             _getKey = getKey;
@@ -143,6 +149,7 @@ namespace Infrastructure.Colony
 
         private void Create(TContext context, TDto dto)
         {
+            Logger.InfoFormat("[{0}] Create {1}", _name, dto);
             context.Add(_toEntity(dto));
             context.SaveChanges();
         }
@@ -157,6 +164,8 @@ namespace Infrastructure.Colony
                 if (entity == null) Create(context, dto);
                 else
                 {
+                    Logger.InfoFormat("[{0}] Update {1}", _name, dto);
+
                     _updateEntity(dto, entity);
                     context.SaveChanges();
                 }
@@ -165,6 +174,8 @@ namespace Infrastructure.Colony
 
         public void Delete(TKey key)
         {
+            Logger.InfoFormat("[{0}] Delete {1}", _name, key);
+
             using (var context = _factory.CreateDbContext())
             {
                 var table = _getTable(context);

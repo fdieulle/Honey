@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using Domain.Dtos;
 using Application;
-using Microsoft.Extensions.Logging;
+using log4net;
 
 namespace Bee.Controllers
 {
@@ -11,13 +11,13 @@ namespace Bee.Controllers
     [Route("[controller]")]
     public class BeeController : ControllerBase, IBee
     {
-        private readonly Application.Bee.Bee _bee;
-        private readonly ILogger<BeeController> _logger;
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public BeeController(Application.Bee.Bee bee, ILogger<BeeController> logger)
+        private readonly Application.Bee.Bee _bee;
+
+        public BeeController(Application.Bee.Bee bee)
         {
             _bee = bee;
-            _logger = logger;
         }
 
         [HttpGet("GetTasks")]
@@ -35,7 +35,7 @@ namespace Bee.Controllers
         [HttpPost("StartTask")]
         public Guid StartTask(string command, string arguments, int nbCores = 1)
         {
-            _logger.LogInformation("Start task: command={0}, arguments={1}, nbCores={2}", command, arguments, nbCores);
+            Logger.InfoFormat("Start task: command={0}, arguments={1}, nbCores={2}", command, arguments, nbCores);
 
             return _bee.StartTask(command, arguments, nbCores);
         }
@@ -43,7 +43,7 @@ namespace Bee.Controllers
         [HttpPost("CancelTask")]
         public void CancelTask(Guid id)
         {
-            _logger.LogInformation("Cancel task: id={0}", id);
+            Logger.InfoFormat("Cancel task: id={0}", id);
 
             _bee.CancelTask(id);
         }
@@ -51,7 +51,7 @@ namespace Bee.Controllers
         [HttpDelete("DeleteTask")]
         public void DeleteTask(Guid id)
         {
-            _logger.LogInformation("Delete task: id={0}", id);
+            Logger.InfoFormat("Delete task: id={0}", id);
 
             _bee.DeleteTask(id);
         }

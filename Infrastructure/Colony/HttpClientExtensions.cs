@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+﻿using log4net;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -10,6 +10,7 @@ namespace Infrastructure.Colony
 {
     internal static class HttpClientExtensions
     {
+        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = false };
 
         public static async Task<T> GetAsync<T>(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
@@ -20,10 +21,7 @@ namespace Infrastructure.Colony
                 if (response.IsSuccessStatusCode)
                     return await response.ReadJsonResponse<T>();
             } 
-            catch (Exception)
-            {
-
-            }
+            catch (Exception e) { Logger.Error($"Cannot proceed a GetAsync request. Url: {requestUri}, Arguments: {arguments}", e); }
 
             return await Task.FromResult<T>(default);
         }
@@ -36,10 +34,7 @@ namespace Infrastructure.Colony
                 if (response.IsSuccessStatusCode)
                     return await response.ReadJsonResponse<TResult>();
             }
-            catch (Exception)
-            {
-
-            }
+            catch (Exception e) { Logger.Error($"Cannot proceed a PostAsArgsAsync request. Url: {requestUri}, Arguments: {arguments}", e); }
 
             return await Task.FromResult<TResult>(default);
         }
@@ -50,9 +45,7 @@ namespace Infrastructure.Colony
             {
                 await client.PostAsync(requestUri.BuildUri(arguments), new StringContent(""));
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception e) { Logger.Error($"Cannot proceed a PostAsArgsAsync request. Url: {requestUri}, Arguments: {arguments}", e); }
         }
 
         public static async Task<TResult> PostAsJsonAsync<TContent, TResult>(this HttpClient client, string requestUri, TContent content)
@@ -63,10 +56,7 @@ namespace Infrastructure.Colony
                 if (response.IsSuccessStatusCode)
                     return await response.ReadJsonResponse<TResult>();
             }
-            catch (Exception)
-            {
-
-            }
+            catch (Exception e) { Logger.Error($"Cannot proceed a PostAsJsonAsync request. Url: {requestUri}, Content: {content}", e); }
 
             return await Task.FromResult<TResult>(default);
         }
@@ -77,9 +67,7 @@ namespace Infrastructure.Colony
             {
                 await client.PostAsync(requestUri, JsonContent.Create(content));
             }
-            catch (Exception)
-            {                
-            }
+            catch (Exception e) { Logger.Error($"Cannot proceed a PostAsJsonAsync request. Url: {requestUri}, Content: {content}", e); }
         }
 
         public static async Task DeleteAsArgsAsync(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
@@ -88,9 +76,7 @@ namespace Infrastructure.Colony
             {
                 await client.DeleteAsync(requestUri.BuildUri(arguments));
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception e) { Logger.Error($"Cannot proceed a DeleteAsArgsAsync request. Url: {requestUri}, Arguments: {arguments}", e); }
         }
 
         private static string BuildUri(this string baseUri, params ValueTuple<string, string>[] arguments)
@@ -101,9 +87,7 @@ namespace Infrastructure.Colony
             return $"{baseUri}?{args}";
         }
 
-        public static async Task<T> ReadJsonResponse<T>(this HttpResponseMessage response)
-        {
-            return await JsonSerializer.DeserializeAsync<T>(response.Content.ReadAsStream(), jsonOptions);
-        }
+        public static async Task<T> ReadJsonResponse<T>(this HttpResponseMessage response) 
+            => await JsonSerializer.DeserializeAsync<T>(response.Content.ReadAsStream(), jsonOptions);
     }
 }
