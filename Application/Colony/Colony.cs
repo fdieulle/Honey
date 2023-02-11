@@ -4,6 +4,7 @@ using Domain.Dtos.Workflows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Application.Colony
 {
@@ -39,7 +40,7 @@ namespace Application.Colony
             {
                 _workflows.Add(workflow.Id, workflow);
 
-                workflow.Start();
+                Task.Run(workflow.Start);
             }
 
             return workflow.Id;
