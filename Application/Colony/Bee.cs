@@ -18,6 +18,8 @@ namespace Application.Colony
 
         public BeeDto Dto { get; } = new BeeDto();
 
+        public int NbFreeCores => _resources?.NbFreeCores ?? 0;
+
         public Bee(string address, IBee bee)
         {
             _proxy = bee;

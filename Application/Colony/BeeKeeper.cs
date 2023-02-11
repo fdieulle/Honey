@@ -6,12 +6,12 @@ namespace Application.Colony
 {
     public class BeeKeeper : IBeeKeeper
     {
-        private static readonly Comparer<BeeDto> heuristic = Comparer<BeeDto>.Create((x, y) =>
+        private static readonly Comparer<Bee> heuristic = Comparer<Bee>.Create((x, y) =>
         {
-            var compare = x.PercentFreeCores.CompareTo(y.PercentFreeCores);
+            var compare = x.NbFreeCores.CompareTo(y.NbFreeCores);
             if (compare != 0) return compare;
 
-            return x.PercentFreeMemory.CompareTo(y.PercentFreeMemory);
+            return x.Dto.PercentFreeMemory.CompareTo(y.Dto.PercentFreeMemory);
         });
 
         private readonly IBeeFactory _factory;
@@ -96,8 +96,8 @@ namespace Application.Colony
                     selectedBees = selectedBees.Where(p => bees.Contains(p.Address));
 
                 return selectedBees
-                    .OrderByDescending(p => p.Dto, heuristic)
-                    .Where(p => p.Dto.PercentFreeCores > 0)
+                    .OrderByDescending(p => p, heuristic)
+                    .Where(p => p.NbFreeCores > 0)
                     .FirstOrDefault();
             }
         }
