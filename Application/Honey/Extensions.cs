@@ -79,6 +79,8 @@ namespace Application.Honey
 
         private static void Update(this HostedJobViewModel vm, SingleTaskJobDto dto, Dictionary<Guid, RemoteTaskDto> tasks)
         {
+            vm.ColonyTaskId = dto.TaskId;
+
             vm.Type = dto.Parameters.Command;
             if (!string.IsNullOrEmpty(vm.Type))
                 vm.Type = Path.GetFileName(vm.Type);
@@ -90,7 +92,7 @@ namespace Application.Honey
             var beeState = task.BeeState;
             if (beeState != null)
             {
-                vm.HostId = beeState.Id;
+                vm.BeeTaskId = beeState.Id;
                 vm.StartTime = beeState.StartTime;
                 vm.Progress = beeState.ProgressPercent * 100;
                 vm.Duration = (beeState.IsFinalStatus() ? beeState.EndTime : DateTime.Now) - beeState.StartTime;

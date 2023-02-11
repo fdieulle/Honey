@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Domain.Dtos
 {
@@ -31,6 +32,8 @@ namespace Domain.Dtos
         public ulong Order { get; set; }
 
         public TaskDto BeeState { get; set; } = new TaskDto { Status = TaskStatus.Pending };
+
+        public List<TaskMessageDto> Messages { get; set; } = new List<TaskMessageDto>();
 
         public RemoteTaskDto() { Id = Guid.NewGuid(); }
 

@@ -138,5 +138,21 @@ namespace Application.Colony
                     .Select(p => p.Dto).ToList();
             }
         }
+
+        public List<TaskMessageDto> FetchTaskMessages(Guid workflowId, Guid taskId)
+        {
+            Beehive beehive;
+            lock(_workflows)
+            {
+                if (!_workflows.TryGetValue(workflowId, out var workflow))
+                    return new List<TaskMessageDto>();
+
+                beehive = _beehiveProvider.GetBeehive(workflow.Dto.Beehive);
+                if (beehive == null)
+                    return new List<TaskMessageDto>();
+            }
+
+            return beehive.FetchTaskMessages(taskId);
+        }
     } 
 }

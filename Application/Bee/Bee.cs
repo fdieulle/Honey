@@ -58,11 +58,17 @@ namespace Application.Bee
             if (!_runningTasks.TryGetValueLocked(id, out var task))
             {
                 _logger.LogError("[{0}] Cannot find the task to fetch messages.", id);
-                yield break;
+                return Array.Empty<TaskMessageDto>();
             }
 
-            while (task.Messages.TryDequeue(out var message))
-                yield return message;
+            var messages = new List<TaskMessageDto>();
+            lock(task.Messages)
+            {
+                while (task.Messages.Count > 0)
+                    messages.Add(task.Messages.Dequeue());
+            }
+
+            return messages;
         }
 
         public Guid StartTask(string command, string arguments, int nbCores = -1)

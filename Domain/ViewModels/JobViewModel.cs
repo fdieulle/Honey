@@ -28,7 +28,9 @@ namespace Domain.ViewModels
 
         public string Host { get; set; }
 
-        public Guid HostId { get; set; }
+        public Guid ColonyTaskId { get; set; }
+
+        public Guid BeeTaskId { get; set; }
 
         public string Command { get; set; }
 

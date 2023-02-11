@@ -14,7 +14,7 @@ namespace Application.Bee
     {
         private readonly Process _process;
         private readonly TaskDto _taskDto = new TaskDto();
-        private readonly ConcurrentQueue<TaskMessageDto> _messages = new ConcurrentQueue<TaskMessageDto>();
+        private readonly Queue<TaskMessageDto> _messages = new Queue<TaskMessageDto>();
         private readonly string _baseUri;
         private readonly StreamWriter _logFile;
 
@@ -26,7 +26,7 @@ namespace Application.Bee
 
         public string Arguments { get; }
 
-        public ConcurrentQueue<TaskMessageDto> Messages => _messages;
+        public Queue<TaskMessageDto> Messages => _messages;
 
         public TaskStatus Status 
         {
@@ -236,7 +236,11 @@ namespace Application.Bee
 
         public void PostMessage(MessageType type, string message)
         {
-            _messages.Enqueue(new TaskMessageDto(Id, DateTime.UtcNow, type, message));
+            lock(_messages) 
+            {
+                _messages.Enqueue(new TaskMessageDto(Id, DateTime.UtcNow, type, message));
+            }
+            
             
             try {
                 _logFile.Write($"[{type}] ");

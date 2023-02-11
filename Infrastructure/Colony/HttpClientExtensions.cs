@@ -25,7 +25,7 @@ namespace Infrastructure.Colony
 
             }
 
-            return default;
+            return await Task.FromResult<T>(default);
         }
 
         public static async Task<TResult> PostAsArgsAsync<TResult>(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
@@ -41,7 +41,7 @@ namespace Infrastructure.Colony
 
             }
 
-            return default;
+            return await Task.FromResult<TResult>(default);
         }
 
         public static async Task PostAsArgsAsync(this HttpClient client, string requestUri, params ValueTuple<string, string>[] arguments)
@@ -68,7 +68,7 @@ namespace Infrastructure.Colony
 
             }
 
-            return default;
+            return await Task.FromResult<TResult>(default);
         }
 
         public static async Task PostAsJsonAsync<TContent>(this HttpClient client, string requestUri, TContent content)

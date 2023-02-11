@@ -330,5 +330,29 @@ namespace Application.Colony
                 else break;
             }
         }
+
+        public List<TaskMessageDto> FetchTaskMessages(Guid id)
+        {
+            RemoteTaskDto task;
+            Bee bee;
+            TaskDto state;
+            lock(_tasks)
+            {
+                if (!_tasks.TryGetValue(id, out task))
+                    return new List<TaskMessageDto>();
+
+                if(!TryGetBeeTaskState(task, out bee, out state))
+                    return task.Messages;
+            }
+
+            var messages = bee.FetchMessages(state.Id);
+            if (messages == null)
+                return task.Messages;
+
+            lock (_tasks)
+                task.Messages.AddRange(messages);
+
+            return task.Messages;           
+        }
     }
 }

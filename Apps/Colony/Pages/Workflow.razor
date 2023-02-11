@@ -54,6 +54,10 @@
             </Column>
             <Column Title="Start" Field="@context.StartTime" Format="yyyy-MM-dd HH:mm:ss" Sortable Hidden />
             <Column Title="Duration" Field="@context.Duration" Format="dd\.hh\:mm\:ss" Sortable />
+            <Column Title="Duration" Field="@context.Duration" Format="dd\.hh\:mm\:ss" Sortable />
+            <ActionColumn>
+                <Button Shape="@ButtonShape.Circle" Icon="@IconType.Outline.UnorderedList" OnClick="()=>GoToMessages(context)" OnClickStopPropagation />
+            </ActionColumn>
         </Table>
     </TabPane>
     <TabPane Tab="Graph" ForceRender>
@@ -97,7 +101,7 @@
         <Text Strong="true">Host Id:</Text>
         </Col>
         <Col Span="10">
-        <Text>@_selectedJob.HostId</Text>
+        <Text>@_selectedJob.BeeTaskId</Text>
         </Col>
     </Row>
     <Divider />
@@ -280,6 +284,12 @@
         if (model is not JobNodeModel node)
             return;
         OnSelect(node.Job);
+    }
+
+    private void GoToMessages(JobViewModel job)
+    {
+        if (job is HostedJobViewModel hJob)
+            Navigation.NavigateTo($"/workflow/{_workflow.Id}/{hJob.ColonyTaskId}");
     }
 
     private void OnRowClick(RowData<JobViewModel> rowData) => OnSelect(rowData.Data);
