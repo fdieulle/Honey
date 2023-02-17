@@ -26,10 +26,7 @@ namespace Application.Colony
             Dto.Address = address;
         }
 
-        public TaskDto GetTaskState(Guid id)
-        {
-            return _tasks.TryGetValue(id, out var job) ? job : null;
-        }
+        public TaskDto GetTaskState(Guid id) => _tasks.TryGetValue(id, out var job) ? job : null;
 
         public void Refresh()
         {
@@ -92,9 +89,17 @@ namespace Application.Colony
             return id;
         }
 
-        public void CancelTask(Guid id) => _proxy.CancelTask(id);
+        public void CancelTask(Guid id)
+        {
+            Logger.InfoFormat("[{0}] Cancel task with Id: {1}", Address, id);
+            _proxy.CancelTask(id);
+        }
 
-        public void DeleteTask(Guid id) => _proxy.DeleteTask(id);
+        public void DeleteTask(Guid id) 
+        {
+            Logger.InfoFormat("[{0}] Delete task with Id: {1}", Address, id);
+            _proxy.DeleteTask(id); 
+        }
 
         public BeeResourcesDto GetResources() => _resources;
 
