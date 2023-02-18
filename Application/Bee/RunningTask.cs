@@ -178,7 +178,7 @@ namespace Application.Bee
                 return;
             }
 
-            _process.Kill();
+            _process.Kill(true);
             _process.WaitForExit();
             Status = TaskStatus.Cancel;
 
