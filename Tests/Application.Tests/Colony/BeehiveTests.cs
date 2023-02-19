@@ -14,6 +14,7 @@ namespace Application.Tests.Colony
         private readonly ColonyDbLogs _db;
         private readonly TaskTracker _tracker;
         private readonly BeeKeeper _beeKeeper;
+        private readonly IDispatcherFactory _dispatcherFactory;
         private readonly Beehive _beehive;
 
         public BeehiveTests()
@@ -22,8 +23,9 @@ namespace Application.Tests.Colony
             _db = new ColonyDbLogs();
             _beeKeeper = new BeeKeeper(_factory, _db);
             _tracker = new TaskTracker();
+            _dispatcherFactory = new SynchronousDispatcherFactory();
 
-            _beehive = new Beehive(BeehiveDto("Beehive 1"), _beeKeeper, _db, _tracker);
+            _beehive = new Beehive(BeehiveDto("Beehive 1"), _beeKeeper, _dispatcherFactory, _db, _tracker);
         }
 
         private void Refresh()
@@ -331,7 +333,7 @@ namespace Application.Tests.Colony
                 TaskDto(task11Id, TaskStatus.Done));
 
             var beeKeeper = new BeeKeeper(_factory, _db);
-            var beehive = new Beehive(BeehiveDto("Beehive 2"), beeKeeper, _db, _tracker);
+            var beehive = new Beehive(BeehiveDto("Beehive 2"), beeKeeper, _dispatcherFactory, _db, _tracker);
 
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
             bee.DidNotReceive().CancelTask(Arg.Any<Guid>());

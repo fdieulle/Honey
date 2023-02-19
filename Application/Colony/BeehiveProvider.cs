@@ -8,12 +8,14 @@ namespace Application.Colony
     {
         private readonly Dictionary<string, Beehive> _beehives = new Dictionary<string, Beehive>();
         private readonly BeeKeeper _beeKeeper;
+        private readonly IDispatcherFactory _dispatcherFactory;
         private readonly IColonyDb _database;
         private readonly TaskTracker _tracker;
 
-        public BeehiveProvider(BeeKeeper beeKeeper, IColonyDb database, TaskTracker tracker)
+        public BeehiveProvider(BeeKeeper beeKeeper, IDispatcherFactory dispatcherFactory, IColonyDb database, TaskTracker tracker)
         {
             _beeKeeper = beeKeeper;
+            _dispatcherFactory = dispatcherFactory;
             _database = database;
             _tracker = tracker;
             var beehives = _database.FetchBeehives() ?? Enumerable.Empty<BeehiveDto>();
@@ -41,7 +43,7 @@ namespace Application.Colony
         {
             if (_beehives.ContainsKey(dto.Name)) return false;
 
-            _beehives.Add(dto.Name, new Beehive(dto, _beeKeeper, _database, _tracker));
+            _beehives.Add(dto.Name, new Beehive(dto, _beeKeeper, _dispatcherFactory, _database, _tracker));
             if (withDb)
                 _database.CreateBeehive(dto);
             return true;

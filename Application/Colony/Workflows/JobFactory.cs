@@ -6,10 +6,10 @@ namespace Application.Colony.Workflows
     public class JobFactory : IJobFactory
     {
         private readonly Beehive _beehive;
-        private readonly ITaskTracker _tracker;
+        private readonly IWorkflowTaskTracker _tracker;
         private readonly IColonyDb _db;
 
-        public JobFactory(Beehive beehive, ITaskTracker tracker, IColonyDb db)
+        public JobFactory(Beehive beehive, IWorkflowTaskTracker tracker, IColonyDb db)
         {
             _beehive = beehive;
             _tracker = tracker;

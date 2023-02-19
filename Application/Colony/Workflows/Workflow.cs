@@ -7,13 +7,14 @@ namespace Application.Colony.Workflows
     public class Workflow
     {
         private readonly IJob _rootJob;
+        private readonly IDispatcher _sequencer;
         private readonly IColonyDb _db;
 
         public event Action<Workflow> Deleted;
 
         public Guid Id => Dto.Id;
         public WorkflowDto Dto { get; }
-        public Workflow(WorkflowParameters parameters, IJobFactory factory, IColonyDb db)
+        public Workflow(WorkflowParameters parameters, Beehive beehive, ITaskTracker tracker, IDispatcherFactory dispatcherFactory, IColonyDb db)
         {
             _db = db;
             Dto = new WorkflowDto
@@ -22,6 +23,9 @@ namespace Application.Colony.Workflows
                 Name = parameters.Name,
                 Beehive = parameters.Beehive,
             };
+            _sequencer = dispatcherFactory.CreateSequencer(Dto.Id.ToString("N"));
+
+            var factory = new JobFactory(beehive, tracker.CreateScope(_sequencer), _db);
 
             _rootJob = factory.CreateJob(parameters.RootJob);
             Dto.RootJobId = _rootJob.Id;
@@ -31,10 +35,13 @@ namespace Application.Colony.Workflows
             _rootJob.Updated += OnJobUpdate;
         }
 
-        public Workflow(WorkflowDto dto, IJobFactory factory, IColonyDb db)
+        public Workflow(WorkflowDto dto, Beehive beehive, ITaskTracker tracker, IDispatcherFactory dispatcherFactory, IColonyDb db)
         {
             Dto = dto;
+            _sequencer = dispatcherFactory.CreateSequencer(Dto.Id.ToString("N"));
             _db = db;
+
+            var factory = new JobFactory(beehive, tracker.CreateScope(_sequencer), _db);
 
             var jobDto = db.FetchJob(dto.RootJobId);
             if (jobDto != null)
@@ -50,26 +57,38 @@ namespace Application.Colony.Workflows
 
         public void Start() 
         {
-            if (_rootJob.CanStart())
-                _rootJob.Start();
+            _sequencer.Dispatch(() =>
+            {
+                if (_rootJob.CanStart())
+                    _rootJob.Start();
+            });
         }
 
         public void Cancel() 
         {
-            if (_rootJob.CanCancel())
-                _rootJob.Cancel();
+            _sequencer.Dispatch(() =>
+            {
+                if (_rootJob.CanCancel())
+                    _rootJob.Cancel();
+            });
         }
 
         public void Recover()
         {
-            if (_rootJob.CanRecover())
-                _rootJob.Recover();
+            _sequencer.Dispatch(() =>
+            {
+                if (_rootJob.CanRecover())
+                    _rootJob.Recover();
+            });
         }
 
         public void Delete() 
         {
-            if (_rootJob.CanDelete())
-                _rootJob.Delete();
+            _sequencer.Dispatch(() =>
+            {
+                if (_rootJob.CanDelete())
+                    _rootJob.Delete();
+            });
         }
 
         public IEnumerable<JobDto> GetJobs()
@@ -93,13 +112,13 @@ namespace Application.Colony.Workflows
 
         private void OnJobUpdate(IJob job)
         {
-            if (job.Status == JobStatus.Deleted)
-            {
-                job.Updated -= OnJobUpdate;
-                _db.DeleteWorkflow(Id);
+            if (job.Status != JobStatus.Deleted)
+                return;
+            
+            job.Updated -= OnJobUpdate;
+            _db.DeleteWorkflow(Id);
 
-                Deleted?.Invoke(this);
-            }
+            Deleted?.Invoke(this);
         }
     }
 }

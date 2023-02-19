@@ -50,6 +50,7 @@ namespace Infrastructure
 
             #endregion
 
+            services.AddSingleton<IDispatcherFactory>(new DispatcherFactory());
             services.AddSingleton<ITimer>(new ThreadedTimer(3000));
             services.AddSingleton<IBeeFactory, BeeProxyFactory>();
             var taskTracker = new TaskTracker();

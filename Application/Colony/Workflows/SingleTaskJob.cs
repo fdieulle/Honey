@@ -8,10 +8,10 @@ namespace Application.Colony.Workflows
     public class SingleTaskJob : Job<SingleTaskJobParameters, SingleTaskJobDto>
     {
         private readonly Beehive _beehive;
-        private readonly ITaskTracker _tracker;
+        private readonly IWorkflowTaskTracker _tracker;
         private IDisposable _subscription;
 
-        public SingleTaskJob(SingleTaskJobParameters parameters, Beehive beehive, ITaskTracker tracker, IColonyDb db)
+        public SingleTaskJob(SingleTaskJobParameters parameters, Beehive beehive, IWorkflowTaskTracker tracker, IColonyDb db)
             : base(parameters, db)
         {
             Dto.Parameters = parameters.Task ?? new TaskParameters();
@@ -21,7 +21,7 @@ namespace Application.Colony.Workflows
             db.CreateJob(Dto);
         }
 
-        public SingleTaskJob(SingleTaskJobDto dto, Beehive beehive, ITaskTracker tracker, IColonyDb db)
+        public SingleTaskJob(SingleTaskJobDto dto, Beehive beehive, IWorkflowTaskTracker tracker, IColonyDb db)
             : base(dto, db) 
         {
             _beehive = beehive;

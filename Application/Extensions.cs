@@ -2,6 +2,7 @@
 using log4net;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Application
@@ -50,6 +51,13 @@ namespace Application
                 ExpectedEndTime = expectedEndTime,
                 Message = message
             });
+        }
+
+        public static TValue GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> x, TKey key, Func<TKey, TValue> factory)
+        {
+            if (!x.TryGetValue(key, out var value))
+                x.Add(key, value = factory(key));
+            return value;
         }
     }
 }

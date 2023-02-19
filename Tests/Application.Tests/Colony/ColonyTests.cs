@@ -15,9 +15,10 @@ namespace Application.Tests.Colony
             var database = Substitute.For<IColonyDb>();
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
+            var dispatcherFactory = new SynchronousDispatcherFactory();
             var taskTracker = new TaskTracker();
-            var beehiveProvider = new BeehiveProvider(beeKeeper, database, taskTracker);
-            var colony = new Application.Colony.Colony(beehiveProvider, taskTracker, database);
+            var beehiveProvider = new BeehiveProvider(beeKeeper, dispatcherFactory, database, taskTracker);
+            var colony = new Application.Colony.Colony(beehiveProvider, dispatcherFactory, taskTracker, database);
 
             // Setup a bee
             var bee = beeKeeper.SetupBee("http://bee1:8080");
@@ -40,9 +41,10 @@ namespace Application.Tests.Colony
             var database = Substitute.For<IColonyDb>();
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
+            var dispatcherFactory = new SynchronousDispatcherFactory();
             var taskTracker = new TaskTracker();
-            var beehiveProvider = new BeehiveProvider(beeKeeper, database, taskTracker);
-            var colony = new Application.Colony.Colony(beehiveProvider, taskTracker, database);
+            var beehiveProvider = new BeehiveProvider(beeKeeper, dispatcherFactory, database, taskTracker);
+            var colony = new Application.Colony.Colony(beehiveProvider, dispatcherFactory, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
@@ -71,9 +73,10 @@ namespace Application.Tests.Colony
             var database = Substitute.For<IColonyDb>();
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
+            var dispatcherFactory = new SynchronousDispatcherFactory();
             var taskTracker = new TaskTracker();
-            var beehiveProvider = new BeehiveProvider(beeKeeper, database, taskTracker);
-            var colony = new Application.Colony.Colony(beehiveProvider, taskTracker, database);
+            var beehiveProvider = new BeehiveProvider(beeKeeper, dispatcherFactory, database, taskTracker);
+            var colony = new Application.Colony.Colony(beehiveProvider, dispatcherFactory, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
@@ -111,9 +114,10 @@ namespace Application.Tests.Colony
             var database = Substitute.For<IColonyDb>();
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
+            var dispatcherFactory = new SynchronousDispatcherFactory();
             var taskTracker = new TaskTracker();
-            var beehiveProvider = new BeehiveProvider(beeKeeper, database, taskTracker);
-            var colony = new Application.Colony.Colony(beehiveProvider, taskTracker, database);
+            var beehiveProvider = new BeehiveProvider(beeKeeper, dispatcherFactory, database, taskTracker);
+            var colony = new Application.Colony.Colony(beehiveProvider, dispatcherFactory, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee
@@ -158,9 +162,10 @@ namespace Application.Tests.Colony
             var database = Substitute.For<IColonyDb>();
             var container = Substitute.For<IBeeFactory>();
             var beeKeeper = new BeeKeeper(container, database);
+            var dispatcherFactory = new SynchronousDispatcherFactory();
             var taskTracker = new TaskTracker();
-            var beehiveProvider = new BeehiveProvider(beeKeeper, database, taskTracker);
-            var colony = new Application.Colony.Colony(beehiveProvider, taskTracker, database);
+            var beehiveProvider = new BeehiveProvider(beeKeeper, dispatcherFactory, database, taskTracker);
+            var colony = new Application.Colony.Colony(beehiveProvider, dispatcherFactory, taskTracker, database);
             var beeTaskIds = new List<Guid>();
 
             // Setup a bee

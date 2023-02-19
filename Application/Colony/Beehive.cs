@@ -1,8 +1,11 @@
 ﻿using Domain.Dtos;
 using log4net;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using TaskStatus = Domain.Dtos.TaskStatus;
 
 namespace Application.Colony
 {
@@ -10,10 +13,10 @@ namespace Application.Colony
     {
         private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        private readonly IDispatcher _sequencer;
         private readonly Queue<RemoteTaskDto> _pendingTasks = new Queue<RemoteTaskDto>();
         private readonly Dictionary<Guid, RemoteTaskDto> _runningTasks = new Dictionary<Guid, RemoteTaskDto>();
-        private readonly Dictionary<Guid, RemoteTaskDto> _tasks = new Dictionary<Guid, RemoteTaskDto>();
-        private readonly object _lock = new object();
+        private readonly ConcurrentDictionary<Guid, RemoteTaskDto> _tasks = new ConcurrentDictionary<Guid, RemoteTaskDto>();
         private readonly BeeKeeper _beeKeeper;
         private readonly IColonyDb _database;
         private readonly TaskTracker _tracker;
@@ -26,13 +29,14 @@ namespace Application.Colony
 
         public BeehiveDto Dto { get; } = new BeehiveDto();
 
-        public Beehive(BeehiveDto dto, BeeKeeper beeKeeper, IColonyDb database, TaskTracker tracker)
+        public Beehive(BeehiveDto dto, BeeKeeper beeKeeper, IDispatcherFactory dispatcherFactory, IColonyDb database, TaskTracker tracker)
         {
             _beeKeeper = beeKeeper;
+            _sequencer = dispatcherFactory.CreateSequencer(dto.Name);
             _database = database;
             _tracker = tracker;
             Dto.Name = dto.Name;
-            Update(dto);
+            UpdateSync(dto);
 
             var tasks = _database.FetchTasks() ?? Enumerable.Empty<RemoteTaskDto>();
             RestoreTasks(tasks.Where(p => p.Beehive == Name));
@@ -40,8 +44,7 @@ namespace Application.Colony
 
         public IEnumerable<RemoteTaskDto> GetAllTasks()
         {
-            lock (_lock)
-                return _tasks.Values.ToList();
+            return _tasks.Values.ToList();
         }
 
         private void RestoreTasks(IEnumerable<RemoteTaskDto> tasks)
@@ -71,31 +74,32 @@ namespace Application.Colony
                 _pendingTasks.Enqueue(task);
         }
 
-        public void Update(BeehiveDto dto)
+        public void Update(BeehiveDto dto) 
+            => _sequencer.Dispatch(() => UpdateSync(dto));
+
+        private void UpdateSync(BeehiveDto dto)
         {
-            lock (_lock)
-            {
-                Dto.MaxParallelTasks = dto.MaxParallelTasks;
-                Dto.Bees = new List<string>(dto.Bees ?? Enumerable.Empty<string>());
+            Dto.MaxParallelTasks = dto.MaxParallelTasks;
+            Dto.Bees = new List<string>(dto.Bees ?? Enumerable.Empty<string>());
 
-                _bees = new HashSet<string>(dto.Bees ?? Enumerable.Empty<string>());
+            _bees = new HashSet<string>(dto.Bees ?? Enumerable.Empty<string>());
 
-                var current = _maxParallelTasks;
-                _maxParallelTasks = dto.MaxParallelTasks;
+            var current = _maxParallelTasks;
+            _maxParallelTasks = dto.MaxParallelTasks;
 
-                var nbTasksToStart = dto.MaxParallelTasks <= 0
-                    ? _pendingTasks.Count
-                    : dto.MaxParallelTasks - current;
-                DequeueTasks(nbTasksToStart);
-            }
+            var nbTasksToStart = dto.MaxParallelTasks <= 0
+                ? _pendingTasks.Count
+                : dto.MaxParallelTasks - current;
+            DequeueTasks(nbTasksToStart);
         }
 
-        public Guid StartTask(string name, TaskParameters startTask)
+        #region Start
+
+        public Guid StartTask(string name, TaskParameters parameters)
         {
-            lock (_lock)
-            {
-                return StartTask(new RemoteTaskDto(Name, name, startTask, _orderIncrement++));
-            }
+            var task = new RemoteTaskDto(Name, name, parameters, Interlocked.Increment(ref _orderIncrement));
+            _sequencer.Dispatch(() => StartTask(task));
+            return task.Id;
         }
 
         private Guid StartTask(RemoteTaskDto task)
@@ -159,6 +163,8 @@ namespace Application.Colony
             return task.Id;
         }
 
+        #endregion
+
         private void RecordTask(RemoteTaskDto task, RemoteTaskStatus status)
         {
             var statusChanged = task.Status != status;
@@ -179,68 +185,79 @@ namespace Application.Colony
             _tracker.Track(task);
         }
 
+        #region Cancel
+
         public void CancelTask(Guid id)
         {
-            lock (_lock)
+            _sequencer.Dispatch(() =>
             {
                 Logger.InfoFormat("[{0}] Cancelling task with Id: {1}", Name, id);
 
-                // Try cancel running task
                 if (_runningTasks.TryGetValue(id, out var task))
-                {
-                    Logger.InfoFormat("[{0}] Cancelling running task {1}", Name, task);
-
-                    var bee = _beeKeeper.GetBee(task.BeeAddress);
-                    if (bee != null)
-                    {
-                        if (task.BeeState == null)
-                        {
-                            Logger.WarnFormat("[{0}] The Bee didn't give any status yet, We can only remove task {1}", Name, task);
-                            // Todo: The Bee didn't give any status yet, We can only remove it
-                            // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
-                            RecordTask(task, RemoteTaskStatus.Error);
-                            return;
-                        }
-
-                        RecordTask(task, RemoteTaskStatus.CancelRequested);
-                        bee.CancelTask(task.BeeState.Id);
-                    }
-                    else
-                    {
-                        Logger.InfoFormat("[{0}] The bee {1} cannot be reach out to cancel task {2}, we wait a bit that the Bee shows up", Name, task.BeeAddress, task);
-
-                        RecordTask(task, RemoteTaskStatus.CancelPending);
-                    }
-                }
-                else // The task is pending
-                {
-                    Logger.InfoFormat("[{0}] Cancelling pending task with Id: {1}", Name, id);
-
-                    var count = _pendingTasks.Count;
-                    for (var i = 0; i < count; i++)
-                    {
-                        task = _pendingTasks.Dequeue();
-                        if (task.Id == id)
-                        {
-                            RecordTask(task, RemoteTaskStatus.Cancel);
-                            continue;
-                        }
-                        _pendingTasks.Enqueue(task);
-                    }
-                }
-            }
+                    CancelRunningTask(task);
+                else CancelPendingTask(id);
+            });
         }
+
+        private void CancelRunningTask(RemoteTaskDto task)
+        {
+            Logger.InfoFormat("[{0}] Cancelling running task {1}", Name, task);
+
+            var bee = _beeKeeper.GetBee(task.BeeAddress);
+            if (bee == null)
+            {
+                Logger.InfoFormat("[{0}] The bee {1} cannot be reach out to cancel task {2}, we wait a bit that the Bee shows up", Name, task.BeeAddress, task);
+                RecordTask(task, RemoteTaskStatus.CancelPending);
+                return;
+            }
+
+            if (task.BeeState == null)
+            {
+                Logger.WarnFormat("[{0}] The Bee didn't give any status yet, We can only remove task {1}", Name, task);
+                // Todo: The Bee didn't give any status yet, We can only remove it
+                // Todo: Should we try to wait a bit the Bee cache update before to take any action ?
+                RecordTask(task, RemoteTaskStatus.Error);
+                return;
+            }
+
+            RecordTask(task, RemoteTaskStatus.CancelRequested);
+            bee.CancelTask(task.BeeState.Id);
+        }
+
+        private void CancelPendingTask(Guid id)
+        {
+            Logger.InfoFormat("[{0}] Cancelling pending task with Id: {1}", Name, id);
+
+            var count = _pendingTasks.Count;
+            var found = false;
+            for (var i = 0; i < count; i++)
+            {
+                var task = _pendingTasks.Dequeue();
+                if (task.Id == id)
+                {
+                    found = true;
+                    RecordTask(task, RemoteTaskStatus.Cancel);
+                    continue;
+                }
+                _pendingTasks.Enqueue(task);
+            }
+
+            if (!found)
+                Logger.WarnFormat("[{0}] The task was not found in pending queue: {1}", Name, id);
+        }
+
+        #endregion 
 
         #region Refresh
 
         public void Refresh()
         {
-            lock (_lock)
+            _sequencer.Dispatch(() =>
             {
                 UpdateRunningTasks();
                 UpdateTasksToSynchronize();
                 UpdatePendingTasks();
-            }
+            });
         }
 
         private void UpdateRunningTasks()
@@ -324,29 +341,44 @@ namespace Application.Colony
 
         #endregion
 
-        public bool DeleteTask(Guid id)
+        #region Delete
+
+        public void DeleteTask(Guid id)
         {
-            lock (_lock)
+            _sequencer.Dispatch(() =>
             {
+                Logger.InfoFormat("[{0}] Deleting task with Id: {1}", Name, id);
+
                 if (!_tasks.TryGetValue(id, out var task) || !task.IsFinalStatus())
-                    return false;
+                {
+                    Logger.InfoFormat("[{0}] Cannot delete task with ID: {1}, because the task is not found or not in a final status. {2}", Name, id, task);
+                    return;
+                }
 
                 // Delete the task from the Bee
                 if (!string.IsNullOrEmpty(task.BeeAddress))
                 {
                     var bee = _beeKeeper.GetBee(task.BeeAddress);
                     if (bee == null || task.BeeState == null)
-                        return false; // Todo: Should mark as deleted for a deletion later or enforce the delete if no Bee can remind it existency
+                    {
+                        Logger.InfoFormat("[{0}] Cannot find the Bee: {1 to delete task: {2}", Name, task.BeeAddress, task);
+                        return; // Todo: Should mark as deleted for a later deletion or enforce the delete if no Bee can remind it existency
+                    }
 
+                    Logger.InfoFormat("[{0}] Deleting task with Id: {1} from Bee {2} with a BeeId: {3}.", Name, id, bee.Address, task.BeeState.Id);
                     bee.DeleteTask(task.BeeState.Id);
                 }
 
                 RecordTask(task, RemoteTaskStatus.Deleted);
-                _tasks.Remove(id);
+                _tasks.TryRemove(id, out var _);
 
-                return true;
-            }
+                Logger.InfoFormat("[{0}] Task with Id: {1} deleted.", Name, id);
+
+                return;
+            });
         }
+
+        #endregion
 
         private void DequeueTasks(int nbTasksToStart)
         {
@@ -368,20 +400,18 @@ namespace Application.Colony
             RemoteTaskDto task;
             Bee bee;
             TaskDto state;
-            lock(_tasks)
-            {
-                if (!_tasks.TryGetValue(id, out task))
-                    return new List<TaskMessageDto>();
+            
+            if (!_tasks.TryGetValue(id, out task))
+                return new List<TaskMessageDto>();
 
-                if(!TryGetBeeTaskState(task, out bee, out state))
-                    return task.Messages;
-            }
+            if(!TryGetBeeTaskState(task, out bee, out state))
+                return task.Messages;
 
             var messages = bee.FetchMessages(state.Id);
             if (messages == null)
                 return task.Messages;
 
-            lock (_tasks)
+            lock (task.Messages)
                 task.Messages.AddRange(messages);
 
             return task.Messages;           

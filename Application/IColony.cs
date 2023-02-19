@@ -94,6 +94,13 @@ namespace Application
 
     public interface ITaskTracker
     {
+        IDisposable Subscribe(Action<IEnumerable<RemoteTaskDto>> onUpdate);
+
+        IWorkflowTaskTracker CreateScope(IDispatcher dispatcher);
+    }
+
+    public interface IWorkflowTaskTracker : IDisposable
+    {
         IDisposable Subscribe(Guid taskId, Action<RemoteTaskDto> onUpdate);
     }
 

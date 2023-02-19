@@ -8,6 +8,10 @@ using NSubstitute;
 using System;
 using NSubstitute.ReceivedExtensions;
 using System.Linq;
+using System.Threading.Tasks.Dataflow;
+using Xunit.Abstractions;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Application.Tests.Colony
 {
@@ -361,6 +365,61 @@ namespace Application.Tests.Colony
             children.ReceivedCancel(1, 0, 0);
             children.ReceivedRecover(1, 1, 0);
             children.ReceivedDelete(1, 1, 1);
+        }
+
+
+        private readonly ITestOutputHelper _output;
+
+        public WorkflowTests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
+        [Fact]
+        public void ActionBlockTest()
+        {
+            var queue = new Queue<int>();
+            var block = new ActionBlock<Func<ValueTask>>(async a =>
+            {
+                try { await a(); }
+                catch (Exception ex) { _output.WriteLine($"Exception: {ex.Message}"); }
+            });
+
+            const int P = 10;
+            const int N = 100000;
+            var tasks = new List<Task>();
+            for (var j = 0; j < P / 2; j++)
+            {
+                var jClosure = j;
+                tasks.Add(Task.Run(async () =>
+                {
+                    for (var k = 0; k < N; k++)
+                        await block.SendAsync(async () => { queue.Enqueue(jClosure); await Task.CompletedTask; });
+                }));
+            }
+            for (var j = P/2; j < P; j++)
+            {
+                var jClosure = j;
+                tasks.Add(Task.Run(() =>
+                {
+                    for (var k = 0; k < N; k++)
+                        block.Post(() => { queue.Enqueue(jClosure); return ValueTask.CompletedTask; });
+                }));
+            }
+            Task.WaitAll(tasks.ToArray());
+            
+            _output.WriteLine("Prior complete");
+            block.Complete();
+            _output.WriteLine("After complete");
+            block.Completion.Wait();
+            _output.WriteLine("After completion done");
+
+            var counters = new int[P];
+            while(queue.Count > 0)
+                counters[queue.Dequeue()]++;
+
+            foreach (var counter in counters)
+                Assert.Equal(N, counter);
         }
     }
 

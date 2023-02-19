@@ -2,29 +2,31 @@
 using Domain.Dtos;
 using Domain.Dtos.Workflows;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Application.Colony
 {
     public class Colony : IColony
     {
         private readonly BeehiveProvider _beehiveProvider;
+        private readonly IDispatcherFactory _dispatcherFactory;
         private readonly ITaskTracker _taskTracker;
         private readonly IColonyDb _db;
-        private readonly Dictionary<string, IJobFactory> _factories = new Dictionary<string, IJobFactory>();
-        private readonly Dictionary<Guid, Workflow> _workflows = new Dictionary<Guid, Workflow>();
+        private readonly ConcurrentDictionary<Guid, Workflow> _workflows = new ConcurrentDictionary<Guid, Workflow>();
 
-        public Colony(BeehiveProvider beehiveProvider, ITaskTracker taskTracker, IColonyDb db)
+        public Colony(BeehiveProvider beehiveProvider, IDispatcherFactory dispatcherFactory, ITaskTracker taskTracker, IColonyDb db)
         {
             _beehiveProvider = beehiveProvider;
+            _dispatcherFactory = dispatcherFactory;
             _taskTracker = taskTracker;
             _db = db;
 
             foreach (var entity in _db.FetchWorkflows())
             {
-                var workflow = new Workflow(entity, GetJobFactory(entity.Beehive), db);
+                var beehive = _beehiveProvider.GetBeehive(entity.Beehive);
+                var workflow = new Workflow(entity, beehive, taskTracker, dispatcherFactory, db);
                 _workflows[entity.Id] = workflow;
                 workflow.Deleted += OnWorkflowDeleted;
             }
@@ -32,16 +34,12 @@ namespace Application.Colony
 
         public Guid Execute(WorkflowParameters parameters)
         {
-            var factory = GetJobFactory(parameters.Beehive);
-            var workflow = new Workflow(parameters, factory, _db);
+            var beehive = _beehiveProvider.GetBeehive(parameters.Beehive);
+            var workflow = new Workflow(parameters, beehive, _taskTracker, _dispatcherFactory, _db);
             workflow.Deleted += OnWorkflowDeleted;
 
-            lock (_workflows)
-            {
-                _workflows.Add(workflow.Id, workflow);
-
-                Task.Run(workflow.Start);
-            }
+            _workflows[workflow.Id] = workflow;
+            workflow.Start();
 
             return workflow.Id;
         }
@@ -49,10 +47,7 @@ namespace Application.Colony
         private void OnWorkflowDeleted(Workflow workflow)
         {
             workflow.Deleted -= OnWorkflowDeleted;
-            lock (_workflows)
-            {
-                _workflows.Remove(workflow.Id);
-            }
+            _workflows.TryRemove(workflow.Id, out _);
         }
 
         public Guid ExecuteTask(string name, string beehive, TaskParameters task) 
@@ -60,98 +55,56 @@ namespace Application.Colony
 
         public bool Cancel(Guid id)
         {
-            lock (_workflows)
-            {
-                if (!_workflows.TryGetValue(id, out var workflow))
-                    return false;
+            if (!_workflows.TryGetValue(id, out var workflow))
+                return false;
 
-                workflow.Cancel();
-                return true;
-            }
+            workflow.Cancel();
+            return true;
         }
 
         public bool Recover(Guid id)
         {
-            lock (_workflows)
-            {
-                if (!_workflows.TryGetValue(id, out var workflow))
-                    return false;
+            if (!_workflows.TryGetValue(id, out var workflow))
+                return false;
 
-                workflow.Recover();
-
-                return true;
-            }
+            workflow.Recover();
+            return true;
         }
 
         public bool Delete(Guid id)
         {
-            lock (_workflows)
-            {
-                if (!_workflows.TryGetValue(id, out var workflow))
-                    return false;
+            if (!_workflows.TryGetValue(id, out var workflow))
+                return false;
 
-                workflow.Delete();
-
-                return true;
-            }
+            workflow.Delete();
+            return true;
         }
 
-        private IJobFactory GetJobFactory(string beehiveName)
-        {
-            lock (_factories)
-            {
-                if (!_factories.TryGetValue(beehiveName, out var factory))
-                {
-                    var beehive = _beehiveProvider.GetBeehive(beehiveName);
-                    if (beehive == null)
-                        beehiveName = "__NULL__";
-                    _factories.Add(beehiveName, factory = new JobFactory(beehive, _taskTracker, _db));
-                }
-
-                return factory;
-            }
-        }
-
-        public List<RemoteTaskDto> GetTasks()
-        {
-            return _beehiveProvider.GetBeehives()
+        public List<RemoteTaskDto> GetTasks() 
+            => _beehiveProvider.GetBeehives()
                 .Select(p => _beehiveProvider.GetBeehive(p.Name))
                 .Where(q => q != null)
                 .SelectMany(p => p.GetAllTasks())
                 .ToList();
-        }
 
-        public List<JobDto> GetJobs()
-        {
-            lock(_workflows)
-            {
-                return _workflows.Values
-                    .SelectMany(p => p.GetJobs())
-                    .ToList();
-            }
-        }
+        public List<JobDto> GetJobs() 
+            => _workflows.Values
+                .SelectMany(p => p.GetJobs())
+                .ToList();
 
-        public List<WorkflowDto> GetWorkflows()
-        {
-            lock (_workflows)
-            {
-                return _workflows.Values
-                    .Select(p => p.Dto).ToList();
-            }
-        }
+        public List<WorkflowDto> GetWorkflows() 
+            => _workflows.Values
+                .Select(p => p.Dto)
+                .ToList();
 
         public List<TaskMessageDto> FetchTaskMessages(Guid workflowId, Guid taskId)
         {
-            Beehive beehive;
-            lock(_workflows)
-            {
-                if (!_workflows.TryGetValue(workflowId, out var workflow))
-                    return new List<TaskMessageDto>();
+            if (!_workflows.TryGetValue(workflowId, out var workflow))
+                return new List<TaskMessageDto>();
 
-                beehive = _beehiveProvider.GetBeehive(workflow.Dto.Beehive);
-                if (beehive == null)
-                    return new List<TaskMessageDto>();
-            }
+            var beehive = _beehiveProvider.GetBeehive(workflow.Dto.Beehive);
+            if (beehive == null)
+                return new List<TaskMessageDto>();
 
             return beehive.FetchTaskMessages(taskId);
         }
