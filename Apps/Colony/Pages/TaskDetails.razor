@@ -55,7 +55,7 @@
     private async Task Update()
     {
         if (_bee == null) return;
-        var lines = await _bee.FetchLogsAsync(BeeTaskId, _messages.Count, 1000);
+        var lines = await _bee.FetchLogsAsync(BeeTaskId, _messages.Count);
         if (lines != null)
             _messages.AddRange(lines);
     }
