@@ -104,6 +104,7 @@ namespace Application.Colony
 
         public Bee GetBee(string address)
         {
+            if (address == null) return null;
             lock (_bees)
             {
                 return _bees.TryGetValue(address, out var bee) ? bee : null;

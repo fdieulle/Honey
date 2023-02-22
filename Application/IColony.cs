@@ -41,8 +41,6 @@ namespace Application
         List<RemoteTaskDto> GetTasks();
         List<JobDto> GetJobs();
         List<WorkflowDto> GetWorkflows();
-
-        List<TaskMessageDto> FetchTaskMessages(Guid workflowId, Guid taskId);
     }
 
     public static class ColonyExtensions
@@ -65,16 +63,13 @@ namespace Application
             => await ValueTask.FromResult(colony.Delete(id));
 
         public async static Task<List<RemoteTaskDto>> GetTasksAsync(this IColony colony)
-            => await ValueTask.FromResult(colony.GetTasks());
+            => await Task.FromResult(colony.GetTasks());
 
         public async static Task<List<JobDto>> GetJobsAsync(this IColony colony)
-            => await ValueTask.FromResult(colony.GetJobs());
+            => await Task.FromResult(colony.GetJobs());
 
         public async static Task<List<WorkflowDto>> GetWorkflowsAsync(this IColony colony)
-            => await ValueTask.FromResult(colony.GetWorkflows());
-
-        public async static Task<List<TaskMessageDto>> FetchTaskMessagesAsync(this IColony colony, Guid workflowId, Guid taskId)
-            => await ValueTask.FromResult(colony.FetchTaskMessages(workflowId, taskId));
+            => await Task.FromResult(colony.GetWorkflows());
 
         #endregion
 

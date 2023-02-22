@@ -289,7 +289,7 @@
     private void GoToMessages(JobViewModel job)
     {
         if (job is HostedJobViewModel hJob)
-            Navigation.NavigateTo($"/workflow/{_workflow.Id}/{hJob.ColonyTaskId}");
+            Navigation.NavigateTo($"/workflow/{_workflow.Id}/{hJob.ColonyTaskId}/{hJob.BeeTaskId}");
     }
 
     private void OnRowClick(RowData<JobViewModel> rowData) => OnSelect(rowData.Data);

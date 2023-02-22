@@ -33,8 +33,6 @@ namespace Domain.Dtos
 
         public TaskDto BeeState { get; set; } = new TaskDto { Status = TaskStatus.Pending };
 
-        public List<TaskMessageDto> Messages { get; set; } = new List<TaskMessageDto>();
-
         public RemoteTaskDto() { Id = Guid.NewGuid(); }
 
         public RemoteTaskDto(string beehive, string name, TaskParameters task, ulong order)

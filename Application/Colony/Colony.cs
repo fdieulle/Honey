@@ -97,16 +97,16 @@ namespace Application.Colony
                 .Select(p => p.Dto)
                 .ToList();
 
-        public List<TaskMessageDto> FetchTaskMessages(Guid workflowId, Guid taskId)
+        public string GetBeeAddress(Guid workflowId, Guid taskId)
         {
             if (!_workflows.TryGetValue(workflowId, out var workflow))
-                return new List<TaskMessageDto>();
+                return null;
 
             var beehive = _beehiveProvider.GetBeehive(workflow.Dto.Beehive);
             if (beehive == null)
-                return new List<TaskMessageDto>();
+                return null;
 
-            return beehive.FetchTaskMessages(taskId);
+            return beehive.GetBeeAddress(taskId);
         }
     } 
 }

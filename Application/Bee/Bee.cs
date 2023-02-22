@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using Domain.Dtos;
 using log4net;
+using System.Threading.Tasks;
 
 namespace Application.Bee
 {
@@ -53,24 +54,17 @@ namespace Application.Bee
             }
         }
 
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id)
+        public async Task<List<string>> FetchLogsAsync(Guid id, int start = 0, int length = -1)
         {
             if (!_runningTasks.TryGetValueLocked(id, out var task))
             {
                 Logger.ErrorFormat("[{0}] Cannot find the task to fetch messages.", id);
-                return Array.Empty<TaskMessageDto>();
+                return new List<string>();
             }
 
-            var messages = new List<TaskMessageDto>();
-            lock(task.Messages)
-            {
-                while (task.Messages.Count > 0)
-                    messages.Add(task.Messages.Dequeue());
-            }
-
-            return messages;
+            return await task.FetchLogsAsync(start, length);
         }
-
+        
         public Guid StartTask(string command, string arguments, int nbCores = -1)
         {
             var task = new RunningTask(

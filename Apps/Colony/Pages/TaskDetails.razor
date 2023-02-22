@@ -1,25 +1,29 @@
-﻿@page "/workflow/{workflowid:guid}/{taskid:guid}"
+﻿@page "/workflow/{workflowid:guid}/{colonytaskid:guid}/{beetaskid:guid}"
 
 @using Domain.Dtos;
 @using Application;
 @using Application.Colony;
+@using System.Text.Json;
+@using System.Net.Http.Headers;
 
 @inject ITimer Timer
 @inject Colony Colony
+@inject BeeKeeper BeeKeeper
 
 <h3>Task</h3>
 
 <div>
     @foreach (var message in _messages)
     {
-        @if (message.Type == Domain.Dtos.MessageType.Error)
+        @message<br />
+        @*@if (message.Type == Domain.Dtos.MessageType.Error)
         {
             <pre style="color: #721c24">@message.ToString()</pre>
         }
         else
         {
             <pre>@message.ToString()</pre>
-        }
+        }*@
     }
 </div>
 
@@ -28,25 +32,39 @@
     public Guid WorkflowId { get; set; }
 
     [Parameter]
-    public Guid TaskId { get; set; }
+    public Guid ColonyTaskId { get; set; }
 
-    private List<TaskMessageDto> _messages = new List<TaskMessageDto>();
+    [Parameter]
+    public Guid BeeTaskId { get; set; }
+
+    private IBee _bee;
+    private readonly List<string> _messages = new List<string>();
 
     protected async override Task OnParametersSetAsync()
     {
-        _messages = await Colony.FetchTaskMessagesAsync(WorkflowId, TaskId);
+        var address = Colony.GetBeeAddress(WorkflowId, ColonyTaskId);
+        _bee = BeeKeeper.GetBee(address);
+        await Update();
 
-        Timer.Updated -= OnTimerTick;
-        Timer.Updated += OnTimerTick;
+        //Timer.Updated -= OnTimerTick;
+        //Timer.Updated += OnTimerTick;
 
         await base.OnParametersSetAsync();
+    }
+
+    private async Task Update()
+    {
+        if (_bee == null) return;
+        var lines = await _bee.FetchLogsAsync(BeeTaskId, _messages.Count, 1000);
+        if (lines != null)
+            _messages.AddRange(lines);
     }
 
     private void OnTimerTick()
     {
         InvokeAsync(async () =>
         {
-            _messages = await Colony.FetchTaskMessagesAsync(WorkflowId, TaskId);
+            await Update();
             StateHasChanged();
         });
     }

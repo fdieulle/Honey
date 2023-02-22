@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Infrastructure.Colony
 {
@@ -22,9 +23,9 @@ namespace Infrastructure.Colony
         public IEnumerable<TaskDto> GetTasks() 
             => _client.GetAsync<List<TaskDto>>("Bee/GetTasks").Result;
 
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id) 
-            => _client.GetAsync<List<TaskMessageDto>>(
-                "Bee/FetchMessages", ("id", id.ToString())).Result;
+        public async Task<List<string>> FetchLogsAsync(Guid id, int start = 0, int length = -1)
+            => await _client.GetAsync<List<string>>(
+                "Bee/FetchMessages", ("id", id.ToString()), ("start", start.ToString()), ("length", length.ToString()));
 
         public Guid StartTask(string command, string arguments, int nbCores = 1) 
             => _client.PostAsArgsAsync<Guid>(

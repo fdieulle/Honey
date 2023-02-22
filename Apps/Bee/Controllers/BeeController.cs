@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Domain.Dtos;
 using Application;
 using log4net;
+using System.Threading.Tasks;
 
 namespace Bee.Controllers
 {
@@ -27,9 +28,9 @@ namespace Bee.Controllers
         }
 
         [HttpGet("FetchMessages")]
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id)
+        public async Task<List<string>> FetchLogsAsync(Guid id, int start = 0, int length = -1)
         {
-            return _bee.FetchMessages(id);
+            return await _bee.FetchLogsAsync(id, start, length);
         }
 
         [HttpPost("StartTask")]

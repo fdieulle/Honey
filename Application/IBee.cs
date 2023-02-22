@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Domain.Dtos;
 
 namespace Application
@@ -8,7 +9,7 @@ namespace Application
     {
         IEnumerable<TaskDto> GetTasks();
 
-        IEnumerable<TaskMessageDto> FetchMessages(Guid id);
+        Task<List<string>> FetchLogsAsync(Guid id, int start = 0, int length = -1);
 
         Guid StartTask(string command, string arguments, int nbCores = 1);
 

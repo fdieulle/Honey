@@ -47,9 +47,5 @@ namespace Honey.Controllers
         [HttpGet("GetWorkflows")]
         public List<WorkflowDto> GetWorkflows()
             => _colony.GetWorkflows();
-
-        [HttpGet("FetchTaskMessages")]
-        public List<TaskMessageDto> FetchTaskMessages(Guid workflowId, Guid taskId)
-            => _colony.FetchTaskMessages(workflowId, taskId);
     }
 }

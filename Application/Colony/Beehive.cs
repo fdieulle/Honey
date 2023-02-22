@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using TaskStatus = Domain.Dtos.TaskStatus;
 
 namespace Application.Colony
@@ -395,26 +396,12 @@ namespace Application.Colony
             }
         }
 
-        public List<TaskMessageDto> FetchTaskMessages(Guid id)
+        public string GetBeeAddress(Guid taskId)
         {
-            RemoteTaskDto task;
-            Bee bee;
-            TaskDto state;
-            
-            if (!_tasks.TryGetValue(id, out task))
-                return new List<TaskMessageDto>();
+            if (!_tasks.TryGetValue(taskId, out var task))
+                return null;
 
-            if(!TryGetBeeTaskState(task, out bee, out state))
-                return task.Messages;
-
-            var messages = bee.FetchMessages(state.Id);
-            if (messages == null)
-                return task.Messages;
-
-            lock (task.Messages)
-                task.Messages.AddRange(messages);
-
-            return task.Messages;           
+            return task.BeeAddress;
         }
     }
 }

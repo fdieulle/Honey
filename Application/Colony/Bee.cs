@@ -3,6 +3,7 @@ using log4net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Application.Colony
 {
@@ -51,7 +52,8 @@ namespace Application.Colony
 
         public IEnumerable<TaskDto> GetTasks() => _tasks.Values;
 
-        public IEnumerable<TaskMessageDto> FetchMessages(Guid id) => _proxy.FetchMessages(id);
+        public async Task<List<string>> FetchLogsAsync(Guid id, int start = 0, int length = -1) 
+            => await _proxy.FetchLogsAsync(id, start, length);
 
         public Guid StartTask(string command, string arguments, int nbCores = 1)
         {

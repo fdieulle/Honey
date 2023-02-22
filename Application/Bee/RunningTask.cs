@@ -1,20 +1,26 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using Domain.Dtos;
 using Domain.Entities;
-
+using TaskStatus = Domain.Dtos.TaskStatus;
 
 namespace Application.Bee
 {
+    public enum MessageType
+    {
+        Info,
+        Error,
+        Exit
+    }
+
     public class RunningTask : IDisposable
     {
         private readonly Process _process;
         private readonly TaskDto _taskDto = new TaskDto();
-        private readonly Queue<TaskMessageDto> _messages = new Queue<TaskMessageDto>();
         private readonly string _baseUri;
         private readonly StreamWriter _logFile;
 
@@ -25,8 +31,6 @@ namespace Application.Bee
         public string Command { get; }
 
         public string Arguments { get; }
-
-        public Queue<TaskMessageDto> Messages => _messages;
 
         public TaskStatus Status 
         {
@@ -47,7 +51,7 @@ namespace Application.Bee
             Arguments = arguments;
             WorkingFolder = Path.Combine(workingFolder, Id.ToString("N"));
 
-            _logFile = CreateLogFile(workingFolder, Id);
+            _logFile = CreateLogFileWriter(workingFolder, Id);
 
             _taskDto.Id = Id;
             if (!string.IsNullOrEmpty(command))
@@ -76,7 +80,7 @@ namespace Application.Bee
             Status = entity.Status;
             WorkingFolder = entity.WorkingFolder;
 
-            _logFile = CreateLogFile(WorkingFolder, Id);
+            _logFile = CreateLogFileWriter(WorkingFolder, Id);
 
             _taskDto.Id = Id;
             _taskDto.StartTime = entity.StartTime;
@@ -236,17 +240,43 @@ namespace Application.Bee
 
         public void PostMessage(MessageType type, string message)
         {
-            lock(_messages) 
-            {
-                _messages.Enqueue(new TaskMessageDto(Id, DateTime.UtcNow, type, message));
-            }
-            
-            
             try {
-                _logFile.Write($"[{type}] ");
+                _logFile.Write(DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                _logFile.Write(" [");
+                _logFile.Write(type.ToString());
+                _logFile.Write("] ");
                 _logFile.Write(message);
                 _logFile.WriteLine();
             } catch(Exception) { }
+        }
+
+        public async Task<List<string>> FetchLogsAsync(int start, int length)
+        {
+            try { 
+                _logFile.Flush();
+            } catch(Exception) { }
+
+            var reader = CreateLogFileReader(WorkingFolder, Id);
+
+            var lines = new List<string>();
+            string line;
+            var lineNumber = 0;
+
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                lineNumber++;
+                if (lineNumber < start)
+                    continue;
+                
+                lines.Add(line);
+                if (length <= 0) // Means read to the end
+                    continue;
+                
+                length--;
+                if (length <= 0) break; // Happens only of a length has been defined by the user
+            }
+
+            return lines;
         }
 
         public void Dispose()
@@ -257,10 +287,22 @@ namespace Application.Bee
             try { _logFile.Dispose(); } catch (Exception) { }
         }
 
-        private static StreamWriter CreateLogFile(string workingFolder, Guid id)
+        private static string LogFilePath(string workingFolder, Guid id)
         {
             var logFolder = Path.Combine(workingFolder, "logs").CreateFolder();
-            return new StreamWriter(new FileStream(Path.Combine(logFolder, $"{id:N}.log"), FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite));
+            return Path.Combine(logFolder, $"{id:N}.log");
+        }
+
+        private static StreamWriter CreateLogFileWriter(string workingFolder, Guid id)
+        {
+            var logFile = LogFilePath(workingFolder, id);
+            return new StreamWriter(new FileStream(logFile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite, 4096));
+        }
+
+        private static StreamReader CreateLogFileReader(string workingFolder, Guid id)
+        {
+            var logFile = LogFilePath(Path.Combine(workingFolder, ".."), id);
+            return new StreamReader(new FileStream(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096));
         }
 
         private static string Format(Exception e)
