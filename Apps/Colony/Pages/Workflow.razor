@@ -4,9 +4,6 @@
 @using AntDesign.TableModels
 @using Application;
 @using Application.Colony
-@using Blazor.Diagrams.Core;
-@using Blazor.Diagrams.Components;
-@using Blazor.Diagrams.Core.Models.Base;
 @using Honey.Components;
 @using Domain.Dtos.Workflows;
 @using Domain.ViewModels;
@@ -16,6 +13,7 @@
 @inject Colony Colony
 @inject NavigationManager Navigation
 @inject ITimer Timer
+@inject IJSRuntime JsRuntime
 
 <div>
     <h3>@_workflow.Name</h3>
@@ -61,12 +59,7 @@
         </Table>
     </TabPane>
     <TabPane Tab="Graph" ForceRender>
-        @*<div style="width: 100vw; height: 100vh">*@
-        <div style="height: 100vh">
-            <CascadingValue Value="Diagram">
-                <DiagramCanvas></DiagramCanvas>
-            </CascadingValue>
-        </div>
+        <div @ref="_graph"></div>
     </TabPane>
 </AntDesign.Tabs>
 
@@ -211,32 +204,9 @@
     private readonly ModalViewModel _modalState = new ModalViewModel();
     private WorkflowViewModel _workflow;
 
-    private Diagram Diagram { get; } = new Diagram();
+    private ElementReference _graph;
     private bool _isDrawerVisible;
     private HostedJobViewModel _selectedJob = HostedJobViewModel.Empty;
-
-    public Workflow()
-    {
-        var options = new DiagramOptions
-        {
-            DefaultNodeComponent = null, // Default component for nodes
-            AllowMultiSelection = true, // Whether to allow multi selection using CTRL
-                                        //EnableVirtualization = true,
-            Links = new DiagramLinkOptions
-            {
-                // Options related to links
-            },
-            Zoom = new DiagramZoomOptions
-            {
-                //Minimum = 0.5, // Minimum zoom value
-                Inverse = false, // Whether to inverse the direction of the zoom when using the wheel
-                                    // Other
-            }
-        };
-
-        Diagram = new Diagram(options);
-        Diagram.RegisterModelComponent<JobNodeModel, JobNodeComponent>();
-    }
 
     protected async override Task OnParametersSetAsync()
     {
@@ -246,15 +216,23 @@
             ;
         _jobs[0] = WorkflowRepository.GetWorkflowJobs(Id);
 
-        Diagram.Batch(() => Diagram.BuildGraph(_jobs[0]));
-
-        Diagram.SelectionChanged -= OnNodeSelected;
-        Diagram.SelectionChanged += OnNodeSelected;
-
         Timer.Updated -= OnTimerTick;
         Timer.Updated += OnTimerTick;
 
         await base.OnParametersSetAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var diagramModule = await JsRuntime
+               .InvokeAsync<IJSObjectReference>("import", "./diagrams.js");
+
+            var diagram = GraphVizBuilder.CreateGraph(_jobs[0]);
+
+            await diagramModule.InvokeVoidAsync("renderDot", diagram, _graph);
+        }
     }
 
     private void Cancel()
@@ -277,13 +255,6 @@
             await Colony.DeleteAsync(Id);
             Navigation.NavigateTo("workflows");
         });
-    }
-
-    private void OnNodeSelected(SelectableModel model)
-    {
-        if (model is not JobNodeModel node)
-            return;
-        OnSelect(node.Job);
     }
 
     private void GoToMessages(JobViewModel job)
