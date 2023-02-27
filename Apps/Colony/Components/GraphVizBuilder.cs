@@ -13,6 +13,7 @@ namespace Honey.Components
         {
             var sb = new StringBuilder();
             sb.AppendLine("digraph {");
+            sb.AppendLine("rankdir=\"LR\"");
 
             var start = new JobViewModel { Name = "Start", Type = "Task", Id = Guid.NewGuid(), Status = root.Status };
             sb.AppendNodeAttribute(start);
