@@ -11,5 +11,7 @@ namespace Domain.Entities.Workflows
         public string Beehive { get; set; }
 
         public Guid RootJobId { get; set; }
+
+        public string Owner { get; set; }
     }
 }

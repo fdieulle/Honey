@@ -381,6 +381,7 @@ namespace Infrastructure.Colony
             entity.Name = dto.Name;
             entity.Beehive = dto.Beehive;
             entity.RootJobId = dto.RootJobId;
+            entity.Owner = dto.Owner;
         }
         public static WorkflowDto ToDto(this WorkflowEntity entity)
         {
@@ -390,6 +391,7 @@ namespace Infrastructure.Colony
                 Name = entity.Name,
                 Beehive = entity.Beehive,
                 RootJobId = entity.RootJobId,
+                Owner = entity.Owner,
             };
         }
 

@@ -26,7 +26,7 @@ namespace Application.Tests.Colony
             // Create a beehive
             beehiveProvider.CreateBeehive("beehive");
 
-            var id = colony.ExecuteTask("name", "beehive", T("powershell", "-version"));
+            var id = colony.ExecuteTask("name", "beehive", "user", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -53,7 +53,7 @@ namespace Application.Tests.Colony
             // Create a beehive
             beehiveProvider.CreateBeehive("beehive");
 
-            var id = colony.ExecuteTask("name", "beehive", T("powershell", "-version"));
+            var id = colony.ExecuteTask("name", "beehive", "user", T("powershell", "-version"));
 
             Assert.NotEqual(id, Guid.Empty);
             bee.Received().StartTask(
@@ -85,9 +85,9 @@ namespace Application.Tests.Colony
             // Create a Beehive
             beehiveProvider.CreateBeehive("beehive");
 
-            var id1 = colony.ExecuteTask("name1", "beehive", T("powershell", "-version"));
-            var id2 = colony.ExecuteTask("name2", "beehive", T("powershell", "-version"));
-            var id3 = colony.ExecuteTask("name", "beehive", T("powershell", "-version"));
+            var id1 = colony.ExecuteTask("name1", "beehive", "user", T("powershell", "-version"));
+            var id2 = colony.ExecuteTask("name2", "beehive", "user", T("powershell", "-version"));
+            var id3 = colony.ExecuteTask("name", "beehive", "user", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);
@@ -129,7 +129,7 @@ namespace Application.Tests.Colony
             // Turn bee too busy
             beeKeeper.UpdateBeeState("http://bee1:8080", 0);
 
-            var id = colony.ExecuteTask("name", "beehive", T("powershell", "-version"));
+            var id = colony.ExecuteTask("name", "beehive", "user", T("powershell", "-version"));
 
             // The task is create into shogun but no sent to a bee yet
             Assert.NotEqual(id, Guid.Empty);
@@ -176,9 +176,9 @@ namespace Application.Tests.Colony
             beehiveProvider.CreateBeehive("beehive1", bees: "http://bee1:8080");
             beehiveProvider.CreateBeehive("beehive2", bees: "http://bee2:8080");
 
-            var id1 = colony.ExecuteTask("name", "beehive1", T("powershell", "-version"));
-            var id2 = colony.ExecuteTask("name", "beehive2", T("powershell", "-version"));
-            var id3 = colony.ExecuteTask("name", "beehive1", T("powershell", "-version"));
+            var id1 = colony.ExecuteTask("name", "beehive1", "user", T("powershell", "-version"));
+            var id2 = colony.ExecuteTask("name", "beehive2", "user", T("powershell", "-version"));
+            var id3 = colony.ExecuteTask("name", "beehive1", "user", T("powershell", "-version"));
 
             Assert.NotEqual(id1, Guid.Empty);
             Assert.NotEqual(id1, beeTaskIds[0]);

@@ -23,6 +23,7 @@
     
     <Column Title="Name" @bind-Field="@context.Name" Sortable Filterable />
     <Column Title="Beehive" @bind-Field="@context.Beehive" Sortable Filterable />
+    <Column Title="Owner" @bind-Field="@context.Owner" Sortable Filterable />
     <Column Title="Progress" @bind-Field="@context.Progress" Sortable>
         <Progress Percent="@context.Progress" Status="@context.ToProgressStatus()" Format="_progressFormat" />
     </Column>

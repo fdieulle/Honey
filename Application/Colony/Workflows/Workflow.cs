@@ -22,6 +22,7 @@ namespace Application.Colony.Workflows
                 Id = Guid.NewGuid(),
                 Name = parameters.Name,
                 Beehive = parameters.Beehive,
+                Owner = parameters.Owner,
             };
             _sequencer = dispatcherFactory.CreateSequencer(Dto.Id.ToString("N"));
 

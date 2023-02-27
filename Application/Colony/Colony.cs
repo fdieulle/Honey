@@ -50,8 +50,8 @@ namespace Application.Colony
             _workflows.TryRemove(workflow.Id, out _);
         }
 
-        public Guid ExecuteTask(string name, string beehive, TaskParameters task) 
-            => Execute(new WorkflowParameters { Name = name, Beehive = beehive, RootJob = new SingleTaskJobParameters { Name = name, Task = task } });
+        public Guid ExecuteTask(string name, string beehive, string owner, TaskParameters task) 
+            => Execute(new WorkflowParameters { Name = name, Beehive = beehive, Owner = owner, RootJob = new SingleTaskJobParameters { Name = name, Task = task } });
 
         public bool Cancel(Guid id)
         {

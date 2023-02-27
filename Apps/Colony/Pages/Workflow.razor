@@ -18,7 +18,7 @@
 <div>
     <h3>@_workflow.Name</h3>
     <Tag class="@_workflow?.ToCssClass()">@_workflow.Status</Tag>
-    <Text Type="secondary">@_workflow?.Id</Text>
+    <Text Type="secondary">@(string.Format("{0} - {1}", _workflow?.Owner, _workflow?.Id))</Text>
     <Divider />
     <Space>
         <SpaceItem>

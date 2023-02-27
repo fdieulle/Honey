@@ -21,6 +21,7 @@ namespace Application.Honey
             Id = dto.Id,
             Name = dto.Name,
             Beehive = dto.Beehive,
+            Owner = dto.Owner,
         };
 
         public static void Update(this WorkflowViewModel workflow, JobViewModel rootJob)
@@ -38,6 +39,7 @@ namespace Application.Honey
         {
             vm.Name = dto.Name;
             vm.Beehive = dto.Beehive;
+            vm.Owner = dto.Owner;
         }
 
         #endregion
