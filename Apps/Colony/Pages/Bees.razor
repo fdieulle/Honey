@@ -4,6 +4,7 @@
 @using Domain.Dtos
 @using Application
 @using Application.Colony
+@using Domain.ViewModels;
 
 @inject BeeKeeper BeeKeeper
 @inject ITimer Timer
@@ -11,7 +12,7 @@
 <h3>Bees</h3>
 
 <Space>
-    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@(()=>{ _isVisible = true; })">Enroll Bee</Button></SpaceItem>
+    <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@(()=>{ _isVisible = true; })">New Bee</Button></SpaceItem>
 </Space>
 
 <Modal Title="New Bee"
@@ -41,6 +42,13 @@
             </Row>
        </Form>
 </Modal>
+<Modal Title="@($"Confirm {_modalState.Purpose}")"
+       Visible="@_modalState.IsVisible"
+       OkText="@("Confirm")" OnOk="@_modalState.Accept"
+       CancelText="@("Cancel")" OnCancel="@_modalState.Cancel">
+    <p>Do you want to @_modalState.Purpose ?</p>
+</Modal>
+
 <AntDesign.Table 
     TItem="BeeDto"
     DataSource="@_bees"   
@@ -65,7 +73,7 @@
     </Column>
     <ActionColumn>
         <Space>
-            <SpaceItem><Button Danger OnClick="()=>Revoke(context.Address)">Revoke</Button></SpaceItem>
+            <SpaceItem><Button Danger OnClick="()=>Delete(context.Address)">Delete</Button></SpaceItem>
         </Space>
     </ActionColumn>
 
@@ -75,6 +83,7 @@
     List<BeeDto> _bees = new List<BeeDto>();
     bool _isVisible;
     BeeDto _newBee = new BeeDto();
+    private readonly ModalViewModel _modalState = new ModalViewModel();
 
     protected override async Task OnInitializedAsync()
     {
@@ -111,12 +120,16 @@
         _isVisible = false;
     }
 
-    private async void Revoke(string name)
+    private void Delete(string name)
     {
-        await BeeKeeper.RevokeBeeAsync(name);
+        _modalState.Purpose = $"delete {name}";
+        _modalState.Show(async () =>
+        {
+            await BeeKeeper.RevokeBeeAsync(name);
 
-        _bees = await BeeKeeper.GetBeesAsync();
-        StateHasChanged();
+            _bees = await BeeKeeper.GetBeesAsync();
+            StateHasChanged();
+        });
     }
 
     string GetColor(double percentFree)

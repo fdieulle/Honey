@@ -5,6 +5,7 @@
 @using Application
 @using Application.Colony
 @using Domain.Dtos
+@using Domain.ViewModels;
 
 @inject BeehiveProvider BeehiveProvider
 @inject BeeKeeper BeeKeeper
@@ -14,6 +15,7 @@
 <Space>
     <SpaceItem><Button Type="@ButtonType.Primary" OnClick="@NewBeehive">New</Button></SpaceItem>
 </Space>
+
 <Modal Title="New Beehive"
        Visible="@_isVisible"
        Closable="false"
@@ -54,6 +56,13 @@
         </Row>
     </Form>
 </Modal>
+<Modal Title="@($"Confirm {_modalState.Purpose}")"
+       Visible="@_modalState.IsVisible"
+       OkText="@("Confirm")" OnOk="@_modalState.Accept"
+       CancelText="@("Cancel")" OnCancel="@_modalState.Cancel">
+    <p>Do you want to @_modalState.Purpose ?</p>
+</Modal>
+
 <AntDesign.Table TItem="BeehiveVM" DataSource="@_beehives" OnExpand="OnRowExpand">
     <ColumnDefinitions>
         <Column Title="Name" @bind-Field="@context.Name" Sortable />
@@ -95,6 +104,7 @@
     BeehiveDto _model = new BeehiveDto();
     List<BeehiveVM> _beehives = new List<BeehiveVM>();
     List<BeeDto> _bees = new List<BeeDto>();
+    private readonly ModalViewModel _modalState = new ModalViewModel();
 
     protected async override Task OnInitializedAsync()
     {
@@ -128,10 +138,14 @@
 
     private void RemoveBeehive(string name)
     {
-        BeehiveProvider.DeleteBeehive(name);
+        _modalState.Purpose = $"delete {name}";
+        _modalState.Show(() =>
+        {
+            BeehiveProvider.DeleteBeehive(name);
 
-        _beehives = BeehiveProvider.GetBeehives().Select(p => new BeehiveVM(p)).ToList();
-        StateHasChanged();
+            _beehives = BeehiveProvider.GetBeehives().Select(p => new BeehiveVM(p)).ToList();
+            StateHasChanged();
+        });
     }
 
     private async Task OnRowExpand(RowData<BeehiveVM> rowData)
