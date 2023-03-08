@@ -307,7 +307,7 @@ namespace Application.Tests.Colony
         }
 
         [Fact]
-        public void ParallelJobsWithOneInErrorThenCancelOthersThenREcoverTests()
+        public void ParallelJobsWithOneInErrorThenCancelOthersThenRecoverTests()
         {
             var db = new ColonyDbLogs();
             var factory = Substitute.For<IJobFactory>();
@@ -367,6 +367,59 @@ namespace Application.Tests.Colony
             children.ReceivedDelete(1, 1, 1);
         }
 
+        [Fact]
+        public void TestCanDeleteParallelJobs()
+        {
+            var db = new ColonyDbLogs();
+            var factory = Substitute.For<IJobFactory>();
+
+            var (jobParameters, children) = factory.SetupJobs("Child 1", "Child 2", "Child 3");
+
+            var parameters = new ManyJobsParameters { Behavior = JobsBehavior.Sequential, Name = "Sequential", Jobs = jobParameters };
+            var job = new ParallelJobs(parameters, factory, db);
+
+            job.Is(JobStatus.Pending)
+                .CanCancel(true)
+                .CanRecover(false)
+                .CanDelete(true);
+
+            job.Start();
+
+            children.ReceivedStart(1, 1, 1);
+
+            children[0].Update(JobStatus.Running);
+            children[1].Update(JobStatus.Running);
+            children[2].Update(JobStatus.Running);
+            job.Is(JobStatus.Running);
+
+
+            children[0].Update(JobStatus.Completed);
+            job.Is(JobStatus.Running)
+                .CanCancel(true)
+                .CanRecover(false)
+                .CanDelete(false);
+
+            children[2].Update(JobStatus.Completed);
+            job.Is(JobStatus.Running)
+                .CanCancel(true)
+                .CanRecover(false)
+                .CanDelete(false);
+
+            children[1].Update(JobStatus.Completed);
+            job.Is(JobStatus.Completed)
+                .CanCancel(false)
+                .CanRecover(false)
+                .CanDelete(true);
+
+
+            children.ReceivedDelete(0, 0, 0);
+            job.Delete();
+
+            children.ReceivedStart(1, 1, 1);
+            children.ReceivedCancel(0, 0, 0);
+            children.ReceivedRecover(0, 0, 0);
+            children.ReceivedDelete(1, 1, 1);
+        }
 
         private readonly ITestOutputHelper _output;
 
@@ -425,7 +478,11 @@ namespace Application.Tests.Colony
 
     public static class WorkflowTestsExtensions
     {
-        public static void Is(this IJob job, JobStatus status) => Assert.Equal(status, job.Status);
+        public static IJob Is(this IJob job, JobStatus status) 
+        { 
+            Assert.Equal(status, job.Status);
+            return job;
+        }
 
         public static void Update(this IJob job, JobStatus status)
         {
@@ -459,6 +516,24 @@ namespace Application.Tests.Colony
             Assert.Equal(jobs.Length, counts.Length);
             for (int i = 0; i < jobs.Length; i++)
                 jobs[i].Received(counts[i]).Delete();
+        }
+
+        public static IJob CanCancel(this IJob job, bool canCancel)
+        {
+            Assert.True(job.CanCancel() == canCancel, "CanCancel");
+            return job;
+        }
+
+        public static IJob CanRecover(this IJob job, bool cancRecover)
+        {
+            Assert.True(job.CanRecover() == cancRecover, "CanRecover");
+            return job;
+        }
+
+        public static IJob CanDelete(this IJob job, bool canDelete)
+        {
+            Assert.True(job.CanDelete() == canDelete, "CanDelete");
+            return job;
         }
 
         public static (JobParameters[], IJob[]) SetupJobs(this IJobFactory factory, params string[] children)

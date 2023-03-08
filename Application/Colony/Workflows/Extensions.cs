@@ -17,7 +17,7 @@ namespace Application.Colony.Workflows
                 : job.Status.CanRecover();
         public static bool CanDelete(this IJob job)
             => job is ManyJobs many
-                ? many.Jobs.Any(p => p.CanDelete())
+                ? many.Jobs.All(p => p.CanDelete())
                 : job.Status.CanDelete();
     }
 }
