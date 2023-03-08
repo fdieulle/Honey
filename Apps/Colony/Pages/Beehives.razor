@@ -55,7 +55,7 @@
     </Form>
 </Modal>
 <AntDesign.Table TItem="BeehiveVM" DataSource="@_beehives" OnExpand="OnRowExpand">
-    <RowTemplate>
+    <ColumnDefinitions>
         <Column Title="Name" @bind-Field="@context.Name" Sortable />
         <Column Title="Max Parallel" @bind-Field="@context.MaxParallelTasks" Sortable />
         <Column Title="Nb Bees" Field="@Count(context.Bees)" Sortable />
@@ -64,7 +64,7 @@
                 <SpaceItem><Button Danger OnClick="()=>RemoveBeehive(context.Name)">Delete</Button></SpaceItem>
             </Space>
         </ActionColumn>
-    </RowTemplate>
+    </ColumnDefinitions>
     <ExpandTemplate Context="rowData">
         <Table DataSource="rowData.Data.BeesVM" Loading="rowData.Data.BeesVM==null" TItem="BeeDto" HidePagination>
             <Column Title="OS" Field="@context.OS">
