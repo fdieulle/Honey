@@ -74,8 +74,8 @@ namespace Application.Colony
 
     public class WorkflowTaskTracker : IWorkflowTaskTracker
     {
-        private readonly Dictionary<Guid, Action<RemoteTaskDto>[]> _listeners = new Dictionary<Guid, Action<RemoteTaskDto>[]>();
-        private readonly object _mutex = new object();
+        private readonly Dictionary<Guid, List<Action<RemoteTaskDto>>> _listeners = new Dictionary<Guid, List<Action<RemoteTaskDto>>>();
+        private readonly Dictionary<Guid, RemoteTaskDto> _cache = new Dictionary<Guid, RemoteTaskDto>();
         private readonly IDispatcher _dispatcher;
         private readonly IDisposable _subscription;
 
@@ -91,15 +91,13 @@ namespace Application.Colony
             {
                 foreach(var task in tasks)
                 {
-                    Action<RemoteTaskDto>[] subscribers;
-                    lock (_mutex)
-                    {
-                        if (!_listeners.TryGetValue(task.Id, out subscribers))
-                            continue;
-                    }
+                    if (!_listeners.TryGetValue(task.Id, out var subscribers))
+                        continue;
 
                     foreach (var onUpdate in subscribers)
                         onUpdate(task);
+
+                    _cache[task.Id] = task;
                 }
             });
             
@@ -107,33 +105,35 @@ namespace Application.Colony
 
         public IDisposable Subscribe(Guid taskId, Action<RemoteTaskDto> onUpdate)
         {
-            lock (_mutex)
+            _dispatcher.Dispatch(() =>
             {
                 if (!_listeners.TryGetValue(taskId, out var listeners))
-                    listeners = Array.Empty<Action<RemoteTaskDto>>();
+                    _listeners.Add(taskId, listeners = new List<Action<RemoteTaskDto>>());
 
-                TaskTracker.AddSafe(ref listeners, onUpdate);
+                listeners.Add(onUpdate);
 
-                _listeners[taskId] = listeners;
-            }
+                if (_cache.TryGetValue(taskId, out var task))
+                    onUpdate(task);
+            });
 
             return new Disposable(() => Unsubscribe(taskId, onUpdate));
         }
 
         private void Unsubscribe(Guid taskId, Action<RemoteTaskDto> onUpdate)
         {
-            lock (_mutex)
+            _dispatcher.Dispatch(() =>
             {
                 if (!_listeners.TryGetValue(taskId, out var listeners))
                     return;
 
-                if (!TaskTracker.RemoveSafe(ref listeners, onUpdate))
-                    return;
+                listeners.Remove(onUpdate);
 
-                if (listeners.Length == 0)
+                if (listeners.Count == 0)
+                {
                     _listeners.Remove(taskId);
-                else _listeners[taskId] = listeners;
-            }
+                    _cache.Remove(taskId);
+                }
+            });
         }
 
         public void Dispose()

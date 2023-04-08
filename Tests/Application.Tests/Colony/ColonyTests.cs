@@ -62,6 +62,8 @@ namespace Application.Tests.Colony
                 Arg.Is(1));
             Assert.NotEqual(id, beeTaskIds[0]);
 
+            taskTracker.Refresh();
+
             colony.Cancel(id);
 
             bee.Received().CancelTask(Arg.Is(beeTaskIds[0]));
@@ -99,6 +101,8 @@ namespace Application.Tests.Colony
                 Arg.Is("powershell"),
                 Arg.Is("-version"),
                 Arg.Is(1));
+
+            taskTracker.Refresh();
 
             colony.Cancel(id2);
             colony.Cancel(id3);
@@ -144,6 +148,7 @@ namespace Application.Tests.Colony
 
             var beehive = beehiveProvider.GetBeehive("beehive");
             beehive.Refresh();
+            taskTracker.Refresh();
 
             bee.Received().StartTask(
                 Arg.Is("powershell"),
@@ -194,6 +199,8 @@ namespace Application.Tests.Colony
                 Arg.Is("powershell"),
                 Arg.Is("-version"),
                 Arg.Is(1));
+
+            taskTracker.Refresh();
 
             colony.Cancel(id2);
             colony.Cancel(id3);

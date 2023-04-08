@@ -79,8 +79,6 @@ namespace Application.Colony.Workflows
                 return;
             }
 
-            Update(JobStatus.Running);
-
             Dto.TaskId = _beehive.StartTask(Dto.Name, Dto.Parameters);
             if (Dto.TaskId == Guid.Empty)
             {
