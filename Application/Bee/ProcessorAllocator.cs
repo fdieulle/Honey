@@ -7,10 +7,10 @@ namespace Application.Bee
     public class ProcessorAllocator
     {
         private readonly Dictionary<int, ProcessAffinity> _processes = new Dictionary<int, ProcessAffinity>();
-
+        private int _nbUsedCores;
         public int NbCores { get; }
 
-        public int NbUsedCores { get; private set; }
+        public int NbFreeCores => NbCores - _nbUsedCores - 1;
 
         public int MaskInUsed { get; private set; }
 
@@ -23,7 +23,7 @@ namespace Application.Bee
         public List<ProcessAffinity> GetAffinityPlan(int pid, int nbCores)
         {
             var result = new List<ProcessAffinity>();
-            if (nbCores <= 0 || nbCores + NbUsedCores >= NbCores)
+            if (nbCores <= 0 || nbCores + _nbUsedCores >= NbCores)
                 return result;
 
             var pa = new ProcessAffinity() { Pid = pid, NbCores = nbCores };
@@ -40,7 +40,7 @@ namespace Application.Bee
 
             MaskInUsed |= pa.Affinity;
             _processes.Add(pid, pa);
-            NbUsedCores += pa.NbCores;
+            _nbUsedCores += pa.NbCores;
 
             result.Add(pa);
             return result;
@@ -81,7 +81,7 @@ namespace Application.Bee
                 return;
 
             MaskInUsed ^= pa.Affinity;
-            NbUsedCores -= pa.NbCores;
+            _nbUsedCores -= pa.NbCores;
             _processes.Remove(pid);
         }
     }

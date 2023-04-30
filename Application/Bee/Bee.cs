@@ -167,7 +167,7 @@ namespace Application.Bee
                 OSPlatform = _beeResourcesProvider.GetOSPlatform(),
                 OSVersion = _beeResourcesProvider.GetOSVersion(),
                 NbCores = _processorAllocator.NbCores,
-                NbFreeCores = _processorAllocator.NbCores - _processorAllocator.NbUsedCores,
+                NbFreeCores = _processorAllocator.NbFreeCores,
                 TotalPhysicalMemory = memory.Total,
                 AvailablePhysicalMemory = memory.Free,
                 DiskSpace = disk.Total,

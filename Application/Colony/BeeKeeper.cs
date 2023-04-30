@@ -87,7 +87,7 @@ namespace Application.Colony
                 bee.Refresh();
         }
 
-        public Bee GetNextBee(HashSet<string> bees = null)
+        public Bee GetNextBee(HashSet<string> bees = null, int nbCores = -1)
         {
             lock (_bees)
             {
@@ -97,7 +97,7 @@ namespace Application.Colony
 
                 return selectedBees
                     .OrderByDescending(p => p, heuristic)
-                    .Where(p => p.NbFreeCores > 0)
+                    .Where(p => p.NbFreeCores > 0 && p.NbFreeCores >= nbCores)
                     .FirstOrDefault();
             }
         }

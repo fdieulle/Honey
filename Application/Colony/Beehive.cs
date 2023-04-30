@@ -116,7 +116,7 @@ namespace Application.Colony
 
             var bees = new HashSet<string>(_bees);
             Bee bee;
-            while ((bee = _beeKeeper.GetNextBee(bees)) != null)
+            while ((bee = _beeKeeper.GetNextBee(bees, task.Parameters.NbCores)) != null)
             {
                 Logger.InfoFormat("[{0}] Starting task {1} on Bee {2}", Name, task, bee);
 
