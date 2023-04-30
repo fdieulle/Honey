@@ -34,7 +34,7 @@ namespace Application
         public IDispatcher CreateSequencer(string name = null) 
             => name == null
                 ? new Dispatcher(null)
-                : _sequencers.GetOrAdd(name, n => new Dispatcher(n));
+                : _sequencers.GetOrAdd(name, n => new Sequencer(n));
 
         public IDisposable Schedule(int dueTimeMs, int intervalMs, Action action)
         {
