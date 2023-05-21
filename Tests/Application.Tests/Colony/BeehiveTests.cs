@@ -211,7 +211,10 @@ namespace Application.Tests.Colony
 
             Refresh();
             bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
-            //_db.CheckTaskUpdate("Task 1", "Beehive 1", null, "cmd 1", Guid.Empty, RemoteTaskStatus.Pending);
+
+            Refresh();
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+
 
             bee.SetupAsEmpty();
 
@@ -273,6 +276,62 @@ namespace Application.Tests.Colony
             _db.TaskTable.EmptyLogs();
         }
 
+        [Fact]
+        public void StartButHangTaskMultipleTimesBecauseOfCompetition()
+        {
+            var bee = _factory.Setup("Bee 1");
+            _beeKeeper.EnrollBee("Bee 1");
+            Refresh();
+
+            var task1Id = bee.SetupStartTask("cmd 1");
+            var task2Id = bee.SetupStartTask("cmd 2");
+            var task3Id = bee.SetupStartTask("cmd 3");
+            var task4Id = bee.SetupStartTask("cmd 4");
+            var task5Id = bee.SetupStartTask("cmd 5");
+            var task6Id = bee.SetupStartTask("cmd 6");
+
+            Refresh();
+
+            _beehive.StartTask("Task 1", StartTaskDto("cmd 1", nbCores: 2));
+            _beehive.StartTask("Task 2", StartTaskDto("cmd 2", nbCores: 2));
+            _beehive.StartTask("Task 3", StartTaskDto("cmd 3", nbCores: 2));
+            _beehive.StartTask("Task 4", StartTaskDto("cmd 4", nbCores: 2));
+            _beehive.StartTask("Task 5", StartTaskDto("cmd 5", nbCores: 2));
+            _beehive.StartTask("Task 6", StartTaskDto("cmd 6", nbCores: 2));
+
+            Refresh();
+
+            bee.CheckStartTask("cmd 1");
+            _db.CheckCreateTask("Task 1", "Beehive 1", "Bee 1", "cmd 1", task1Id, RemoteTaskStatus.Running, checkEmpty: false);
+            bee.CheckStartTask("cmd 2");
+            _db.CheckCreateTask("Task 2", "Beehive 1", "Bee 1", "cmd 2", task2Id, RemoteTaskStatus.Running, checkEmpty: false);
+            bee.CheckStartTask("cmd 3");
+            _db.CheckCreateTask("Task 3", "Beehive 1", "Bee 1", "cmd 3", task3Id, RemoteTaskStatus.Running, checkEmpty: false);
+            bee.CheckStartTask("cmd 4");
+            _db.CheckCreateTask("Task 4", "Beehive 1", "Bee 1", "cmd 4", task4Id, RemoteTaskStatus.Running, checkEmpty: false);
+            _db.CheckCreateTask("Task 5", "Beehive 1", null, "cmd 5", Guid.Empty, RemoteTaskStatus.Pending, checkEmpty: false);
+            _db.CheckCreateTask("Task 6", "Beehive 1", null, "cmd 6", Guid.Empty, RemoteTaskStatus.Pending, checkEmpty: true);
+            bee.ClearReceivedCalls();
+
+
+            Refresh();
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+
+            Refresh();
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+
+            Refresh();
+            bee.DidNotReceive().StartTask(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
+
+            bee.GetTasks().Returns(new[] { TaskDto(task2Id, TaskStatus.Done, 1.0) });
+            bee.SetupFreeCores(2);
+            Refresh();
+
+            _db.CheckUpdateTask("Task 2", "Beehive 1", "Bee 1", "cmd 2", task2Id, RemoteTaskStatus.Completed, checkEmpty: false);
+            _db.CheckUpdateTask("Task 5", "Beehive 1", "Bee 1", "cmd 5", task5Id, RemoteTaskStatus.Running, checkEmpty: true);
+
+            _db.TaskTable.EmptyLogs();
+        }
 
         [Fact]
         public void StartColonyWithDifferentTaskState()
@@ -422,14 +481,23 @@ namespace Application.Tests.Colony
             return bee;
         }
 
+        public static Guid SetupStartTask(this IBee bee, string command)
+        {
+            var taskId = Guid.NewGuid();
+            bee.SetupStartTask(command, taskId);
+            return taskId;
+        }
         public static void SetupStartTask(this IBee bee, string command, Guid taskId)
             => bee.StartTask(Arg.Is(command), Arg.Any<string>(), Arg.Any<int>()).Returns(taskId);
 
         public static void SetupTaskState(this IBee bee, params TaskDto[] tasks) 
             => bee.GetTasks().Returns(tasks);
 
-        public static void SetupAsFull(this IBee bee) => bee.GetResources().Returns(ResourcesDto(0));
-        public static void SetupAsEmpty(this IBee bee) => bee.GetResources().Returns(ResourcesDto(8));
+        public static void SetupAsFull(this IBee bee) => bee.SetupFreeCores(0);
+        public static void SetupAsEmpty(this IBee bee) => bee.SetupFreeCores(8);
+
+        public static void SetupFreeCores(this IBee bee, int nbFreeCores) 
+            => bee.GetResources().Returns(ResourcesDto(nbFreeCores));
 
         public static bool Check(
             this List<RemoteTaskDto> list,
@@ -511,16 +579,18 @@ namespace Application.Tests.Colony
         public static void CheckDeleteTask(this IBee bee, Guid id) 
             => bee.Received().DeleteTask(Arg.Is(id));
 
-        public static void CheckCreateTask(this ColonyDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
+        public static void CheckCreateTask(this ColonyDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running, bool checkEmpty = true)
         {
             db.TaskTable.NextCreate().Check(name, queue, bee, command, taskId, status);
-            db.TaskTable.EmptyLogs();
+            if (checkEmpty)
+                db.TaskTable.EmptyLogs();
         }
 
-        public static void CheckUpdateTask(this ColonyDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running)
+        public static void CheckUpdateTask(this ColonyDbLogs db, string name, string queue, string bee, string command, Guid taskId, RemoteTaskStatus status = RemoteTaskStatus.Running, bool checkEmpty = true)
         {
             db.TaskTable.NextUpdate().Check(name, queue, bee, command, taskId, status);
-            db.TaskTable.EmptyLogs();
+            if (checkEmpty)
+                db.TaskTable.EmptyLogs();
         }
 
         public static TaskDto TaskDto(Guid id, TaskStatus status, double progress = 0.5)

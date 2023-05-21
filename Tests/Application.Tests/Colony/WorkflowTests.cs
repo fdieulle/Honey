@@ -474,6 +474,60 @@ namespace Application.Tests.Colony
             foreach (var counter in counters)
                 Assert.Equal(N, counter);
         }
+
+        [Fact]
+        public void GenerateWorkflow()
+        {
+            var random = new Random();
+
+            var root = Sequence(
+                "Sequence",
+                Parallel("Scatter", Enumerable.Range(1, 20).Select((p, q) => Cmd($"Task {p}", random.Next(5, 30)))),
+                Cmd("Gather", random.Next(5, 30)));
+
+            var workflow = new WorkflowParameters
+            {
+                Name = "Scatter/Gatcher",
+                Beehive = "FX",
+                Owner = "Fabien",
+                RootJob = root
+            };
+
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            var json = System.Text.Json.JsonSerializer.Serialize<WorkflowParameters>(workflow, options);
+
+            var parameters = System.Text.Json.JsonSerializer.Deserialize<WorkflowParameters>(json);
+
+            Assert.NotNull(parameters);
+            Assert.IsAssignableFrom<WorkflowParameters>(parameters);
+        }
+
+        private static JobParameters Cmd(string name, int duration = 10)
+        {
+            return new SingleTaskJobParameters()
+            {
+                Name = name,
+                Task = new TaskParameters
+                {
+                    Command = "C:\\OtherDrive\\Workspace\\Git\\fdieulle\\Honey\\Apps\\DemoTask\\bin\\Debug\\net7.0\\DemoTask.exe",
+                    Arguments = $"{duration}",
+                    NbCores = 1
+                }
+            };
+        }
+
+        private static JobParameters Parallel(string name, IEnumerable<JobParameters> jobs)
+            => Parallel(name, jobs.ToArray());
+        private static JobParameters Parallel(string name, params JobParameters[] jobs) 
+            => new ManyJobsParameters { Behavior = JobsBehavior.Parallel, Name = name, Jobs = jobs };
+
+        private static JobParameters Sequence(string name, IEnumerable<JobParameters> jobs)
+            => Sequence(name, jobs.ToArray());
+        private static JobParameters Sequence(string name, params JobParameters[] jobs) 
+            => new ManyJobsParameters { Behavior = JobsBehavior.Sequential, Name = name, Jobs = jobs };
     }
 
     public static class WorkflowTestsExtensions
