@@ -84,7 +84,6 @@ namespace Application.Tests.Bee
             allocator.Check("01111111", 0);
         }
 
-
         [Fact]
         public void TestAllocWf3()
         {
