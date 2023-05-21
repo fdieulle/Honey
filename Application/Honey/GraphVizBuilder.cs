@@ -1,11 +1,11 @@
 ﻿using Domain.Dtos.Workflows;
 using Domain.ViewModels;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace Honey.Components
+namespace Application.Honey
 {
     public static class GraphVizBuilder
     {
@@ -35,7 +35,7 @@ namespace Honey.Components
                 return sb.AppendParallelNode(node, predecessors);
             else if (node.Type == JobsBehavior.Sequential.ToString())
                 return sb.AppendSequenceNode(node, predecessors);
-            else 
+            else
                 return sb.AppendTaskNode(node, predecessors);
         }
 
@@ -44,10 +44,22 @@ namespace Honey.Components
             var successors = new List<JobViewModel>();
             if (node.Children == null) return successors;
 
-            foreach (var child in node.Children)
-                successors.AddRange(sb.AppendNode(child, predecessors));
+            var successor = sb.AppendTaskNode(node, predecessors);
+            if (node.Children.Count > 4)
+            {
+                foreach (var child in node.Children.Take(2))
+                    successors.AddRange(sb.AppendNode(child, successor));
+                successors.AddRange(sb.AppendTextNode("...", successor));
+                foreach (var child in node.Children.Skip(node.Children.Count - 2))
+                    successors.AddRange(sb.AppendNode(child, successor));
+            }
+            else
+            {
+                foreach (var child in node.Children)
+                    successors.AddRange(sb.AppendNode(child, successor));
+            }
 
-            return successors;
+            return successors.Count > 0 ? successors : successor;
         }
 
         private static List<JobViewModel> AppendSequenceNode(this StringBuilder sb, JobViewModel node, List<JobViewModel> predecessors)
@@ -74,6 +86,9 @@ namespace Honey.Components
 
             return new List<JobViewModel> { node };
         }
+
+        private static List<JobViewModel> AppendTextNode(this StringBuilder sb, string text, List<JobViewModel> predecessors) 
+            => sb.AppendTaskNode(new JobViewModel { Id = Guid.NewGuid(), Name = text, Type = "Text" }, predecessors);
 
         private static void AppendNodeAttribute(this StringBuilder sb, JobViewModel node)
         {
