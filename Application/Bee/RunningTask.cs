@@ -159,13 +159,15 @@ namespace Application.Bee
                 }
                 else
                 {
-                    Status= TaskStatus.Error;
+                    WorkingFolder.DeleteFolder();
+                    Status = TaskStatus.Error;
                     PostMessage(MessageType.Exit, "Start Failed");
                     // Todo: Send start failed reason
                 }
             } 
             catch (Exception e)
             {
+                WorkingFolder.DeleteFolder();
                 Status = TaskStatus.Error;
                 PostMessage(MessageType.Exit, Format(e));
             }
@@ -210,7 +212,8 @@ namespace Application.Bee
                 
                 _taskDto.EndTime = DateTime.UtcNow;
             }
-            
+
+            WorkingFolder.DeleteFolder();
             PostMessage(MessageType.Exit, $"Exit with code: {_process?.ExitCode}");
             Exited?.Invoke(this);
         }
